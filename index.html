@@ -25,6 +25,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -191,10 +192,9 @@ html,body{
 .fc-tail{width:2px;height:6px;background:#CBD5E1;}
 .fc-base{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
 
-/* ── FLOATING NAV PILL — respeta el home indicator ── */
+/* ── FLOATING NAV PILL — clara, consistente con el resto de la UI ── */
 .bottom-nav{
   position:absolute;
-  /* sube la pill sobre el home indicator de iOS */
   bottom: max(20px, calc(var(--sab) + 12px));
   left:50%;
   transform:translateX(-50%);
@@ -202,20 +202,20 @@ html,body{
   display:flex;
   align-items:center;
   gap:4px;
-  background:rgba(15,23,42,.88);
+  background:rgba(255,255,255,.96);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,.10);
+  border:1px solid var(--border);
   border-radius:99px;
   padding:6px 6px;
-  box-shadow:var(--shadow-float),0 0 0 1px rgba(255,255,255,.06) inset;
+  box-shadow:var(--shadow-float);
   animation:navAppear .4s cubic-bezier(.34,1.56,.64,1);
 }
 @keyframes navAppear{from{opacity:0;transform:translateX(-50%) translateY(16px) scale(.92)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
-.nav-btn{display:flex;align-items:center;gap:7px;padding:9px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:700;color:rgba(255,255,255,.55);border-radius:99px;transition:all .22s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;font-family:inherit;letter-spacing:-.1px;position:relative;}
+.nav-btn{display:flex;align-items:center;gap:7px;padding:9px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:700;color:var(--text3);border-radius:99px;transition:all .22s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;font-family:inherit;letter-spacing:-.1px;position:relative;}
 .nav-btn svg{width:17px;height:17px;transition:transform .22s cubic-bezier(.34,1.56,.64,1);}
-.nav-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07);}
-.nav-btn.active{color:#fff;background:rgba(255,255,255,.14);font-weight:800;}
+.nav-btn:hover{color:var(--text2);background:var(--surface2);}
+.nav-btn.active{color:var(--green-dk);background:var(--green-lt);font-weight:800;}
 .nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:20px;height:2px;background:var(--green);border-radius:0 0 3px 3px;animation:tabIndicator .22s ease;}
 @keyframes tabIndicator{from{width:0;opacity:0}to{width:20px;opacity:1}}
 
@@ -269,7 +269,7 @@ html,body{
 .prize-cta.can:hover{transform:translateY(-1px);}
 .prize-cta.cant{background:var(--surface2);color:var(--text3);border:1px solid var(--border);}
 
-/* ── TOAST — sube sobre el home indicator ── */
+/* ── TOAST ── */
 .toast{
   position:fixed;
   bottom: calc(90px + var(--sab));
@@ -299,7 +299,7 @@ html,body{
 #react-popup-root{position:fixed;inset:0;z-index:10000;pointer-events:none;}
 #react-popup-root.active{pointer-events:all;}
 
-/* ── INSTALL PROMPT — respeta notch ── */
+/* ── INSTALL PROMPT ── */
 .install-banner{
   position:absolute;
   top:14px;
@@ -454,6 +454,28 @@ html,body{
 <div id="react-popup-root"></div>
 
 <script>
+/* ════════════════════════════════════════════════════════════
+   CONFIG — completar después de desplegar el backend
+   ════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  // URL del Web App de Apps Script (Implementar > Nueva implementación > Aplicación web).
+  // Ejemplo: 'https://script.google.com/macros/s/AKfycb.../exec'
+  APPS_SCRIPT_URL: 'PEGAR_AQUI_TU_APPS_SCRIPT_WEB_APP_URL',
+
+  // Client ID de OAuth 2.0 (Google Cloud Console > Credenciales > ID de cliente OAuth > Aplicación web)
+  // Ejemplo: '1234567890-abc123.apps.googleusercontent.com'
+  GOOGLE_CLIENT_ID: 'PEGAR_AQUI_TU_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+
+  // Centro por defecto del mapa si el usuario no comparte ubicación (Buenos Aires, Microcentro)
+  DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
+
+  // Radio de búsqueda de comercios reales (metros)
+  SEARCH_RADIUS_M: 1200,
+};
+
+const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
+const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
+
 /* ─────────────── DATA ─────────────── */
 const STATUS_CFG = [
   {label:'Poca gente',     sub:'Entrá tranquilo',  color:'#00C48C'},
@@ -467,21 +489,25 @@ const VOTE_PTS = [10,10,15,20];
 const LEVEL_TITLES = ['Novato','Explorador','Cazador de Filas','Maestro del Mapa','Leyenda Urbana'];
 const XP_PER_LEVEL = 150;
 
-const PLACES = [
-  {id:0, name:'Carrefour Express', type:'Supermercado', logo:'🛒', rating:4.2, reviewsN:'1.2k', addr:'Av. Corrientes 1234', status:2, reporters:14, open:true, lat:-34.6048, lng:-58.3857, verified:true},
-  {id:1, name:'Farmacity Centro',  type:'Farmacia',     logo:'💊', rating:4.0, reviewsN:'856',  addr:'Florida 340',     status:0, reporters:5,  open:true, lat:-34.6037, lng:-58.3743, verified:true, photo:'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=800&q=80'},
-  {id:2, name:'Disco San Nicolás', type:'Supermercado', logo:'🏪', rating:3.8, reviewsN:'2.1k', addr:'Av. Callao 540',  status:3, reporters:22, open:true, lat:-34.6011, lng:-58.3920},
-  {id:3, name:'Banco Nación',      type:'Banco / Cajeros', logo:'🏦', rating:3.2, reviewsN:'430', addr:'Florida 236', status:2, reporters:18, open:true, lat:-34.6074, lng:-58.3738, verified:true},
-  {id:4, name:'Rapipago',          type:'Pagos y servicios', logo:'💳', rating:3.6, reviewsN:'210', addr:'Lavalle 870', status:1, reporters:7, open:true, lat:-34.5997, lng:-58.3855},
-  {id:5, name:'Panadería La Farola', type:'Panadería', logo:'🥐', rating:4.7, reviewsN:'520', addr:'Av. Rivadavia 3400', status:0, reporters:3, open:true, lat:-34.6147, lng:-58.4148, verified:true},
-  {id:6, name:'Coto Belgrano',     type:'Supermercado', logo:'🛍️', rating:4.1, reviewsN:'3.4k', addr:'Av. Belgrano 1100', status:3, reporters:31, open:true, lat:-34.6165, lng:-58.3792, verified:true},
-  {id:7, name:'ANSES Centro',      type:'Oficina pública', logo:'📋', rating:2.9, reviewsN:'890', addr:'Av. de Mayo 760', status:3, reporters:40, open:true, lat:-34.6093, lng:-58.3802, verified:true},
-  {id:8, name:'McDonalds Callao',  type:'Comida rápida', logo:'🍔', rating:4.3, reviewsN:'5.1k', addr:'Av. Corrientes 1600', status:1, reporters:9, open:true, lat:-34.6038, lng:-58.3906, verified:true},
-  {id:9, name:'La Serenísima',     type:'Lácteos / Tienda', logo:'🥛', rating:4.5, reviewsN:'320', addr:'Scalabrini Ortiz 56', status:0, reporters:2, open:false, lat:-34.6072, lng:-58.4235},
-  {id:10,name:'Parrilla Don Pepe', type:'Restaurante', logo:'🍖', rating:4.6, reviewsN:'680', addr:'Av. Santa Fe 2100', status:0, reporters:4, open:true, lat:-34.5950, lng:-58.3990, verified:true},
+// Datos semilla: se usan como primer render (instantáneo) y como respaldo
+// si el backend todavía no está configurado o falla una consulta puntual.
+// En cuanto CONFIG.APPS_SCRIPT_URL está completo, todo esto se reemplaza
+// por datos reales/dinámicos provenientes del Google Sheet.
+const SEED_PLACES = [
+  {id:'seed-0', name:'Carrefour Express', type:'Supermercado', logo:'🛒', rating:4.2, reviewsN:'1.2k', addr:'Av. Corrientes 1234', status:2, reporters:14, open:true, lat:-34.6048, lng:-58.3857, verified:true},
+  {id:'seed-1', name:'Farmacity Centro',  type:'Farmacia',     logo:'💊', rating:4.0, reviewsN:'856',  addr:'Florida 340',     status:0, reporters:5,  open:true, lat:-34.6037, lng:-58.3743, verified:true, photo:'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=800&q=80'},
+  {id:'seed-2', name:'Disco San Nicolás', type:'Supermercado', logo:'🏪', rating:3.8, reviewsN:'2.1k', addr:'Av. Callao 540',  status:3, reporters:22, open:true, lat:-34.6011, lng:-58.3920},
+  {id:'seed-3', name:'Banco Nación',      type:'Banco / Cajeros', logo:'🏦', rating:3.2, reviewsN:'430', addr:'Florida 236', status:2, reporters:18, open:true, lat:-34.6074, lng:-58.3738, verified:true},
+  {id:'seed-4', name:'Rapipago',          type:'Pagos y servicios', logo:'💳', rating:3.6, reviewsN:'210', addr:'Lavalle 870', status:1, reporters:7, open:true, lat:-34.5997, lng:-58.3855},
+  {id:'seed-5', name:'Panadería La Farola', type:'Panadería', logo:'🥐', rating:4.7, reviewsN:'520', addr:'Av. Rivadavia 3400', status:0, reporters:3, open:true, lat:-34.6147, lng:-58.4148, verified:true},
+  {id:'seed-6', name:'Coto Belgrano',     type:'Supermercado', logo:'🛍️', rating:4.1, reviewsN:'3.4k', addr:'Av. Belgrano 1100', status:3, reporters:31, open:true, lat:-34.6165, lng:-58.3792, verified:true},
+  {id:'seed-7', name:'ANSES Centro',      type:'Oficina pública', logo:'📋', rating:2.9, reviewsN:'890', addr:'Av. de Mayo 760', status:3, reporters:40, open:true, lat:-34.6093, lng:-58.3802, verified:true},
+  {id:'seed-8', name:'McDonalds Callao',  type:'Comida rápida', logo:'🍔', rating:4.3, reviewsN:'5.1k', addr:'Av. Corrientes 1600', status:1, reporters:9, open:true, lat:-34.6038, lng:-58.3906, verified:true},
+  {id:'seed-9', name:'La Serenísima',     type:'Lácteos / Tienda', logo:'🥛', rating:4.5, reviewsN:'320', addr:'Scalabrini Ortiz 56', status:0, reporters:2, open:false, lat:-34.6072, lng:-58.4235},
+  {id:'seed-10',name:'Parrilla Don Pepe', type:'Restaurante', logo:'🍖', rating:4.6, reviewsN:'680', addr:'Av. Santa Fe 2100', status:0, reporters:4, open:true, lat:-34.5950, lng:-58.3990, verified:true},
 ];
 
-const RANKING_DATA = [
+const SEED_RANKING = [
   {name:'Mariana G.',   init:'MG',reports:142,pts:1840,bg:'#E8FBF5',fg:'#007A59'},
   {name:'Lucas T.',     init:'LT',reports:118,pts:1540,bg:'#FFF7ED',fg:'#9A3412'},
   {name:'Sofía R.',     init:'SR',reports:95, pts:1210,bg:'#EEF2FF',fg:'#3730A3'},
@@ -490,27 +516,73 @@ const RANKING_DATA = [
   {name:'Carlos V.',    init:'CV',reports:54, pts:690, bg:'#E8FBF5',fg:'#007A59'},
   {name:'Valentina F.', init:'VF',reports:49, pts:620, bg:'#FFFBEB',fg:'#92400E'},
   {name:'Emilio B.',    init:'EB',reports:35, pts:440, bg:'#EEF2FF',fg:'#3730A3'},
-  {name:'Vos',          init:'YO',reports:19, pts:240, bg:'#00C48C',fg:'#fff',isMe:true},
 ];
 
-const PRIZES_DATA = [
-  {emoji:'☕',name:'Café gratis',            pts:200, cat:'Gastronomía',    partner:'Starbucks'},
-  {emoji:'🎬',name:'Entrada de cine',         pts:400, cat:'Entretenimiento',partner:'Cinemark'},
-  {emoji:'🛒',name:'Descuento 20% Carrefour', pts:600, cat:'Supermercado',  partner:'Carrefour'},
-  {emoji:'🍕',name:'Pizza para 2 personas',   pts:800, cat:'Gastronomía',   partner:"Ugi's"},
-  {emoji:'🚌',name:'Carga SUBE $2000',        pts:1000,cat:'Transporte',    partner:'SUBE'},
-  {emoji:'🎮',name:'Streaming 1 mes',         pts:1200,cat:'Digital',       partner:'Netflix'},
-  {emoji:'🛍️',name:'Gift card $5000',         pts:2500,cat:'Compras',      partner:'Naranja X'},
-  {emoji:'✈️',name:'Voucher de viaje',         pts:5000,cat:'Turismo',      partner:'Despegar'},
+const SEED_PRIZES = [
+  {id:'p1',emoji:'☕',name:'Café gratis',            pts:200, cat:'Gastronomía',    partner:'Starbucks'},
+  {id:'p2',emoji:'🎬',name:'Entrada de cine',         pts:400, cat:'Entretenimiento',partner:'Cinemark'},
+  {id:'p3',emoji:'🛒',name:'Descuento 20% Carrefour', pts:600, cat:'Supermercado',  partner:'Carrefour'},
+  {id:'p4',emoji:'🍕',name:'Pizza para 2 personas',   pts:800, cat:'Gastronomía',   partner:"Ugi's"},
+  {id:'p5',emoji:'🚌',name:'Carga SUBE $2000',        pts:1000,cat:'Transporte',    partner:'SUBE'},
+  {id:'p6',emoji:'🎮',name:'Streaming 1 mes',         pts:1200,cat:'Digital',       partner:'Netflix'},
+  {id:'p7',emoji:'🛍️',name:'Gift card $5000',         pts:2500,cat:'Compras',      partner:'Naranja X'},
+  {id:'p8',emoji:'✈️',name:'Voucher de viaje',         pts:5000,cat:'Turismo',      partner:'Despegar'},
 ];
 
 /* ─────────────── STATE ─────────────── */
-let userPts = 240;
-let places = PLACES.map(p=>({...p}));
+let userPts = 0;
+let currentUser = null;          // { email, name, picture } una vez logueado
+let places = SEED_PLACES.map(p=>({...p}));
+let rankingData = SEED_RANKING.map(r=>({...r}));
+let prizesData = SEED_PRIZES.map(p=>({...p}));
 let leafletMap = null, leafletMarkers = {};
 let isLoggedIn = false;
 let countdown = 30;
 let voteCount = 0;
+let pendingVote = null; // {placeId, statusIdx} si el usuario reporta sin estar logueado
+
+/* ─────────────── BACKEND API (Apps Script Web App) ─────────────────
+   GET  ?action=places&lat=..&lng=..&radius=..   → lugares reales + estado de la comunidad
+   GET  ?action=ranking                          → top usuarios por puntos
+   GET  ?action=prizes                           → catálogo de premios
+   GET  ?action=me&email=..                      → perfil + puntos del usuario
+   POST {action:'login',  access_token}          → valida el login de Google y crea/actualiza el usuario
+   POST {action:'vote',   place, status, email}  → guarda un reporte y suma puntos
+   POST {action:'redeem', email, prize_id}       → canjea un premio
+   ──────────────────────────────────────────────────────────────── */
+async function apiGet(action, params = {}) {
+  if (!BACKEND_READY) return null;
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  try {
+    const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?${qs}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error de backend');
+    return data.result;
+  } catch (err) {
+    console.warn('apiGet falló:', action, err);
+    return null;
+  }
+}
+
+async function apiPost(action, payload = {}) {
+  if (!BACKEND_READY) return null;
+  try {
+    // Sin header Content-Type a propósito: así el request queda como
+    // "simple request" y Apps Script lo puede recibir sin problemas de CORS.
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...payload }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error de backend');
+    return data.result;
+  } catch (err) {
+    console.warn('apiPost falló:', action, err);
+    showToast('⚠️ No se pudo conectar con el servidor');
+    return null;
+  }
+}
+
 
 /* ─────────────── REACT POPUP ─────────────── */
 const { useState, useEffect, useRef } = React;
@@ -750,17 +822,45 @@ function closePopup() {
   currentPopupPlace = null;
 }
 
-function handlePopupVoteSubmit(placeId, voteIdx) {
+async function handlePopupVoteSubmit(placeId, voteIdx) {
   const p = places.find(x => x.id === placeId);
   if (!p) return;
+
+  // Actualización optimista en el mapa: se ve al instante.
   const pts = VOTE_PTS[voteIdx];
   p.status = voteIdx;
   p.reporters += 1;
   voteCount++;
   refreshMarkerIcon(p.id);
   updateCrowdBar(calcCrowdPct());
-  addPoints(pts);
+
+  if (!isLoggedIn) {
+    // Sin cuenta no se pueden guardar puntos: se pide login y se reintenta el voto.
+    pendingVote = { placeId, voteIdx };
+    showToast('🔑 Iniciá sesión para sumar tus puntos');
+    doGoogleLogin(document.getElementById('login-topbar-btn'));
+    return;
+  }
+
+  const result = await apiPost('vote', {
+    place: { id: p.id, name: p.name, type: p.type, addr: p.addr, lat: p.lat, lng: p.lng, logo: p.logo },
+    status: voteIdx,
+    email: currentUser.email,
+  });
+
+  if (result && typeof result.points === 'number') {
+    userPts = result.points;
+    updateUserHUD();
+    flashPoints();
+  } else {
+    addPoints(pts); // respaldo local si el backend no respondió
+  }
   showToast(`🎉 +${pts} puntos ganados`);
+}
+
+function flashPoints() {
+  const ptsEl = document.getElementById('my-pts');
+  if (ptsEl) { ptsEl.style.animation = 'none'; ptsEl.offsetHeight; ptsEl.style.animation = 'ptsFlash .45s cubic-bezier(.34,1.56,.64,1)'; }
 }
 
 /* ─────────────── MAP ─────────────── */
@@ -782,13 +882,38 @@ function addPoints(amount) {
 }
 
 function initMap() {
-  leafletMap = L.map('leaflet-map', { center: [-34.6083, -58.3896], zoom: 14, zoomControl: true });
+  leafletMap = L.map('leaflet-map', { center: [CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng], zoom: 14, zoomControl: true });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19 }).addTo(leafletMap);
+
+  // Primer render instantáneo con datos semilla, mientras se cargan los reales.
   buildMapMarkers();
   setTimeout(() => {
-    const nearby = places.find(p => p.id === 1);
+    const nearby = places[0];
     if (nearby) openPlacePopup(nearby);
   }, 800);
+
+  loadRealPlaces(CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng);
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        leafletMap.setView([latitude, longitude], 15);
+        loadRealPlaces(latitude, longitude);
+      },
+      () => { /* el usuario no compartió ubicación: se queda con el centro por defecto */ },
+      { enableHighAccuracy: true, timeout: 6000 }
+    );
+  }
+}
+
+async function loadRealPlaces(lat, lng) {
+  if (!BACKEND_READY) return; // sin backend configurado, se queda con los datos semilla
+  const result = await apiGet('places', { lat, lng, radius: CONFIG.SEARCH_RADIUS_M });
+  if (!result || !Array.isArray(result.places) || result.places.length === 0) return;
+  places = result.places;
+  buildMapMarkers();
+  updateCrowdBar(calcCrowdPct());
 }
 
 function makeStatusChipHTML(status) {
