@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="FilaCero">
+<meta name="apple-mobile-web-app-title" content="Qooentum">
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -275,9 +275,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         </div>
       </div>
       <div class="install-banner" id="install-banner" style="display:none">
-        <img src="./icons/icon-96.png" alt="FilaCero">
+        <img src="./icons/icon-96.png" alt="Qooentum">
         <div class="install-banner-body">
-          <div class="install-banner-title">Instalar FilaCero</div>
+          <div class="install-banner-title">Instalar Qooentum</div>
           <div class="install-banner-sub">Acceso rápido desde tu pantalla de inicio</div>
         </div>
         <button class="install-banner-btn" onclick="installPwa()">Instalar</button>
@@ -290,7 +290,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
           <div class="ad-title">Pedilo sin filas</div>
           <div class="ad-sub">30% OFF en tu primer pedido · PedidosYa</div>
         </div>
-        <button class="ad-cta" onclick="showToast('🎉 Cupón copiado: FILACERO30');event.stopPropagation()">Ver oferta</button>
+        <button class="ad-cta" onclick="showToast('🎉 Cupón copiado: Qooentum30');event.stopPropagation()">Ver oferta</button>
         <button class="ad-close" onclick="document.getElementById('ad-banner').style.display='none';event.stopPropagation()">✕</button>
       </div>
     </div>
@@ -818,7 +818,7 @@ function doGoogleLogin(btn) {
     document.getElementById('user-chip').style.display = 'flex';
     document.getElementById('topbar-avatar').innerHTML = `<div style="width:100%;height:100%;background:linear-gradient(135deg,#A855F7,#6366F1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;">MG</div>`;
     updateUserHUD();
-    showToast('👋 ¡Bienvenido a FilaCero!');
+    showToast('👋 ¡Bienvenido a Qooentum!');
   }, 900);
 }
 
@@ -962,7 +962,7 @@ function installPwa() {
 
 window.addEventListener('appinstalled', () => {
   document.getElementById('install-banner').style.display = 'none';
-  showToast('✅ FilaCero instalada');
+  showToast('✅ Qooentum instalada');
 });
 </script>
 </body>
