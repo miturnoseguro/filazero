@@ -400,6 +400,9 @@ html,body{
   .login-topbar-btn{order:3;width:100%;justify-content:center;}
   .ad-banner{max-width:240px;}
   .bottom-nav{bottom: max(16px, calc(var(--sab) + 10px));}
+  /* Subimos el control de zoom de Leaflet para que no quede tapado
+     por la barra de navegación flotante inferior (Premios/Mapa/Ranking) */
+  .leaflet-control-zoom{margin:0 12px calc(92px + var(--sab)) 0 !important;}
 }
 </style>
 </head>
@@ -713,6 +716,9 @@ const PLACE_PHOTOS = {
   'Oficina pública': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
   'Restaurante': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
   'Lácteos / Tienda': 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=800&q=80',
+  'Hospital': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800&q=80',
+  'Guardia / Emergencias': 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=800&q=80',
+  'Clínica / Centro de salud': 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=800&q=80',
 };
 
 function getPhoto(place) {
@@ -782,6 +788,11 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
     zIndex: 10000, padding: '20px',
   };
 
+  // El alto máximo se calcula con dvh (viewport dinámico) para que en mobile
+  // la barra de direcciones del navegador no empuje la tarjeta fuera de pantalla.
+  // Además, restamos el padding del overlay (20px arriba + 20px abajo) para
+  // garantizar que siempre quede dentro del área visible, sin importar
+  // cuánto contenido tenga adentro (la tarjeta scrollea internamente).
   const cardStyle = {
     width: '100%', maxWidth: '370px',
     background: '#fff',
@@ -791,7 +802,12 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
     transform: cardVisible ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.93)',
     opacity: cardVisible ? 1 : 0,
     transition: 'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease',
-    maxHeight: '90vh',
+    maxHeight: 'calc(100dvh - 40px)',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const scrollBodyStyle = {
     overflowY: 'auto',
     msOverflowStyle: 'none',
     scrollbarWidth: 'none',
@@ -799,6 +815,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
 
   return React.createElement('div', { ref: overlayRef, style: overlayStyle, onClick: handleOverlayClick },
     React.createElement('div', { style: cardStyle },
+      React.createElement('div', { style: scrollBodyStyle },
       React.createElement('div', { style: { position: 'relative', height: '210px', flexShrink: 0, background: '#E2E8F0' } },
         React.createElement('img', {
           src: photo, alt: place.name,
@@ -845,16 +862,19 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
             )
           )
         ),
-        React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:7, marginBottom:12, padding:'8px 11px', background:'#E8FBF5', borderRadius:10, border:'1px solid #A8EDD8' } },
+        !onCooldown && React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:7, marginBottom:12, padding:'8px 11px', background:'#E8FBF5', borderRadius:10, border:'1px solid #A8EDD8' } },
           React.createElement('span', { style:{ fontSize:14 } }, '📍'),
           React.createElement('span', { style:{ fontSize:12, fontWeight:700, color:'#007A59' } }, 'Estás cerca · podés reportar')
         ),
-        React.createElement('p', { style:{ margin:'0 0 10px', fontSize:11, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.8px' } }, '¿Cómo está ahora?'),
-        // Bloque de cooldown activo
+        !onCooldown && React.createElement('p', { style:{ margin:'0 0 10px', fontSize:11, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.8px' } }, '¿Cómo está ahora?'),
+        // Bloque de cooldown activo — versión compacta para que el popup no
+        // crezca de más y termine saliéndose de la pantalla. Reemplaza por
+        // completo a la grilla de votación + nota "estás cerca" mientras
+        // el usuario esté bloqueado.
         onCooldown && React.createElement('div', {
-          style:{ display:'flex', alignItems:'center', gap:10, background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:12, padding:'13px 14px', marginBottom:12 }
+          style:{ display:'flex', alignItems:'center', gap:10, background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:12, padding:'12px 14px', marginBottom:4 }
         },
-          React.createElement('span', { style:{ fontSize:20 } }, '⏳'),
+          React.createElement('span', { style:{ fontSize:20, flexShrink:0 } }, '⏳'),
           React.createElement('div', null,
             React.createElement('p', { style:{ margin:0, fontSize:13, fontWeight:800, color:'#92400E' } }, 'Ya reportaste recientemente'),
             React.createElement('p', { style:{ margin:'2px 0 0', fontSize:12, color:'#92400E' } },
@@ -862,7 +882,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
             )
           )
         ),
-        !submitted && React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12, opacity: onCooldown ? 0.5 : 1, pointerEvents: onCooldown ? 'none' : 'auto' } },
+        !submitted && !onCooldown && React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 } },
           ...[
             { idx:0, label:'Poca gente',  pts:'+10', color:'#00C48C' },
             { idx:1, label:'Bastante',    pts:'+10', color:'#F59E0B' },
@@ -873,11 +893,10 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
             return React.createElement('button', {
               key: idx,
               onClick: () => handleVote(idx),
-              disabled: onCooldown,
               style: {
                 border: isSelected ? `2px solid ${color}` : '1.5px solid #E2E8F0',
                 borderRadius: 10, background: isSelected ? color : '#fff',
-                padding: '11px 10px', cursor: onCooldown ? 'not-allowed' : 'pointer',
+                padding: '11px 10px', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 7,
                 fontSize: 12, fontWeight: 700,
                 color: isSelected ? '#fff' : '#0F172A',
@@ -902,31 +921,29 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
             React.createElement('p', { style:{ margin:'2px 0 0', fontSize:12, color:'#047857' } }, `+${VOTE_PTS[selectedVote] || 10} puntos sumados a tu cuenta`)
           )
         ),
-        !submitted && React.createElement('button', {
+        !submitted && !onCooldown && React.createElement('button', {
           onClick: handleSubmit,
-          disabled: selectedVote === null || onCooldown,
+          disabled: selectedVote === null,
           style: {
             width: '100%',
-            background: onCooldown ? '#E2E8F0' : (selectedVote !== null ? `linear-gradient(135deg, ${STATUS_CFG[selectedVote].color}, ${STATUS_CFG[selectedVote].color}cc)` : '#E2E8F0'),
-            color: onCooldown ? '#94A3B8' : (selectedVote !== null ? '#fff' : '#94A3B8'),
+            background: selectedVote !== null ? `linear-gradient(135deg, ${STATUS_CFG[selectedVote].color}, ${STATUS_CFG[selectedVote].color}cc)` : '#E2E8F0',
+            color: selectedVote !== null ? '#fff' : '#94A3B8',
             border: 'none', borderRadius: 12, padding: '14px',
-            fontSize: 14, fontWeight: 800, cursor: (selectedVote !== null && !onCooldown) ? 'pointer' : 'not-allowed',
+            fontSize: 14, fontWeight: 800, cursor: selectedVote !== null ? 'pointer' : 'not-allowed',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontFamily: 'inherit',
             transition: 'all 0.22s cubic-bezier(0.34,1.56,0.64,1)',
-            boxShadow: (selectedVote !== null && !onCooldown) ? `0 6px 20px ${STATUS_CFG[selectedVote].color}44` : 'none',
-            transform: (selectedVote !== null && !onCooldown) ? 'translateY(-1px)' : 'none',
+            boxShadow: selectedVote !== null ? `0 6px 20px ${STATUS_CFG[selectedVote].color}44` : 'none',
+            transform: selectedVote !== null ? 'translateY(-1px)' : 'none',
           }
         },
           React.createElement('svg', { viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2.5, strokeLinecap:'round', strokeLinejoin:'round', style:{ width:15, height:15 } },
             React.createElement('line', { x1:22, y1:2, x2:11, y2:13 }),
             React.createElement('polygon', { points:'22 2 15 22 11 13 2 9 22 2' })
           ),
-          onCooldown
-            ? `Disponible en ${formatCooldownRemaining(cooldownMs)}`
-            : 'Reportar estado'
+          'Reportar estado'
         ),
-        React.createElement('p', { style:{ margin:'10px 0 0', fontSize:11, color:'#94A3B8', display:'flex', alignItems:'center', gap:5, fontWeight:500 } },
+        !submitted && React.createElement('p', { style:{ margin:'10px 0 0', fontSize:11, color:'#94A3B8', display:'flex', alignItems:'center', gap:5, fontWeight:500 } },
           React.createElement('svg', { viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round', style:{ width:12, height:12, flexShrink:0 } },
             React.createElement('path', { d:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
             React.createElement('circle', { cx:9, cy:7, r:4 }),
@@ -935,6 +952,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
           ),
           `${place.reporters} reportes en las últimas 2h`
         )
+      )
       )
     )
   );
