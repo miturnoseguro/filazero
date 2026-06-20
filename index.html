@@ -219,6 +219,13 @@ html,body{
 .nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:20px;height:2px;background:var(--green);border-radius:0 0 3px 3px;animation:tabIndicator .22s ease;}
 @keyframes tabIndicator{from{width:0;opacity:0}to{width:20px;opacity:1}}
 
+/* ── Tab "Mapa": destacada dentro de la pill, más grande que el resto ── */
+.nav-btn.is-main{padding:12px 24px;font-size:14.5px;font-weight:800;color:var(--text);}
+.nav-btn.is-main svg{width:20px;height:20px;}
+.nav-btn.is-main.active{color:#fff;background:linear-gradient(135deg,var(--green),var(--green-dk));box-shadow:0 4px 14px rgba(0,196,140,.35);}
+.nav-btn.is-main.active::before{display:none;}
+.nav-btn.is-main:not(.active):hover{color:var(--green-dk);background:var(--green-lt);}
+
 /* ── MODALS & TOASTS ── */
 .levelup-modal{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:99998;animation:fadeIn .2s ease;}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -406,7 +413,7 @@ html,body{
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
         Premios
       </button>
-      <button class="nav-btn active" id="nav-map" onclick="switchTab('map')">
+      <button class="nav-btn is-main active" id="nav-map" onclick="switchTab('map')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
         Mapa
       </button>
@@ -426,7 +433,7 @@ html,body{
     <div class="rank-list" id="rank-list"></div>
     <nav class="bottom-nav" id="bottom-nav-ranking">
       <button class="nav-btn" onclick="switchTab('prizes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Premios</button>
-      <button class="nav-btn" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
+      <button class="nav-btn is-main" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
       <button class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>Ranking</button>
     </nav>
   </div>
@@ -444,7 +451,7 @@ html,body{
     <div class="prizes-list" id="prizes-list"></div>
     <nav class="bottom-nav" id="bottom-nav-prizes">
       <button class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Premios</button>
-      <button class="nav-btn" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
+      <button class="nav-btn is-main" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
       <button class="nav-btn" onclick="switchTab('ranking')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>Ranking</button>
     </nav>
   </div>
@@ -547,6 +554,31 @@ let countdown = 30;
 let voteCount = 0;
 let pendingVote = null; // {placeId, statusIdx} si el usuario reporta sin estar logueado
 
+/* ── Cooldown entre reportes: el usuario no puede reportar más de una vez
+   cada VOTE_COOLDOWN_HOURS horas (en ningún comercio). nextVoteAt llega
+   siempre del backend (login/me/vote) — nunca se calcula solo del lado
+   del cliente, para que no se pueda evadir cambiando la hora del equipo. ── */
+const VOTE_COOLDOWN_HOURS_FALLBACK = 8;
+let nextVoteAt = null; // Date | null — null = puede votar ahora
+
+function applyCooldownInfo(info) {
+  if (!info) return;
+  nextVoteAt = info.nextVoteAt ? new Date(info.nextVoteAt) : null;
+}
+
+function getVoteCooldownRemainingMs() {
+  if (!nextVoteAt) return 0;
+  return Math.max(0, nextVoteAt.getTime() - Date.now());
+}
+
+function formatCooldownRemaining(ms) {
+  const totalMin = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  if (h <= 0) return `${m} min`;
+  if (m <= 0) return `${h} h`;
+  return `${h} h ${m} min`;
+}
+
 /* ─────────────── BACKEND API (Apps Script Web App) ─────────────────
    GET  ?action=places&lat=..&lng=..&radius=..   → lugares reales + estado de la comunidad
    GET  ?action=ranking                          → top usuarios por puntos
@@ -589,6 +621,31 @@ async function apiPost(action, payload = {}) {
   }
 }
 
+// Variante de apiPost solo para 'vote': el backend puede rechazar el
+// reporte por cooldown (error 'COOLDOWN:<iso-date>'), que no es una falla
+// de conexión sino una regla de negocio — no debe mostrar el toast genérico.
+async function apiPostVote(payload) {
+  if (!BACKEND_READY) return { ok: false, network: false, result: null };
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'vote', ...payload }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      const msg = String(data.error || '');
+      if (msg.startsWith('COOLDOWN:')) {
+        return { ok: false, network: false, cooldown: true, nextVoteAt: msg.slice('COOLDOWN:'.length) };
+      }
+      throw new Error(msg || 'Error de backend');
+    }
+    return { ok: true, network: true, result: data.result };
+  } catch (err) {
+    console.warn('apiPost falló: vote', err);
+    return { ok: false, network: false, result: null };
+  }
+}
+
 
 /* ─────────────── REACT POPUP ─────────────── */
 const { useState, useEffect, useRef } = React;
@@ -610,13 +667,15 @@ function getPhoto(place) {
   return place.photo || PLACE_PHOTOS[place.type] || PLACE_PHOTOS.default;
 }
 
-function PlacePopup({ place, onClose, onVoteSubmit }) {
+function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
   const [visible, setVisible] = useState(false);
   const [cardVisible, setCardVisible] = useState(false);
   const [selectedVote, setSelectedVote] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [cooldownMs, setCooldownMs] = useState(cooldownRemainingMs || 0);
   const overlayRef = useRef(null);
+  const onCooldown = cooldownMs > 0 && !submitted;
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -624,6 +683,16 @@ function PlacePopup({ place, onClose, onVoteSubmit }) {
       setTimeout(() => setCardVisible(true), 40);
     });
   }, []);
+
+  // Cuenta regresiva en vivo mientras el popup está abierto, por si el
+  // cooldown vence justo durante la visita (caso borde, pero prolijo).
+  useEffect(() => {
+    if (cooldownMs <= 0) return;
+    const id = setInterval(() => {
+      setCooldownMs(ms => Math.max(0, ms - 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldownMs > 0]);
 
   function handleClose() {
     setCardVisible(false);
@@ -636,12 +705,12 @@ function PlacePopup({ place, onClose, onVoteSubmit }) {
   }
 
   function handleVote(idx) {
-    if (submitted) return;
+    if (submitted || onCooldown) return;
     setSelectedVote(idx);
   }
 
   function handleSubmit() {
-    if (selectedVote === null || submitted) return;
+    if (selectedVote === null || submitted || onCooldown) return;
     setSubmitted(true);
     setTimeout(() => {
       onVoteSubmit(place.id, selectedVote);
@@ -730,7 +799,16 @@ function PlacePopup({ place, onClose, onVoteSubmit }) {
           React.createElement('span', { style:{ fontSize:12, fontWeight:700, color:'#007A59' } }, 'Estás cerca · podés reportar')
         ),
         React.createElement('p', { style:{ margin:'0 0 10px', fontSize:11, fontWeight:700, color:'#94A3B8', textTransform:'uppercase', letterSpacing:'0.8px' } }, '¿Cómo está ahora?'),
-        !submitted && React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 } },
+        onCooldown && React.createElement('div', {
+          style:{ display:'flex', alignItems:'center', gap:10, background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:12, padding:'13px 14px', marginBottom:12 }
+        },
+          React.createElement('span', { style:{ fontSize:20 } }, '⏳'),
+          React.createElement('div', null,
+            React.createElement('p', { style:{ margin:0, fontSize:13, fontWeight:800, color:'#92400E' } }, 'Ya reportaste recientemente'),
+            React.createElement('p', { style:{ margin:'2px 0 0', fontSize:12, color:'#92400E' } }, `Podés volver a reportar en ${formatCooldownRemaining(cooldownMs)}`)
+          )
+        ),
+        !submitted && React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12, opacity: onCooldown ? 0.5 : 1, pointerEvents: onCooldown ? 'none' : 'auto' } },
           ...[
             { idx:0, label:'Poca gente',  pts:'+10', color:'#00C48C' },
             { idx:1, label:'Bastante',    pts:'+10', color:'#F59E0B' },
@@ -741,10 +819,11 @@ function PlacePopup({ place, onClose, onVoteSubmit }) {
             return React.createElement('button', {
               key: idx,
               onClick: () => handleVote(idx),
+              disabled: onCooldown,
               style: {
                 border: isSelected ? `2px solid ${color}` : '1.5px solid #E2E8F0',
                 borderRadius: 10, background: isSelected ? color : '#fff',
-                padding: '11px 10px', cursor: 'pointer',
+                padding: '11px 10px', cursor: onCooldown ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', gap: 7,
                 fontSize: 12, fontWeight: 700,
                 color: isSelected ? '#fff' : '#0F172A',
@@ -771,25 +850,25 @@ function PlacePopup({ place, onClose, onVoteSubmit }) {
         ),
         !submitted && React.createElement('button', {
           onClick: handleSubmit,
-          disabled: selectedVote === null,
+          disabled: selectedVote === null || onCooldown,
           style: {
             width: '100%',
-            background: selectedVote !== null ? `linear-gradient(135deg, ${STATUS_CFG[selectedVote].color}, ${STATUS_CFG[selectedVote].color}cc)` : '#E2E8F0',
-            color: selectedVote !== null ? '#fff' : '#94A3B8',
+            background: onCooldown ? '#E2E8F0' : (selectedVote !== null ? `linear-gradient(135deg, ${STATUS_CFG[selectedVote].color}, ${STATUS_CFG[selectedVote].color}cc)` : '#E2E8F0'),
+            color: onCooldown ? '#94A3B8' : (selectedVote !== null ? '#fff' : '#94A3B8'),
             border: 'none', borderRadius: 12, padding: '14px',
-            fontSize: 14, fontWeight: 800, cursor: selectedVote !== null ? 'pointer' : 'not-allowed',
+            fontSize: 14, fontWeight: 800, cursor: (selectedVote !== null && !onCooldown) ? 'pointer' : 'not-allowed',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontFamily: 'inherit',
             transition: 'all 0.22s cubic-bezier(0.34,1.56,0.64,1)',
-            boxShadow: selectedVote !== null ? `0 6px 20px ${STATUS_CFG[selectedVote].color}44` : 'none',
-            transform: selectedVote !== null ? 'translateY(-1px)' : 'none',
+            boxShadow: (selectedVote !== null && !onCooldown) ? `0 6px 20px ${STATUS_CFG[selectedVote].color}44` : 'none',
+            transform: (selectedVote !== null && !onCooldown) ? 'translateY(-1px)' : 'none',
           }
         },
           React.createElement('svg', { viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2.5, strokeLinecap:'round', strokeLinejoin:'round', style:{ width:15, height:15 } },
             React.createElement('line', { x1:22, y1:2, x2:11, y2:13 }),
             React.createElement('polygon', { points:'22 2 15 22 11 13 2 9 22 2' })
           ),
-          'Reportar estado'
+          onCooldown ? `Disponible en ${formatCooldownRemaining(cooldownMs)}` : 'Reportar estado'
         ),
         React.createElement('p', { style:{ margin:'10px 0 0', fontSize:11, color:'#94A3B8', display:'flex', alignItems:'center', gap:5, fontWeight:500 } },
           React.createElement('svg', { viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round', style:{ width:12, height:12, flexShrink:0 } },
@@ -818,7 +897,10 @@ function openPlacePopup(place) {
 }
 
 function renderPopup(place) {
-  popupRoot.render(React.createElement(PlacePopup, { place, onClose: closePopup, onVoteSubmit: handlePopupVoteSubmit }));
+  popupRoot.render(React.createElement(PlacePopup, {
+    place, onClose: closePopup, onVoteSubmit: handlePopupVoteSubmit,
+    cooldownRemainingMs: getVoteCooldownRemainingMs(),
+  }));
 }
 
 function closePopup() {
@@ -831,6 +913,15 @@ function closePopup() {
 async function handlePopupVoteSubmit(placeId, voteIdx) {
   const p = places.find(x => x.id === placeId);
   if (!p) return;
+
+  // El popup ya bloquea el envío si hay cooldown activo, pero se vuelve a
+  // chequear acá por si el tiempo venció justo mientras estaba abierto:
+  // así nunca se aplica una actualización optimista que después el
+  // backend va a rechazar.
+  if (isLoggedIn && getVoteCooldownRemainingMs() > 0) {
+    showToast(`⏳ Podés reportar de nuevo en ${formatCooldownRemaining(getVoteCooldownRemainingMs())}`);
+    return;
+  }
 
   // Actualización optimista en el mapa: se ve al instante.
   p.status = voteIdx;
@@ -852,7 +943,7 @@ async function handlePopupVoteSubmit(placeId, voteIdx) {
 
 async function submitVoteToBackend(p, voteIdx) {
   const pts = VOTE_PTS[voteIdx];
-  const result = await apiPost('vote', {
+  const res = await apiPostVote({
     place: {
       id: p.id, name: p.name, type: p.type, addr: p.addr, lat: p.lat, lng: p.lng,
       logo: p.logo, rating: p.rating, reviewsN: p.reviewsN, verified: !!p.verified, open: p.open !== false,
@@ -861,14 +952,34 @@ async function submitVoteToBackend(p, voteIdx) {
     email: currentUser.email,
   });
 
-  if (result && typeof result.points === 'number') {
-    userPts = result.points;
+  if (res.cooldown) {
+    // El backend rechazó el reporte por cooldown (ej: dos pestañas a la vez,
+    // o el cliente todavía no había sincronizado el último voto). Se revierte
+    // la actualización optimista del marcador y se informa cuándo podrá
+    // volver a reportar.
+    nextVoteAt = res.nextVoteAt ? new Date(res.nextVoteAt) : null;
+    p.reporters = Math.max(0, p.reporters - 1);
+    refreshMarkerIcon(p.id);
+    updateCrowdBar(calcCrowdPct());
+    showToast(`⏳ Ya reportaste hace poco · próximo en ${formatCooldownRemaining(getVoteCooldownRemainingMs())}`);
+    return;
+  }
+
+  if (res.ok && res.result && typeof res.result.points === 'number') {
+    userPts = res.result.points;
     updateUserHUD();
     flashPoints();
+    applyCooldownInfo(res.result);
+    showToast(`🎉 +${pts} puntos ganados`);
+  } else if (res.ok) {
+    addPoints(pts); // respaldo local si el backend respondió sin puntos
+    showToast(`🎉 +${pts} puntos ganados`);
   } else {
-    addPoints(pts); // respaldo local si el backend no respondió
+    // Falla de red/backend: se mantiene la actualización optimista del
+    // mapa (ya se ve el nuevo estado) pero no se suman puntos locales,
+    // para no inflar el contador si el reporte no llegó a guardarse.
+    showToast('⚠️ No se pudo conectar con el servidor');
   }
-  showToast(`🎉 +${pts} puntos ganados`);
 }
 
 function flashPoints() {
@@ -1105,6 +1216,7 @@ async function handleGoogleTokenResponse(resp) {
       picture: profile.picture || '',
     };
     if (backendResult && typeof backendResult.points === 'number') userPts = backendResult.points;
+    applyCooldownInfo(backendResult);
     isLoggedIn = true;
 
     // Persiste el perfil para que la sesión sobreviva a un refresh/cierre de app.
@@ -1158,6 +1270,7 @@ async function restoreSession() {
       userPts = me.points || 0;
       if (me.name) currentUser.name = me.name;
       if (me.picture) currentUser.picture = me.picture;
+      applyCooldownInfo(me);
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
       applyLoggedInUI();
     }
@@ -1172,6 +1285,7 @@ function logout() {
   currentUser = null;
   isLoggedIn = false;
   userPts = 0;
+  nextVoteAt = null;
   document.getElementById('user-chip').style.display = 'none';
   document.getElementById('login-topbar-btn').style.display = 'flex';
   updateUserHUD();
