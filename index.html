@@ -604,7 +604,7 @@ html,body{
 
       <div class="map-loading-pill" id="map-loading-pill">
         <span class="map-loading-spinner"></span>
-        <span id="map-loading-txt">Buscando comercios…</span>
+        <span id="map-loading-txt">Actualizando comercios…</span>
       </div>
 
       <div class="pick-mode-banner" id="pick-mode-banner">
@@ -701,7 +701,6 @@ html,body{
 </div>
 
 <div class="toast" id="toast"></div>
-<!-- Toast con acción (login) -->
 <div class="toast-action" id="toast-action">
   <span id="toast-action-msg">Para reportar, iniciá sesión</span>
   <button class="toast-action-btn" onclick="doGoogleLogin(document.getElementById('login-topbar-btn'));hideToastAction()">Ingresar</button>
@@ -717,19 +716,21 @@ const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzq25vO_iow3D0Suwi7CpLcIhpYAedVPct8kA-vTCiOAr2gtjD-fvAnH-xQ1kVjUMBiGw/exec',
   GOOGLE_CLIENT_ID: '283820904318-leis6rl3mfhtve2amj59q8sq221dg3qf.apps.googleusercontent.com',
   DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
-  SEARCH_RADIUS_M: 300,        // FIX: aumentado para traer más locales del backend
-  REPORT_RADIUS_M: 50,         // FIX: aumentado a 50m para mayor tolerancia GPS
-  GPS_ZOOM: 17,                // FIX: zoom más razonable (20 era demasiado)
+  SEARCH_RADIUS_M: 300,
+  REPORT_RADIUS_M: 10,          // ← CAMBIO: solo 10 metros de radio para reportar
+  GPS_ZOOM: 17,
   CHECKIN_RADIUS_M: 150,
   CHECKIN_NEAR_M: 50,
-  OVERPASS_RADIUS_M: 400,      // Radio para Overpass API
+  OVERPASS_RADIUS_M: 400,
+  VOTE_COOLDOWN_MS: 8 * 60 * 60 * 1000,  // ← CAMBIO: cooldown cliente de 8 horas
 };
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
 const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
 const SESSION_STORAGE_KEY = 'qooentum_user';
-// FIX: clave única de dispositivo para bloquear cuentas múltiples
 const DEVICE_KEY = 'qooentum_device_email';
+// ← CAMBIO: clave para persistir cooldowns localmente
+const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
 
 /* ─────────────── DATA ─────────────── */
 const STATUS_CFG = [
@@ -744,7 +745,6 @@ const VOTE_PTS = [10,10,15,20];
 const LEVEL_TITLES = ['Novato','Explorador','Cazador de Filas','Maestro del Mapa','Leyenda Urbana'];
 const XP_PER_LEVEL = 150;
 
-// Mapeo de amenity/shop de Overpass → emoji + tipo
 const OSM_TYPE_MAP = {
   supermarket:      {emoji:'🛒', tipo:'Supermercado'},
   convenience:      {emoji:'🏪', tipo:'Almacén'},
@@ -808,16 +808,98 @@ let leafletMap = null, leafletMarkers = {};
 let isLoggedIn = false;
 let voteCount = 0;
 let pendingVote = null;
+// ← CAMBIO: placeCooldowns se persiste en localStorage, cargado al inicio
 let placeCooldowns = {};
-let gpsWatchId = null;        // FIX: ID del watchPosition
+let gpsWatchId = null;
 let lastLoadedLat = null;
 let lastLoadedLng = null;
-let userMarker = null;        // FIX: marcador de posición del usuario
+let userMarker = null;
 
-/* ── GPS state ── */
 let userLat = null, userLng = null;
 let checkinShown = false;
 let pickModeActive = false;
+
+/* ════════════════════════════════════════════════════════════
+   COOLDOWN — persistencia local (8 horas por comercio)
+   ════════════════════════════════════════════════════════════ */
+
+// Carga los cooldowns guardados en localStorage al iniciar
+function loadCooldownsFromStorage() {
+  try {
+    const raw = localStorage.getItem(COOLDOWNS_STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    const now = Date.now();
+    // Solo cargar los que todavía están activos (no vencidos)
+    Object.keys(data).forEach(pid => {
+      const ts = data[pid];
+      if (ts && ts > now) placeCooldowns[pid] = new Date(ts);
+    });
+  } catch(e) { /* silencioso */ }
+}
+
+// Guarda los cooldowns activos en localStorage
+function saveCooldownsToStorage() {
+  try {
+    const now = Date.now();
+    const toSave = {};
+    Object.keys(placeCooldowns).forEach(pid => {
+      const ts = placeCooldowns[pid] instanceof Date ? placeCooldowns[pid].getTime() : 0;
+      if (ts > now) toSave[pid] = ts; // solo guardar los que no vencieron
+    });
+    localStorage.setItem(COOLDOWNS_STORAGE_KEY, JSON.stringify(toSave));
+  } catch(e) { /* silencioso */ }
+}
+
+function applyPlaceCooldown(pid, isoOrMs) {
+  if (!pid) return;
+  if (isoOrMs) {
+    // Acepta ISO string del backend o timestamp ms
+    const date = typeof isoOrMs === 'number'
+      ? new Date(isoOrMs)
+      : new Date(isoOrMs);
+    placeCooldowns[pid] = date;
+  } else {
+    delete placeCooldowns[pid];
+  }
+  saveCooldownsToStorage();
+}
+
+// ← CAMBIO: cuando el usuario vota, seteamos 8h de cooldown inmediatamente en el cliente
+function applyLocalCooldown(pid) {
+  const nextVoteAt = Date.now() + CONFIG.VOTE_COOLDOWN_MS;
+  placeCooldowns[pid] = new Date(nextVoteAt);
+  saveCooldownsToStorage();
+}
+
+function applyCooldownInfo(map) {
+  if (!map) return;
+  Object.keys(map).forEach(pid => { if (map[pid]) placeCooldowns[pid] = new Date(map[pid]); });
+  saveCooldownsToStorage();
+}
+
+function getVoteCooldownRemainingMs(pid) {
+  const next = placeCooldowns[pid];
+  if (!next) return 0;
+  return Math.max(0, next.getTime() - Date.now());
+}
+
+function formatCooldownRemaining(ms) {
+  const totalMin = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  if (h <= 0) return `${m} min`;
+  if (m <= 0) return `${h} h`;
+  return `${h} h ${m} min`;
+}
+
+function tickCooldownUI() {
+  if (!currentPopupPlace) return;
+  const ms = getVoteCooldownRemainingMs(currentPopupPlace.id);
+  if (ms <= 0 && currentPopupPlace._wasOnCooldown) {
+    currentPopupPlace._wasOnCooldown = false;
+    renderPopup(currentPopupPlace);
+  }
+}
 
 /* ── Haversine distance (metros) ── */
 function distanceMeter(lat1, lng1, lat2, lng2) {
@@ -826,37 +908,6 @@ function distanceMeter(lat1, lng1, lat2, lng2) {
   const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
   const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
   return 2 * R * Math.asin(Math.sqrt(a));
-}
-
-/* ── Cooldown helpers ── */
-function applyCooldownInfo(map) {
-  if (!map) return;
-  Object.keys(map).forEach(pid => { if (map[pid]) placeCooldowns[pid] = new Date(map[pid]); });
-}
-function applyPlaceCooldown(pid, iso) {
-  if (!pid) return;
-  if (iso) placeCooldowns[pid] = new Date(iso);
-  else delete placeCooldowns[pid];
-}
-function getVoteCooldownRemainingMs(pid) {
-  const next = placeCooldowns[pid];
-  if (!next) return 0;
-  return Math.max(0, next.getTime() - Date.now());
-}
-function formatCooldownRemaining(ms) {
-  const totalMin = Math.ceil(ms / 60000);
-  const h = Math.floor(totalMin / 60), m = totalMin % 60;
-  if (h <= 0) return `${m} min`;
-  if (m <= 0) return `${h} h`;
-  return `${h} h ${m} min`;
-}
-function tickCooldownUI() {
-  if (!currentPopupPlace) return;
-  const ms = getVoteCooldownRemainingMs(currentPopupPlace.id);
-  if (ms <= 0 && currentPopupPlace._wasOnCooldown) {
-    currentPopupPlace._wasOnCooldown = false;
-    renderPopup(currentPopupPlace);
-  }
 }
 
 /* ─────────────── BACKEND API ─────────────── */
@@ -899,8 +950,7 @@ async function apiPostVote(payload) {
   } catch (err) { console.warn('apiPost falló: vote', err); return { ok: false, network: false, result: null }; }
 }
 
-/* ─────────────── OVERPASS API (OpenStreetMap — gratuita) ─────────────── */
-// Convierte un nodo de Overpass a un place de Qooentum
+/* ─────────────── OVERPASS API ─────────────── */
 function osmNodeToPlace(node) {
   const tags = node.tags || {};
   const key = tags.amenity || tags.shop || tags.office || 'general';
@@ -927,7 +977,6 @@ function osmNodeToPlace(node) {
 
 async function loadOverpassPlaces(lat, lng) {
   const r = CONFIG.OVERPASS_RADIUS_M;
-  // Query: supermercados, farmacias, bancos, comida y comercios
   const query = `
     [out:json][timeout:15];
     (
@@ -954,10 +1003,8 @@ async function loadOverpassPlaces(lat, lng) {
   }
 }
 
-// Mergea los places de Overpass con los del backend (los del backend tienen prioridad)
 function mergePlaces(backendPlaces, osmPlaces) {
   const ids = new Set(backendPlaces.map(p => p.id));
-  // También deduplicar por nombre+distancia para no mostrar el mismo local dos veces
   const nameCoords = new Set(backendPlaces.map(p => `${p.name.toLowerCase().trim()}`));
   const fresh = osmPlaces.filter(p => !ids.has(p.id) && !nameCoords.has(p.name.toLowerCase().trim()));
   return [...backendPlaces, ...fresh];
@@ -981,6 +1028,7 @@ const PLACE_PHOTOS = {
 };
 function getPhoto(place) { return place.photo || PLACE_PHOTOS[place.type] || PLACE_PHOTOS.default; }
 
+// ← CAMBIO: radio de 10m estrictos
 function canReportThisPlace(place) {
   if (userLat === null || userLng === null) return false;
   return distanceMeter(userLat, userLng, place.lat, place.lng) <= CONFIG.REPORT_RADIUS_M;
@@ -1014,11 +1062,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
   function handleOverlayClick(e) { if (e.target === overlayRef.current) handleClose(); }
   function handleVote(idx) {
     if (submitted || onCooldown) return;
-    if (!isLoggedIn) {
-      // FIX: toast con acción si no está logueado
-      showToastAction('🔑 Iniciá sesión para reportar y ganar puntos');
-      return;
-    }
+    if (!isLoggedIn) { showToastAction('🔑 Iniciá sesión para reportar y ganar puntos'); return; }
     if (!nearby) return;
     setSelectedVote(idx);
   }
@@ -1051,6 +1095,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
     maxHeight:'calc(100dvh - 40px)',display:'flex',flexDirection:'column',
   };
 
+  // ← CAMBIO: mensaje actualizado con 10m
   const tooFarBlock = hasGps && !nearby && !onCooldown && React.createElement('div',{
     style:{display:'flex',alignItems:'center',gap:10,background:'#F1F5F9',border:'1px solid #E2E8F0',borderRadius:12,padding:'12px 14px',marginBottom:12}
   },
@@ -1058,7 +1103,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
     React.createElement('div',null,
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#0F172A'}},`Estás a ${distToPlace}m de este comercio`),
       React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#64748B'}},
-        `Tenés que estar a menos de ${CONFIG.REPORT_RADIUS_M}m para reportar. Acercate y volvé a intentar.`
+        `Necesitás estar a menos de ${CONFIG.REPORT_RADIUS_M}m para reportar. Entrá al local y volvé a intentar.`
       )
     )
   );
@@ -1069,11 +1114,10 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
     React.createElement('span',{style:{fontSize:20,flexShrink:0}},'🛰️'),
     React.createElement('div',null,
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#3730A3'}},'Activá tu ubicación para reportar'),
-      React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#4338CA'}},'Solo podés reportar si estás físicamente en el comercio.')
+      React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#4338CA'}},'Solo podés reportar si estás físicamente dentro del comercio.')
     )
   );
 
-  // FIX: bloque para usuarios no logueados
   const notLoggedBlock = !isLoggedIn && !onCooldown && React.createElement('div',{
     style:{display:'flex',alignItems:'center',gap:10,background:'#F0FDF9',border:'1px solid #A8EDD8',borderRadius:12,padding:'12px 14px',marginBottom:12}
   },
@@ -1130,8 +1174,9 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
           notLoggedBlock,
           tooFarBlock,
           noGpsBlock,
+          // ← CAMBIO: mensaje de confirmación actualizado con 10m
           isLoggedIn && nearby && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:12,padding:'8px 11px',background:'#E8FBF5',borderRadius:10,border:'1px solid #A8EDD8'}},
-            React.createElement('span',{style:{fontSize:14}},'📍'),
+            React.createElement('span',{style:{fontSize:14}},'✅'),
             React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'#007A59'}},`Estás a ${distToPlace ?? '?'}m · podés reportar`)
           ),
           !onCooldown && isLoggedIn && nearby && React.createElement('p',{style:{margin:'0 0 10px',fontSize:11,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',letterSpacing:'0.8px'}},'¿Cómo está ahora?'),
@@ -1139,8 +1184,9 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs }) {
             React.createElement('span',{style:{fontSize:20,flexShrink:0}},'⏳'),
             React.createElement('div',null,
               React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#92400E'}},`Ya reportaste ${place.name} hace poco`),
+              // ← CAMBIO: mensaje de cooldown menciona 8 horas
               React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#92400E'}},`Podés volver a reportar en ${formatCooldownRemaining(cooldownMs)}`),
-              React.createElement('p',{style:{margin:'4px 0 0',fontSize:11,color:'#92400E',opacity:.8}},'Mientras tanto podés reportar cualquier otro comercio')
+              React.createElement('p',{style:{margin:'4px 0 0',fontSize:11,color:'#92400E',opacity:.8}},'Cada comercio se puede reportar una vez cada 8 horas')
             )
           ),
           !submitted && isLoggedIn && nearby && !onCooldown && React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}},
@@ -1210,21 +1256,24 @@ async function handlePopupVoteSubmit(placeId, voteIdx) {
   const p = places.find(x => x.id === placeId);
   if (!p) return;
 
-  // FIX: siempre verificar login primero
   if (!isLoggedIn) {
     showToastAction('🔑 Iniciá sesión para ganar puntos por tu reporte');
     return;
   }
 
-  if (!canReportThisPlace(p)) {
-    showToast(`📍 Acercate al comercio para reportar (máx. ${CONFIG.REPORT_RADIUS_M}m)`);
+  // ← CAMBIO: verificar cooldown ANTES de procesar (doble verificación)
+  if (getVoteCooldownRemainingMs(placeId) > 0) {
+    showToast(`⏳ Ya reportaste ${p.name} · próximo en ${formatCooldownRemaining(getVoteCooldownRemainingMs(placeId))}`);
     return;
   }
 
-  if (getVoteCooldownRemainingMs(placeId) > 0) {
-    showToast(`⏳ Podés reportar ${p.name} en ${formatCooldownRemaining(getVoteCooldownRemainingMs(placeId))}`);
+  if (!canReportThisPlace(p)) {
+    showToast(`📍 Tenés que estar dentro del comercio para reportar (máx. ${CONFIG.REPORT_RADIUS_M}m)`);
     return;
   }
+
+  // ← CAMBIO: aplicar cooldown de 8h inmediatamente en el cliente (antes de la respuesta del backend)
+  applyLocalCooldown(placeId);
 
   p.status = voteIdx;
   p.reporters += 1;
@@ -1243,6 +1292,7 @@ async function submitVoteToBackend(p, voteIdx) {
   });
 
   if (res.cooldown) {
+    // El backend también detectó cooldown: sincronizar con el tiempo del servidor
     applyPlaceCooldown(p.id, res.nextVoteAt);
     p.reporters = Math.max(0, p.reporters - 1);
     refreshMarkerIcon(p.id); updateCrowdBar(calcCrowdPct());
@@ -1254,6 +1304,7 @@ async function submitVoteToBackend(p, voteIdx) {
   if (res.ok && res.result && typeof res.result.points === 'number') {
     userPts = res.result.points;
     updateUserHUD(); flashPoints();
+    // Si el backend envía su propio nextVoteAt, usarlo (tiene prioridad sobre el local)
     if (res.result.cooldown) applyPlaceCooldown(res.result.cooldown.placeId, res.result.cooldown.nextVoteAt);
     showToast(`🎉 +${pts} puntos ganados`);
   } else if (res.ok) {
@@ -1285,7 +1336,6 @@ function addPoints(amount) {
   if (newLevel > prevLevel) setTimeout(() => levelUpCelebration(newLevel), 400);
 }
 
-/* ── FIX: Marcador del usuario ── */
 function updateUserMarker(lat, lng) {
   if (!leafletMap) return;
   if (userMarker) {
@@ -1312,11 +1362,9 @@ function initMap() {
     subdomains: 'abcd', maxZoom: 20,
   }).addTo(leafletMap);
 
-  // FIX: pedir GPS al inicio con watchPosition para seguimiento continuo
   startGpsWatch();
 }
 
-/* ── FIX: GPS watchPosition para tracking continuo ── */
 function startGpsWatch() {
   if (!navigator.geolocation) return;
   if (gpsWatchId !== null) {
@@ -1325,16 +1373,14 @@ function startGpsWatch() {
   gpsWatchId = navigator.geolocation.watchPosition(
     pos => onGpsSuccess(pos),
     err => {
-      // Si falla silenciosamente, cargar con centro por defecto
-      if (!lastLoadedLat) loadPlacesAt(CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng);
+      if (!lastLoadedLat) loadPlacesAt(CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng, false);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
   );
 }
 
-/* ── FIX: Callback GPS — sin offset, zoom correcto ── */
 function onGpsSuccess(pos) {
-  const { latitude, longitude, accuracy } = pos.coords;
+  const { latitude, longitude } = pos.coords;
   const isFirst = userLat === null;
 
   userLat = latitude;
@@ -1342,20 +1388,19 @@ function onGpsSuccess(pos) {
 
   updateUserMarker(latitude, longitude);
 
-  // Solo re-centrar si es la primera posición o si nos movimos más de 50m
   if (isFirst) {
     leafletMap.setView([latitude, longitude], CONFIG.GPS_ZOOM);
     document.getElementById('gps-btn').classList.add('active');
   }
 
-  // FIX: Cargar lugares solo si nos movimos significativamente (>80m) o es la primera vez
   const movedEnough = lastLoadedLat === null ||
     distanceMeter(latitude, longitude, lastLoadedLat, lastLoadedLng) > 80;
 
   if (movedEnough) {
     lastLoadedLat = latitude;
     lastLoadedLng = longitude;
-    loadPlacesAt(latitude, longitude);
+    // ← CAMBIO: false = no mostrar loading en carga automática por GPS
+    loadPlacesAt(latitude, longitude, false);
   }
 
   if (isFirst && !checkinShown && places.length > 0) {
@@ -1364,6 +1409,7 @@ function onGpsSuccess(pos) {
   }
 }
 
+// ← CAMBIO: setMapLoading solo se llama cuando showLoading=true (solo en manualRefresh)
 function setMapLoading(isLoading, label) {
   const el = document.getElementById('map-loading-pill');
   const txt = document.getElementById('map-loading-txt');
@@ -1372,11 +1418,10 @@ function setMapLoading(isLoading, label) {
   el.classList.toggle('show', !!isLoading);
 }
 
-/* ── FIX: loadPlacesAt — carga backend + Overpass en paralelo ── */
-async function loadPlacesAt(lat, lng) {
-  setMapLoading(true, 'Buscando comercios…');
+// ← CAMBIO: loadPlacesAt recibe parámetro showLoading
+async function loadPlacesAt(lat, lng, showLoading = false) {
+  if (showLoading) setMapLoading(true, 'Actualizando comercios…');
 
-  // FIX: lanzar backend y Overpass en paralelo para mayor velocidad
   const [backendResult, osmPlaces] = await Promise.all([
     BACKEND_READY
       ? apiGet('sync_places', { lat, lng, radius: CONFIG.SEARCH_RADIUS_M })
@@ -1384,12 +1429,11 @@ async function loadPlacesAt(lat, lng) {
     loadOverpassPlaces(lat, lng),
   ]);
 
-  setMapLoading(false);
+  if (showLoading) setMapLoading(false);
 
   const backendPlaces = (backendResult && Array.isArray(backendResult.places))
     ? backendResult.places : [];
 
-  // FIX: mergear ambas fuentes
   const merged = mergePlaces(backendPlaces, osmPlaces);
   if (merged.length > 0) {
     places = merged;
@@ -1397,7 +1441,6 @@ async function loadPlacesAt(lat, lng) {
     updateCrowdBar(calcCrowdPct());
   }
 
-  // Mostrar checkin si no se mostró antes
   if (!checkinShown && userLat !== null && places.length > 0) {
     checkinShown = true;
     setTimeout(() => showCheckinModal(userLat, userLng), 800);
@@ -1418,10 +1461,8 @@ function makeIcon(place) {
 }
 
 function buildMapMarkers() {
-  // FIX: remover solo los markers que ya no están en places (evita re-render completo)
   const newIds = new Set(places.map(p => p.id));
 
-  // Limpiar markers viejos que ya no existen
   Object.keys(leafletMarkers).forEach(id => {
     if (!newIds.has(id)) {
       leafletMarkers[id].remove();
@@ -1429,10 +1470,8 @@ function buildMapMarkers() {
     }
   });
 
-  // Agregar o actualizar
   places.forEach(p => {
     if (leafletMarkers[p.id]) {
-      // Actualizar ícono si ya existe
       leafletMarkers[p.id].setIcon(makeIcon(p));
     } else {
       const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p) }).addTo(leafletMap);
@@ -1467,7 +1506,6 @@ function updateCrowdBar(pct) {
   document.getElementById('cbar-pct').textContent = pct + '%';
 }
 
-/* ── FIX: GPS button — centra el mapa en la posición actual ── */
 function requestGpsPermission() {
   const btn = document.getElementById('gps-btn');
   btn.classList.add('pulsing');
@@ -1479,7 +1517,6 @@ function requestGpsPermission() {
   }
 
   if (userLat !== null && userLng !== null) {
-    // Ya tenemos posición: solo centrar el mapa
     leafletMap.setView([userLat, userLng], CONFIG.GPS_ZOOM);
     btn.classList.remove('pulsing');
     btn.classList.add('active');
@@ -1487,7 +1524,6 @@ function requestGpsPermission() {
     return;
   }
 
-  // Pedir permiso por primera vez
   navigator.geolocation.getCurrentPosition(
     pos => {
       btn.classList.remove('pulsing');
@@ -1505,7 +1541,7 @@ function requestGpsPermission() {
 }
 
 /* ══════════════════════════════════════════════
-   CHECK-IN MODAL — siempre los 3 más cercanos a tu GPS
+   CHECK-IN MODAL
    ══════════════════════════════════════════════ */
 function showCheckinModal(lat, lng) {
   const sorted = places
@@ -1647,7 +1683,6 @@ async function handleGoogleTokenResponse(resp) {
     if (!profileRes.ok) throw new Error('No se pudo obtener el perfil de Google');
     const profile = await profileRes.json();
 
-    // FIX: bloquear si ya hay otra cuenta logueada en este dispositivo
     const deviceEmail = localStorage.getItem(DEVICE_KEY);
     if (deviceEmail && deviceEmail !== profile.email) {
       resetLoginButton();
@@ -1665,7 +1700,7 @@ async function handleGoogleTokenResponse(resp) {
     if (backendResult && backendResult.cooldowns) applyCooldownInfo(backendResult.cooldowns);
     isLoggedIn = true;
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
-    localStorage.setItem(DEVICE_KEY, profile.email);  // FIX: registrar email del dispositivo
+    localStorage.setItem(DEVICE_KEY, profile.email);
     applyLoggedInUI();
     hideToastAction();
     showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
@@ -1690,10 +1725,8 @@ async function restoreSession() {
   try { currentUser = JSON.parse(saved); } catch { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
   if (!currentUser || !currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
 
-  // FIX: verificar consistencia con email del dispositivo
   const deviceEmail = localStorage.getItem(DEVICE_KEY);
   if (deviceEmail && deviceEmail !== currentUser.email) {
-    // Conflicto: limpiar la sesión inconsistente
     localStorage.removeItem(SESSION_STORAGE_KEY);
     currentUser = null;
     return;
@@ -1750,7 +1783,7 @@ function burstConfetti(originEl) {
   }
 }
 
-/* ── FIX: manualRefresh — siempre recarga desde las APIs ── */
+/* ← CAMBIO: manualRefresh — pasa showLoading:true para mostrar el spinner solo aquí */
 function manualRefresh() {
   const icon = document.getElementById('refresh-icon');
   icon.style.animation = 'none';
@@ -1760,10 +1793,9 @@ function manualRefresh() {
   const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
   const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
 
-  // FIX: forzar recarga desde APIs (resetear lastLoaded para que no lo saltee)
   lastLoadedLat = null;
   lastLoadedLng = null;
-  loadPlacesAt(lat, lng).then(() => {
+  loadPlacesAt(lat, lng, true).then(() => {
     showToast('🔄 Locales actualizados');
   });
 }
@@ -1852,10 +1884,12 @@ function switchTab(tab) {
   if (tab === 'map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 50);
 }
 
-/* ─────────────── INTERVAL — solo cooldown UI ─────────────── */
+/* ─────────────── INTERVAL ─────────────── */
 setInterval(() => { tickCooldownUI(); }, 1000);
 
 window.addEventListener('DOMContentLoaded', () => {
+  // ← CAMBIO: cargar cooldowns persistidos al arrancar
+  loadCooldownsFromStorage();
   initMap();
   updateCrowdBar(calcCrowdPct());
   updateUserHUD();
