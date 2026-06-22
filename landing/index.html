@@ -1,1 +1,762 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mapa en tiempo real de filas y ocupación en comercios cerca tuyo." />
+  <meta name="theme-color" content="#00C48C" />
+  <title>Qooentum — Sabé cuánta gente hay antes de ir</title>
+  <link rel="icon" href="https://qooentum.com/icons/icon-96.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #00C48C;
+      --green-dark: #009e70;
+      --green-deep: #00664a;
+      --green-bg: #e6faf3;
+      --ink: #0d1a13;
+      --ink-muted: #4a5e55;
+      --ink-light: #8aa39a;
+      --surface: #ffffff;
+      --bg: #f7faf8;
+      --border: rgba(0,196,140,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(247,250,248,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--green); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--green-dark); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green);
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 11px 24px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--green-dark);
+      border: 1.5px solid var(--green);
+    }
+    .btn-outline:hover { background: var(--green-bg); }
+
+    .btn-large { padding: 15px 34px; font-size: 16px; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 88px 48px 64px;
+      max-width: 1140px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: var(--green-dark);
+      background: var(--green-bg);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+
+    .pulse-dot {
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.5); }
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 54px;
+      font-weight: 700;
+      line-height: 1.07;
+      letter-spacing: -1.8px;
+      color: var(--ink);
+      margin-bottom: 22px;
+    }
+    .hero h1 em { font-style: normal; color: var(--green); }
+
+    .hero p {
+      font-size: 17px;
+      line-height: 1.68;
+      color: var(--ink-muted);
+      margin-bottom: 38px;
+      max-width: 460px;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── MAP CARD ── */
+    .map-card {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,196,140,0.07);
+    }
+
+    .map-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .map-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green-dark);
+      background: var(--green-bg);
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+    .live-badge .pulse-dot { width: 6px; height: 6px; animation-duration: 1.4s; }
+
+    .map-body {
+      padding: 16px;
+      background: #eef6f2;
+      position: relative;
+      height: 220px;
+    }
+
+    .map-place {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .map-pin {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: default;
+      transition: transform 0.2s;
+    }
+    .map-pin:hover { transform: scale(1.1); }
+    .map-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--ink);
+      background: #fff;
+      padding: 2px 7px;
+      border-radius: 6px;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+    }
+
+    .level-low  { background: #d4f5e5; }
+    .level-med  { background: #ffe8b0; }
+    .level-high { background: #ffd6d6; }
+
+    .map-footer {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ── STATS ── */
+    .stats-wrap {
+      padding: 0 48px;
+      max-width: 1140px;
+      margin: 0 auto 0;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .stat {
+      background: var(--surface);
+      padding: 34px 36px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 46px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label { font-size: 14px; color: var(--ink-muted); }
+
+    /* ── SECTION BASE ── */
+    .section {
+      padding: 88px 48px;
+      max-width: 1140px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--green-dark);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -1.2px;
+      color: var(--ink);
+      margin-bottom: 16px;
+      line-height: 1.12;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--ink-muted);
+      max-width: 520px;
+      line-height: 1.68;
+      margin-bottom: 56px;
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 26px;
+    }
+    .step-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 52px;
+      font-weight: 700;
+      color: var(--green-bg);
+      line-height: 1;
+      margin-bottom: 14px;
+      letter-spacing: -2px;
+    }
+    .step-icon {
+      width: 46px; height: 46px;
+      background: var(--green-bg);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+    .step h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .step p { font-size: 14px; color: var(--ink-muted); line-height: 1.65; }
+
+    /* ── WHO ── */
+    .who-grid {
+      padding: 0 48px 88px;
+      max-width: 1140px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .who-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 38px;
+      position: relative;
+      overflow: hidden;
+    }
+    .who-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--green);
+    }
+    .who-card-icon { font-size: 38px; display: block; margin-bottom: 18px; }
+    .who-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 23px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+    .who-card p { font-size: 15px; color: var(--ink-muted); line-height: 1.65; margin-bottom: 22px; }
+    .check-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .check-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+    .check-list li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 700;
+      font-size: 13px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    /* ── POINTS BAND ── */
+    .points-band {
+      background: var(--ink);
+      padding: 80px 48px;
+    }
+    .points-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: center;
+    }
+    .points-band .section-label { color: var(--green); }
+    .points-band .section-title { color: #fff; margin-bottom: 14px; }
+    .points-band .section-title em { font-style: normal; color: var(--green); }
+    .points-band .section-sub { color: rgba(255,255,255,0.55); margin-bottom: 34px; }
+
+    .points-preview {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .points-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .points-header-left {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+    }
+    .points-header-left strong { color: var(--green); }
+    .points-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      background: rgba(0,196,140,0.12);
+      padding: 4px 10px;
+      border-radius: 100px;
+    }
+    .reward-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .reward-row:last-child { border-bottom: none; }
+    .reward-left { display: flex; align-items: center; gap: 12px; }
+    .reward-emoji { font-size: 26px; }
+    .reward-name { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.82); }
+    .reward-pts { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; color: var(--green); }
+
+    /* ── CTA ── */
+    .cta {
+      padding: 104px 48px;
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .cta h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      color: var(--ink);
+      margin-bottom: 18px;
+      line-height: 1.08;
+    }
+    .cta h2 em { font-style: normal; color: var(--green); }
+    .cta p { font-size: 17px; color: var(--ink-muted); margin-bottom: 42px; line-height: 1.65; }
+    .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 48px;
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .footer-note { font-size: 13px; color: var(--ink-light); }
+    .footer-links { display: flex; gap: 22px; }
+    .footer-links a { font-size: 13px; color: var(--ink-light); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--green); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 56px 24px 40px;
+        gap: 40px;
+      }
+      .hero h1 { font-size: 38px; }
+
+      .stats-wrap { padding: 0 24px; }
+      .stats-grid { grid-template-columns: 1fr; }
+
+      .section { padding: 60px 24px; }
+
+      .steps { grid-template-columns: 1fr; }
+
+      .who-grid {
+        grid-template-columns: 1fr;
+        padding: 0 24px 60px;
+      }
+
+      .points-band { padding: 60px 24px; }
+      .points-inner { grid-template-columns: 1fr; gap: 40px; }
+
+      .cta { padding: 72px 24px; }
+      .cta h2 { font-size: 34px; }
+
+      footer { padding: 24px; flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">Qoo<span>entum</span></div>
+    <ul class="nav-links">
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#negocios">Para negocios</a></li>
+      <li><a href="#premios">Premios</a></li>
+    </ul>
+    <a href="https://qooentum.com" class="btn">Abrir la app</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">
+        <span class="pulse-dot"></span>
+        Datos en tiempo real
+      </div>
+      <h1>Sabé cuánta gente hay <em>antes de ir</em></h1>
+      <p>Qooentum es el mapa colaborativo que muestra la ocupación real de locales, supermercados, bancos y más — actualizado por la propia comunidad.</p>
+      <div class="hero-btns">
+        <a href="https://qooentum.com" class="btn btn-large">Usá la app gratis</a>
+        <a href="#negocios" class="btn btn-outline btn-large">Para tu negocio</a>
+      </div>
+    </div>
+
+    <!-- MAP WIDGET (decorativo) -->
+    <div class="map-card">
+      <div class="map-header">
+        <span class="map-title">Zona — Palermo, Buenos Aires</span>
+        <span class="live-badge"><span class="pulse-dot"></span>En vivo</span>
+      </div>
+      <div class="map-body">
+        <svg width="100%" height="100%" style="position:absolute;top:0;left:0;pointer-events:none;" aria-hidden="true">
+          <line x1="30%" y1="0" x2="30%" y2="100%" stroke="#cce8da" stroke-width="14"/>
+          <line x1="0" y1="45%" x2="100%" y2="45%" stroke="#cce8da" stroke-width="10"/>
+          <line x1="65%" y1="0" x2="65%" y2="100%" stroke="#cce8da" stroke-width="8"/>
+          <line x1="0" y1="75%" x2="100%" y2="75%" stroke="#cce8da" stroke-width="8"/>
+        </svg>
+        <div class="map-place" style="top:16%;left:20%">
+          <div class="map-pin level-low">🛒</div>
+          <span class="map-label">Libre</span>
+        </div>
+        <div class="map-place" style="top:36%;left:54%">
+          <div class="map-pin level-med">🏦</div>
+          <span class="map-label">Moderado</span>
+        </div>
+        <div class="map-place" style="top:62%;left:16%">
+          <div class="map-pin level-high">☕</div>
+          <span class="map-label">Lleno</span>
+        </div>
+        <div class="map-place" style="top:14%;left:72%">
+          <div class="map-pin level-low">💊</div>
+          <span class="map-label">Libre</span>
+        </div>
+        <div class="map-place" style="top:66%;left:64%">
+          <div class="map-pin level-med">🍔</div>
+          <span class="map-label">Moderado</span>
+        </div>
+      </div>
+      <div class="map-footer">
+        <div class="legend-item"><div class="legend-dot" style="background:#52d49a"></div>Libre</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f5c64a"></div>Moderado</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f58a8a"></div>Lleno</div>
+        <div class="legend-item" style="margin-left:auto;font-size:11px;color:#8aa39a">Actualizado hace 1 min</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-wrap">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num">+12k</div>
+        <div class="stat-label">Reportes este mes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">340+</div>
+        <div class="stat-label">Comercios en el mapa</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">~2 min</div>
+        <div class="stat-label">Tiempo promedio de actualización</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="como-funciona">
+    <div class="section-label">Cómo funciona</div>
+    <h2 class="section-title">Simple, rápido<br>y colaborativo</h2>
+    <p class="section-sub">No requiere cámaras ni sensores. La comunidad reporta, todos se benefician.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">📍</div>
+        <h3>Abrís la app</h3>
+        <p>Ves el mapa con la ocupación actual de los locales de tu zona, en tiempo real.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">📊</div>
+        <h3>Reportás al llegar</h3>
+        <p>Con un toque indicás si el local está libre, moderado o lleno. Tarda menos de 5 segundos.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">🏆</div>
+        <h3>Ganás puntos</h3>
+        <p>Cada reporte suma puntos que podés canjear por premios reales con partners locales.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO FOR -->
+  <div class="who-grid" id="negocios">
+    <div class="who-card">
+      <span class="who-card-icon">🧍</span>
+      <h3>Para usuarios</h3>
+      <p>Tomá mejores decisiones antes de salir. Ahorrá tiempo y evitá filas innecesarias.</p>
+      <ul class="check-list">
+        <li>Ver ocupación antes de ir al super, banco o farmacia</li>
+        <li>Planificar tus salidas para los momentos de menor flujo</li>
+        <li>Ganar puntos por contribuir a la comunidad</li>
+        <li>Canjear premios en negocios locales</li>
+      </ul>
+    </div>
+    <div class="who-card">
+      <span class="who-card-icon">🏪</span>
+      <h3>Para negocios</h3>
+      <p>Aparecé en el mapa de tu zona y conectá con clientes que ya están buscando lo que ofrecés.</p>
+      <ul class="check-list">
+        <li>Visibilidad en el mapa de ocupación de tu barrio</li>
+        <li>Datos de flujo de clientes en tu local</li>
+        <li>Sumarte como destino de canje de puntos</li>
+        <li>Promociones geolocalizadas para tu audiencia cercana</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- POINTS BAND -->
+  <div class="points-band" id="premios">
+    <div class="points-inner">
+      <div>
+        <div class="section-label">Sistema de puntos</div>
+        <h2 class="section-title">Reportás,<br>la comunidad gana.<br><em>Vos también.</em></h2>
+        <p class="section-sub">Cada vez que actualizás el estado de un local, sumás puntos que podés convertir en descuentos y premios reales.</p>
+        <a href="https://qooentum.com" class="btn btn-large">Ver premios disponibles</a>
+      </div>
+      <div class="points-preview">
+        <div class="points-header">
+          <span class="points-header-left">Tus puntos: <strong>480 pts</strong></span>
+          <span class="points-badge">Nivel 3</span>
+        </div>
+        <div class="reward-row">
+          <div class="reward-left">
+            <span class="reward-emoji">☕</span>
+            <span class="reward-name">Café gratis</span>
+          </div>
+          <span class="reward-pts">200 pts</span>
+        </div>
+        <div class="reward-row">
+          <div class="reward-left">
+            <span class="reward-emoji">🍕</span>
+            <span class="reward-name">30% OFF en pizzería</span>
+          </div>
+          <span class="reward-pts">350 pts</span>
+        </div>
+        <div class="reward-row">
+          <div class="reward-left">
+            <span class="reward-emoji">🎬</span>
+            <span class="reward-name">Entrada de cine</span>
+          </div>
+          <span class="reward-pts">600 pts</span>
+        </div>
+        <div class="reward-row">
+          <div class="reward-left">
+            <span class="reward-emoji">🛍️</span>
+            <span class="reward-name">Vale de compras $2.000</span>
+          </div>
+          <span class="reward-pts">900 pts</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Tu próxima salida,<br><em>sin sorpresas</em></h2>
+    <p>Usá Qooentum antes de salir y llegá cuando el lugar esté libre. Sin filas, sin esperas, sin perder el tiempo.</p>
+    <div class="cta-btns">
+      <a href="https://qooentum.com" class="btn btn-large">Abrir Qooentum</a>
+      <a href="#como-funciona" class="btn btn-outline btn-large">Cómo funciona</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="logo" style="font-size:16px;">Qoo<span>entum</span></div>
+    <span class="footer-note">Hecho con ♥ por <a href="https://bigdaat.com" style="color:var(--green)">bigdaat.com</a> · Buenos Aires</span>
+    <div class="footer-links">
+      <a href="https://qooentum.com">App</a>
+      <a href="mailto:hola@qooentum.com">Contacto</a>
+    </div>
+  </footer>
+
+</body>
+</html>
