@@ -2300,58 +2300,6 @@ async function restoreSession() {
   }
 }
 
-  // Intento silencioso de renovación
-  const trysilent = () => new Promise(resolve => {
-    if (!GOOGLE_AUTH_READY) return resolve(false);
-    const waitGoogle = (tries) => {
-      if (tries <= 0) return resolve(false);
-      if (window.google && google.accounts && google.accounts.oauth2) {
-        if (!initGoogleTokenClient()) return resolve(false);
-        const client = google.accounts.oauth2.initTokenClient({
-          client_id: CONFIG.GOOGLE_CLIENT_ID,
-          scope: 'email profile',
-          hint: currentUser.email,
-          callback: async (resp) => {
-            if (!resp || resp.error || !resp.access_token) return resolve(false);
-            try {
-              const profile = await fetchProfileFromToken(resp.access_token);
-              if (profile && profile.email === currentUser.email) {
-                currentUser = { email: profile.email, name: profile.name || profile.email, picture: profile.picture || '' };
-                saveTokenToStorage(resp.access_token, resp.expires_in);
-                localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
-                isLoggedIn = true;
-                if (BACKEND_READY) {
-                  const me = await apiGet('me', { email: currentUser.email });
-                  if (me && me.exists) { userPts = me.points || 0; if (me.cooldowns) applyCooldownInfo(me.cooldowns); }
-                }
-                applyLoggedInUI(); resolve(true);
-              } else resolve(false);
-            } catch(e) { resolve(false); }
-          },
-          error_callback: () => resolve(false),
-        });
-        client.requestAccessToken({ prompt: '' });
-      } else { setTimeout(() => waitGoogle(tries - 1), 400); }
-    };
-    waitGoogle(10);
-  });
-
-  const renewed = await trysilent();
-  if (!renewed) {
-    isLoggedIn = false;
-    applyLoggedInUI();
-    isLoggedIn = false;
-    const chip = document.getElementById('user-chip');
-    if (chip) { chip.title = 'Tu sesión expiró. Hacé clic para reingresar.'; chip.onclick = () => doGoogleLogin(document.getElementById('login-topbar-btn')); }
-    document.getElementById('user-chip-wrap').style.display = 'flex';
-    document.getElementById('login-topbar-btn').style.display = 'none';
-    if (BACKEND_READY) {
-      const me = await apiGet('me', { email: currentUser.email });
-      if (me && me.exists) { userPts = me.points || 0; if (me.cooldowns) applyCooldownInfo(me.cooldowns); updateUserHUD(); }
-    }
-  }
-}
-
 function updateUserHUD() {
   const info = getLevelInfo(userPts);
   document.getElementById('my-pts').textContent = userPts + ' pts';
