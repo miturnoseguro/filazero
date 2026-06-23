@@ -510,6 +510,38 @@ html,body{
 .checkin-skip-main{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;padding:13px 18px;font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .2s cubic-bezier(.34,1.56,.64,1);letter-spacing:-.1px;margin-top:2px;}
 .checkin-skip-main:hover{background:#fff;border-color:var(--text2);color:var(--text);transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.1);}
 .checkin-skip-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:8px;font-weight:500;}
+  /* ── CLUSTER CARDS ── */
+.cluster-card{
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;
+  filter:drop-shadow(0 3px 10px rgba(15,23,42,.18));
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),filter .18s;
+}
+.cluster-card:hover{transform:scale(1.07) translateY(-2px);filter:drop-shadow(0 7px 18px rgba(15,23,42,.25));}
+.cluster-bubble{
+  background:rgba(255,255,255,.97);
+  border:2px solid var(--green);
+  border-radius:16px;
+  padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  font-family:'Inter',system-ui,sans-serif;
+  min-width:130px;
+  box-shadow:0 0 0 3px rgba(0,196,140,.12);
+}
+.cluster-count{font-size:22px;font-weight:900;color:var(--green-dk);line-height:1;}
+.cluster-label{font-size:11px;font-weight:700;color:var(--text2);line-height:1.3;}
+.cluster-label strong{display:block;font-size:12px;color:var(--text);font-weight:800;}
+.cluster-tail{width:2px;height:6px;background:#CBD5E1;}
+.cluster-base{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
+/* colores según densidad */
+.cluster-bubble.density-low{border-color:var(--green);}
+.cluster-bubble.density-low .cluster-count{color:var(--green-dk);}
+.cluster-bubble.density-med{border-color:var(--yellow);}
+.cluster-bubble.density-med .cluster-count{color:#B45309;}
+.cluster-bubble.density-high{border-color:var(--orange);}
+.cluster-bubble.density-high .cluster-count{color:#C2410C;}
+.cluster-bubble.density-max{border-color:var(--red);}
+.cluster-bubble.density-max .cluster-count{color:#B91C1C;}
 </style>
 </head>
 <body>
@@ -1708,6 +1740,12 @@ function initMap() {
   // Detectar arrastre manual → salir de follow mode
   leafletMap.on('dragstart', onMapDragStart);
 
+  // Re-renderizar markers cuando cambia el zoom
+leafletMap.on('zoomend', () => {
+  const toShow = nearbyPlaces.length ? nearbyPlaces : places;
+  if (toShow.length) buildMapMarkers(toShow);
+});
+
   startGpsWatch();
   initSearch();
 }
@@ -1793,29 +1831,154 @@ function makeIcon(place) {
   });
 }
 
+/* ════════════════════════════════════
+   ZOOM-BASED CLUSTERING
+   ════════════════════════════════════
+   zoom ≥ 17 → markers individuales
+   zoom 15-16 → clusters por cuadra (~150m)
+   zoom 13-14 → clusters por zona (~500m)
+   zoom ≤ 12  → clusters grandes (~1.5km)
+*/
+const CLUSTER_ZOOM_THRESHOLD = 17; // por encima de esto → markers individuales
+
+function getClusterGridDeg(zoom) {
+  if (zoom >= 15) return 0.0015;   // ~150m — manzana
+  if (zoom >= 13) return 0.005;    // ~500m — barrio
+  return 0.015;                     // ~1.5km — macrozona
+}
+
+function densityClass(count) {
+  if (count <= 5)  return 'density-low';
+  if (count <= 15) return 'density-med';
+  if (count <= 40) return 'density-high';
+  return 'density-max';
+}
+
+function clusterLabel(count) {
+  if (count === 1) return '1 lugar';
+  return `${count} lugares`;
+}
+
+/** Agrupa places en celdas de cuadrícula y devuelve array de clusters */
+function computeClusters(placesToCluster, gridDeg) {
+  const cells = {};
+  placesToCluster.forEach(p => {
+    const cx = Math.floor(p.lat / gridDeg);
+    const cy = Math.floor(p.lng / gridDeg);
+    const key = `${cx}:${cy}`;
+    if (!cells[key]) {
+      cells[key] = {
+        lat: (cx + 0.5) * gridDeg,
+        lng: (cy + 0.5) * gridDeg,
+        places: [],
+      };
+    }
+    cells[key].places.push(p);
+  });
+  return Object.values(cells).map(c => ({
+    lat: c.lat,
+    lng: c.lng,
+    count: c.places.length,
+    places: c.places,
+    // status promedio del cluster (para color de urgencia)
+    avgStatus: c.places.reduce((s, p) => s + (p.reporters > 0 ? p.status : 0), 0) / c.places.length,
+    // reporte total
+    totalReporters: c.places.reduce((s, p) => s + (p.reporters || 0), 0),
+  }));
+}
+
+function makeClusterIcon(cluster) {
+  const dc = densityClass(cluster.count);
+  const label = clusterLabel(cluster.count);
+  const subtitle = cluster.totalReporters > 0
+    ? `${cluster.totalReporters} reportes activos`
+    : 'Sin reportes aún';
+  return L.divIcon({
+    html: `<div class="cluster-card">
+      <div class="cluster-bubble ${dc}">
+        <div class="cluster-count">${cluster.count}</div>
+        <div class="cluster-label"><strong>${label}</strong>${subtitle}</div>
+      </div>
+      <div class="cluster-tail"></div>
+      <div class="cluster-base"></div>
+    </div>`,
+    className: '',
+    iconAnchor: [65, 62],
+  });
+}
+
+/** Tracks de markers separados para no mezclar tipos */
+let clusterMarkers = {};
+
+function clearClusterMarkers() {
+  Object.values(clusterMarkers).forEach(m => m.remove());
+  clusterMarkers = {};
+}
+
+function clearIndividualMarkers() {
+  Object.keys(leafletMarkers).forEach(id => { leafletMarkers[id].remove(); delete leafletMarkers[id]; });
+}
+
+/**
+ * Punto de entrada principal — decide qué mostrar según el zoom actual.
+ * Llamar desde: ensurePlacesLoadedAt, manualRefresh, y el listener de zoomend.
+ */
 function buildMapMarkers(placesToShow) {
   placesToShow = placesToShow || nearbyPlaces;
-  const newIds = new Set(placesToShow.map(p => p.id));
-  Object.keys(leafletMarkers).forEach(id => {
-    if (!newIds.has(id)) { leafletMarkers[id].remove(); delete leafletMarkers[id]; }
-  });
-  placesToShow.forEach(p => {
-    if (leafletMarkers[p.id]) {
-      leafletMarkers[p.id].setIcon(makeIcon(p));
-    } else {
-      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p) }).addTo(leafletMap);
+  if (!leafletMap || !placesToShow.length) return;
+
+  const zoom = leafletMap.getZoom();
+
+  if (zoom >= CLUSTER_ZOOM_THRESHOLD) {
+    // ── Zoom alto: markers individuales ──
+    clearClusterMarkers();
+
+    const newIds = new Set(placesToShow.map(p => p.id));
+    Object.keys(leafletMarkers).forEach(id => {
+      if (!newIds.has(id)) { leafletMarkers[id].remove(); delete leafletMarkers[id]; }
+    });
+    placesToShow.forEach(p => {
+      if (leafletMarkers[p.id]) {
+        leafletMarkers[p.id].setIcon(makeIcon(p));
+      } else {
+        const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p) }).addTo(leafletMap);
+        marker.on('click', () => {
+          if (pickModeActive) { exitPickMode(); openPlacePopup(p); }
+          else { openPlacePopup(p); }
+        });
+        leafletMarkers[p.id] = marker;
+      }
+    });
+
+  } else {
+    // ── Zoom bajo: clusters ──
+    clearIndividualMarkers();
+
+    const gridDeg = getClusterGridDeg(zoom);
+    const clusters = computeClusters(placesToShow, gridDeg);
+
+    // Limpiar clusters viejos
+    clearClusterMarkers();
+
+    clusters.forEach((cluster, idx) => {
+      const marker = L.marker([cluster.lat, cluster.lng], { icon: makeClusterIcon(cluster) }).addTo(leafletMap);
       marker.on('click', () => {
-        if (pickModeActive) { exitPickMode(); openPlacePopup(p); }
-        else { openPlacePopup(p); }
+        // Zoom hacia el cluster → al llegar al threshold se mostrarán markers individuales
+        const targetZoom = Math.min(leafletMap.getZoom() + 3, CLUSTER_ZOOM_THRESHOLD + 1);
+        leafletMap.setView([cluster.lat, cluster.lng], targetZoom, { animate: true, duration: 0.5 });
       });
-      leafletMarkers[p.id] = marker;
-    }
-  });
+      clusterMarkers[`cluster_${idx}`] = marker;
+    });
+  }
 }
 
 function refreshMarkerIcon(id) {
   const p = places.find(x => x.id === id);
-  if (p && leafletMarkers[id]) leafletMarkers[id].setIcon(makeIcon(p));
+  if (!p) return;
+  // Solo actualizar si estamos en zoom alto (markers individuales)
+  if (leafletMap && leafletMap.getZoom() >= CLUSTER_ZOOM_THRESHOLD && leafletMarkers[id]) {
+    leafletMarkers[id].setIcon(makeIcon(p));
+  }
 }
 
 function calcCrowdPct() {
