@@ -2258,6 +2258,10 @@ async function restoreSession() {
   const deviceEmail = localStorage.getItem(DEVICE_KEY);
   if (deviceEmail && deviceEmail !== currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
 
+  // Mostrar el chip inmediatamente con los datos guardados (UX instantánea)
+  // isLoggedIn = false hasta que validemos el token
+  applyLoggedInUI();
+
   const savedToken = loadTokenFromStorage();
   if (savedToken) {
     try {
@@ -2274,17 +2278,26 @@ async function restoreSession() {
             localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
           }
         }
-        applyLoggedInUI(); return;
+        updateUserHUD();
+        return;
       }
     } catch(e) { localStorage.removeItem(TOKEN_STORAGE_KEY); }
   }
 
-  // Token vencido o inválido → limpiar sesión y mostrar botón de login
+  // Token vencido o inexistente — igual mantenemos el chip visible
+  // pero isLoggedIn = false, así si intenta reportar le pide que reingrese
   isLoggedIn = false;
-  currentUser = null;
-  localStorage.removeItem(SESSION_STORAGE_KEY);
-  document.getElementById('user-chip-wrap').style.display = 'none';
-  document.getElementById('login-topbar-btn').style.display = 'flex';
+  // Hacer que el chip lleve al login al clickear
+  const chip = document.getElementById('user-chip');
+  if (chip) {
+    chip.title = 'Tu sesión expiró · tocá para reingresar';
+    chip.onclick = () => doGoogleLogin(document.getElementById('login-topbar-btn'));
+  }
+  // Mostrar puntos guardados aunque no esté activo
+  if (BACKEND_READY) {
+    const me = await apiGet('me', { email: currentUser.email });
+    if (me && me.exists) { userPts = me.points || 0; updateUserHUD(); }
+  }
 }
 
   // Intento silencioso de renovación
