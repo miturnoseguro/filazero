@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -88,7 +87,7 @@ html,body{
 .brand-powered{font-size:9px;font-weight:500;color:var(--text3);letter-spacing:.15px;padding-left:2px;white-space:nowrap;line-height:1; position: relative; top: -10px; left: 27px;}
 .brand-powered strong{font-weight:700;color:var(--text3);}
 
-/* ── TOPBAR AUTH AREA (desktop: a la derecha del logo) ── */
+/* ── TOPBAR AUTH AREA ── */
 .topbar-auth{
   display:flex;
   align-items:center;
@@ -113,11 +112,9 @@ html,body{
 .pts-label{font-size:13px;font-weight:800;color:var(--green);line-height:1.2;}
 .xp-bar-bg{height:4px;background:var(--surface2);border-radius:99px;margin-top:3px;overflow:hidden;border:1px solid var(--border);}
 .xp-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#00C48C,#22D3EE);box-shadow:0 0 6px rgba(34,211,238,.6);transition:width .6s cubic-bezier(.34,1.1,.64,1);}
-/* ── USER CHIP WRAP ── */
 .user-chip-wrap{position:relative;}
 .chip-caret{width:12px;height:12px;color:var(--text3);flex-shrink:0;transition:transform .2s;}
 .user-chip-wrap.open .chip-caret{transform:rotate(180deg);}
-/* ── LOGOUT DROPDOWN ── */
 .user-dropdown{
   position:absolute;top:calc(100% + 8px);right:0;
   background:var(--surface);border:1px solid var(--border);border-radius:14px;
@@ -187,106 +184,30 @@ html,body{
   border-color:var(--green);
   box-shadow:0 0 0 3px rgba(0,196,140,.12), var(--shadow-float);
 }
-.map-search-icon{
-  width:16px;height:16px;
-  color:var(--text3);
-  flex-shrink:0;
-  transition:color .2s;
-}
+.map-search-icon{width:16px;height:16px;color:var(--text3);flex-shrink:0;transition:color .2s;}
 .map-search-bar:focus-within .map-search-icon{ color:var(--green); }
-.map-search-input{
-  flex:1;
-  border:none;
-  outline:none;
-  background:transparent;
-  font-size:13.5px;
-  font-weight:500;
-  color:var(--text);
-  font-family:'Inter',system-ui,sans-serif;
-  min-width:0;
-}
+.map-search-input{flex:1;border:none;outline:none;background:transparent;font-size:13.5px;font-weight:500;color:var(--text);font-family:'Inter',system-ui,sans-serif;min-width:0;}
 .map-search-input::placeholder{ color:var(--text3); }
-.map-search-clear{
-  width:22px;height:22px;
-  background:var(--surface2);
-  border:none;
-  border-radius:50%;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  color:var(--text3);
-  font-size:13px;
-  line-height:1;
-  flex-shrink:0;
-  transition:all .18s;
-}
+.map-search-clear{width:22px;height:22px;background:var(--surface2);border:none;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;flex-shrink:0;transition:all .18s;}
 .map-search-clear:hover{ background:var(--border2); color:var(--text); }
 .map-search-clear.visible{ display:flex; }
 
 /* ── SEARCH RESULTS DROPDOWN ── */
-.search-results-dropdown{
-  position:absolute;
-  top:calc(100% + 8px);
-  left:0;right:0;
-  background:rgba(255,255,255,.98);
-  backdrop-filter:blur(16px);
-  border:1px solid var(--border);
-  border-radius:20px;
-  box-shadow:var(--shadow-lg);
-  overflow:hidden;
-  display:none;
-  max-height:320px;
-  overflow-y:auto;
-}
+.search-results-dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:rgba(255,255,255,.98);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);overflow:hidden;display:none;max-height:320px;overflow-y:auto;}
 .search-results-dropdown.open{ display:block; }
-.search-result-item{
-  display:flex;
-  align-items:center;
-  gap:11px;
-  padding:12px 16px;
-  cursor:pointer;
-  border-bottom:1px solid rgba(226,232,240,.5);
-  transition:background .15s;
-}
+.search-result-item{display:flex;align-items:center;gap:11px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(226,232,240,.5);transition:background .15s;}
 .search-result-item:last-child{ border-bottom:none; }
 .search-result-item:hover{ background:var(--green-lt); }
-.search-result-logo{
-  width:36px;height:36px;
-  border-radius:11px;
-  background:var(--surface2);
-  border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
-}
+.search-result-logo{width:36px;height:36px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .search-result-info{ flex:1;min-width:0; }
 .search-result-name{ font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .search-result-sub{ font-size:11px;color:var(--text2);margin-top:1px; }
-.search-result-status{
-  font-size:10px;font-weight:800;
-  padding:3px 9px;border-radius:99px;
-  white-space:nowrap;flex-shrink:0;
-  color:#fff;
-}
-.search-empty{
-  padding:24px;text-align:center;
-  color:var(--text3);font-size:13px;font-weight:500;
-}
-.search-loading{
-  padding:20px;text-align:center;
-  display:flex;align-items:center;justify-content:center;gap:9px;
-  color:var(--text3);font-size:13px;
-}
-.search-spinner{
-  width:14px;height:14px;
-  border-radius:50%;
-  border:2px solid var(--border);
-  border-top-color:var(--green);
-  animation:spin .7s linear infinite;
-  flex-shrink:0;
-}
+.search-result-status{font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;flex-shrink:0;color:#fff;}
+.search-empty{padding:24px;text-align:center;color:var(--text3);font-size:13px;font-weight:500;}
+.search-loading{padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--text3);font-size:13px;}
+.search-spinner{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--green);animation:spin .7s linear infinite;flex-shrink:0;}
 
-/* ── FLOATING CONTROLS — GPS arriba a la derecha del buscador ── */
+/* ── GPS BUTTON ── */
 .map-float-controls{position:absolute;top:14px;right:14px;z-index:999;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
 .gps-float-btn{width:42px;height:42px;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .22s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--shadow-float);}
 .gps-float-btn:hover{border-color:var(--blue);background:var(--blue-lt);transform:translateY(-2px) scale(1.06);}
@@ -294,10 +215,37 @@ html,body{
 .gps-float-btn.pulsing{animation:gpsPulse .8s ease-in-out infinite;}
 .gps-float-btn.active{border-color:var(--green);background:var(--green-lt);}
 .gps-float-btn.active svg{color:var(--green);}
+/* Estado "siguiendo" — indica que el mapa sigue al usuario */
+.gps-float-btn.following{border-color:var(--green);background:linear-gradient(135deg,var(--green-lt),#D1FAF0);box-shadow:0 0 0 3px rgba(0,196,140,.18),var(--shadow-float);}
+.gps-float-btn.following svg{color:var(--green-dk);}
 @keyframes gpsPulse{0%,100%{box-shadow:var(--shadow-float)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.18),var(--shadow-float)}}
 @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 
-/* ── REFRESH BUTTON — flotante centrado arriba del nav ── */
+/* ── FOLLOW-MODE INDICATOR pill ── */
+.follow-pill{
+  position:absolute;
+  top:64px; /* debajo del buscador */
+  left:50%;
+  transform:translateX(-50%);
+  z-index:998;
+  background:rgba(0,196,140,.92);
+  color:#fff;
+  border-radius:99px;
+  padding:5px 14px;
+  font-size:11px;font-weight:800;
+  display:none;
+  align-items:center;gap:6px;
+  pointer-events:none;
+  box-shadow:0 3px 12px rgba(0,196,140,.35);
+  white-space:nowrap;
+  backdrop-filter:blur(8px);
+  letter-spacing:.1px;
+  animation:adSlideIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+.follow-pill.show{display:flex;}
+.follow-dot{width:6px;height:6px;border-radius:50%;background:#fff;opacity:.8;animation:gpsPulse .9s ease-in-out infinite;}
+
+/* ── REFRESH BUTTON ── */
 .map-refresh-btn{
   position:absolute;
   bottom: calc(76px + max(20px, calc(var(--sab) + 12px)));
@@ -317,11 +265,7 @@ html,body{
   font-family:inherit;
   white-space:nowrap;
 }
-.map-refresh-btn:hover{
-  transform:translateX(-50%) translateY(-2px) scale(1.04);
-  box-shadow:0 8px 24px rgba(0,196,140,.2);
-  border-color:var(--green);
-}
+.map-refresh-btn:hover{transform:translateX(-50%) translateY(-2px) scale(1.04);box-shadow:0 8px 24px rgba(0,196,140,.2);border-color:var(--green);}
 .map-refresh-btn:active{transform:translateX(-50%) scale(.97);}
 .map-refresh-btn svg{width:15px;height:15px;color:var(--green);flex-shrink:0;}
 
@@ -414,18 +358,7 @@ html,body{
 
 /* ── PRIZES ── */
 .prizes-header-note{padding:11px 15px;background:linear-gradient(135deg,var(--green-lt),#D1FAF0);border-bottom:1px solid rgba(0,196,140,.2);font-size:12px;font-weight:600;color:var(--green-dk);display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.prizes-coming-soon{
-  margin:13px 15px 0;
-  background:linear-gradient(135deg,#FFFBEB,#FEF3C7);
-  border:1px solid #FDE68A;
-  border-radius:var(--radius-lg);
-  padding:14px 16px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-shrink:0;
-  box-shadow:var(--shadow-sm);
-}
+.prizes-coming-soon{margin:13px 15px 0;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1px solid #FDE68A;border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:var(--shadow-sm);}
 .prizes-coming-soon-emoji{font-size:26px;flex-shrink:0;}
 .prizes-coming-soon-title{font-size:13.5px;font-weight:800;color:#92400E;}
 .prizes-coming-soon-sub{font-size:12px;color:#92400E;opacity:.85;margin-top:2px;}
@@ -502,20 +435,11 @@ html,body{
 
 /* ── INSTALL PROMPT ── */
 .install-banner{
-  position:absolute;
-  top:68px;
-  left:14px;
-  z-index:999;
-  background:rgba(15,23,42,.92);
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:14px;
-  padding:10px 12px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  box-shadow:var(--shadow-lg);
-  max-width:260px;
+  position:absolute;top:68px;left:14px;z-index:999;
+  background:rgba(15,23,42,.92);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);border-radius:14px;
+  padding:10px 12px;display:flex;align-items:center;gap:10px;
+  box-shadow:var(--shadow-lg);max-width:260px;
   animation:adSlideIn .5s cubic-bezier(.34,1.56,.64,1);
 }
 .install-banner img{width:34px;height:34px;border-radius:9px;flex-shrink:0;}
@@ -527,18 +451,11 @@ html,body{
 
 /* ── PICK-FROM-MAP OVERLAY ── */
 .pick-mode-banner{
-  position:absolute;
-  top:68px;left:50%;transform:translateX(-50%);
-  z-index:997;
-  background:linear-gradient(135deg,#1E293B,#0F172A);
-  border:1.5px solid var(--green);
-  border-radius:99px;
-  padding:9px 20px;
-  font-size:12.5px;font-weight:800;color:#fff;
+  position:absolute;top:68px;left:50%;transform:translateX(-50%);z-index:997;
+  background:linear-gradient(135deg,#1E293B,#0F172A);border:1.5px solid var(--green);border-radius:99px;
+  padding:9px 20px;font-size:12.5px;font-weight:800;color:#fff;
   display:none;align-items:center;gap:8px;
-  box-shadow:0 6px 24px rgba(0,196,140,.25);
-  white-space:nowrap;
-  pointer-events:none;
+  box-shadow:0 6px 24px rgba(0,196,140,.25);white-space:nowrap;pointer-events:none;
   animation:adSlideIn .3s cubic-bezier(.34,1.56,.64,1);
 }
 .pick-mode-banner.show{display:flex;}
@@ -546,35 +463,13 @@ html,body{
 
 @keyframes adSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── SEARCH RESULT POPUP BADGE ── */
-.search-result-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  background:linear-gradient(135deg,#6366F1,#4F46E5);
-  color:#fff;
-  font-size:10px;font-weight:800;
-  padding:3px 9px;
-  border-radius:99px;
-  letter-spacing:.3px;
-  text-transform:uppercase;
-  margin-bottom:10px;
-}
-
 /* ── MOBILE ── */
 @media(max-width:680px){
-  .topbar{
-    flex-wrap:nowrap;
-    height:auto;
-    padding: max(var(--sat), 10px) 12px 10px;
-    align-items:center;
-    gap:8px;
-  }
+  .topbar{flex-wrap:nowrap;height:auto;padding: max(var(--sat), 10px) 12px 10px;align-items:center;gap:8px;}
   .brand{flex-shrink:0;}
   .brand-mark{width:120px;height:35px;}
   .brand-powered{display:none;}
-  .topbar-auth{
-    margin-left:auto;
-    flex-shrink:0;
-  }
+  .topbar-auth{margin-left:auto;flex-shrink:0;}
   .user-chip{padding:4px 10px 4px 4px;gap:7px;}
   .avatar{width:28px;height:28px;font-size:10px;}
   .user-chip-info{min-width:0;}
@@ -585,139 +480,48 @@ html,body{
   .leaflet-control-zoom{margin:0 12px calc(92px + var(--sab)) 0 !important;}
   .map-search-wrap{left:14px;right:14px;}
   .map-float-controls{top:14px;right:14px;}
-  /* Evita el zoom automático de iOS/Android al hacer foco en el buscador */
   .map-search-input{font-size:16px;}
-  /* Refresh button en mobile: ajustar bottom */
-  .map-refresh-btn{
-    bottom: calc(72px + max(16px, calc(var(--sab) + 10px)));
-  }
+  .map-refresh-btn{bottom: calc(72px + max(16px, calc(var(--sab) + 10px)));}
 }
+
 /* ── CHECK-IN MODAL ── */
-.checkin-overlay{
-  position:fixed;inset:0;
-  background:rgba(15,23,42,.55);
-  backdrop-filter:blur(5px);
-  -webkit-backdrop-filter:blur(5px);
-  z-index:5000;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  padding: 0 0 max(var(--sab), 20px);
-  animation:fadeIn .22s ease;
-}
-.checkin-card{
-  width:100%;
-  max-width:480px;
-  background:var(--surface);
-  border-radius:24px 24px 20px 20px;
-  overflow:hidden;
-  box-shadow:var(--shadow-lg);
-  animation:checkinSlideUp .38s cubic-bezier(.34,1.56,.64,1);
-}
+.checkin-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:5000;display:flex;align-items:flex-end;justify-content:center;padding: 0 0 max(var(--sab), 20px);animation:fadeIn .22s ease;}
+.checkin-card{width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 20px 20px;overflow:hidden;box-shadow:var(--shadow-lg);animation:checkinSlideUp .38s cubic-bezier(.34,1.56,.64,1);}
 @keyframes checkinSlideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-.checkin-header{
-  padding:20px 20px 14px;
-  background: #fff;
-  border-bottom:1px solid rgba(0,196,140,.15);
-  text-align:center;
-  color: white;
-}
+.checkin-header{padding:20px 20px 14px;background:#fff;border-bottom:1px solid rgba(0,196,140,.15);text-align:center;color:white;}
 .checkin-header-emoji{font-size:26px;margin-bottom:6px;}
 .checkin-header-title{font-size:15.5px;font-weight:900;color:var(--text);letter-spacing:-.3px;}
 .checkin-header-sub{font-size:12px;color:var(--text2);margin-top:3px;}
 .checkin-body{padding:16px 16px 20px;}
 .checkin-tabs{display:flex;gap:8px;margin-bottom:14px;}
-.checkin-tab{
-  flex:1;
-  min-width:0;
-  background:var(--surface);
-  border:2px solid var(--border);
-  border-radius:16px;
-  padding:12px 8px 11px;
-  cursor:pointer;
-  text-align:center;
-  transition:all .2s cubic-bezier(.34,1.56,.64,1);
-  font-family:inherit;
-  position:relative;
-  overflow:hidden;
-}
-.checkin-tab::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,var(--green),var(--green-dk));
-  opacity:0;transition:opacity .18s;
-  border-radius:14px;
-}
+.checkin-tab{flex:1;min-width:0;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:12px 8px 11px;cursor:pointer;text-align:center;transition:all .2s cubic-bezier(.34,1.56,.64,1);font-family:inherit;position:relative;overflow:hidden;}
+.checkin-tab::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--green),var(--green-dk));opacity:0;transition:opacity .18s;border-radius:14px;}
 .checkin-tab:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,196,140,.2);}
 .checkin-tab:hover::before{opacity:.06;}
 .checkin-tab.near{border-color:rgba(0,196,140,.4);background:linear-gradient(160deg,#fff,#f0fdf9);}
 .checkin-tab-logo{font-size:22px;line-height:1;position:relative;z-index:1;}
-.checkin-tab-name{
-  font-size:11px;font-weight:800;color:var(--text);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  margin-top:5px;line-height:1.2;position:relative;z-index:1;
-}
-.checkin-tab-dist{
-  font-size:10px;font-weight:700;color:var(--green-dk);
-  margin-top:3px;position:relative;z-index:1;
-}
+.checkin-tab-name{font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px;line-height:1.2;position:relative;z-index:1;}
+.checkin-tab-dist{font-size:10px;font-weight:700;color:var(--green-dk);margin-top:3px;position:relative;z-index:1;}
 .checkin-tab.far .checkin-tab-dist{color:var(--text3);}
 .checkin-tab.far{opacity:.75;}
-.checkin-tab.other-tab{
-  border-style:dashed;
-  border-color:var(--border2);
-  background:var(--surface2);
-}
+.checkin-tab.other-tab{border-style:dashed;border-color:var(--border2);background:var(--surface2);}
 .checkin-tab.other-tab:hover{border-color:var(--blue);background:var(--blue-lt);}
 .checkin-tab.other-tab .checkin-tab-dist{color:var(--text3);}
-.checkin-skip-main{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  width:100%;
-  background:var(--surface2);
-  border:1.5px solid var(--border2);
-  border-radius:14px;
-  padding:13px 18px;
-  font-size:13.5px;
-  font-weight:800;
-  color:var(--text2);
-  cursor:pointer;
-  font-family:inherit;
-  transition:all .2s cubic-bezier(.34,1.56,.64,1);
-  letter-spacing:-.1px;
-  margin-top:2px;
-}
-.checkin-skip-main:hover{
-  background:#fff;
-  border-color:var(--text2);
-  color:var(--text);
-  transform:translateY(-1px);
-  box-shadow:0 4px 12px rgba(15,23,42,.1);
-}
-.checkin-skip-hint{
-  text-align:center;
-  font-size:11px;
-  color:var(--text3);
-  margin-top:8px;
-  font-weight:500;
-}
+.checkin-skip-main{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;padding:13px 18px;font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .2s cubic-bezier(.34,1.56,.64,1);letter-spacing:-.1px;margin-top:2px;}
+.checkin-skip-main:hover{background:#fff;border-color:var(--text2);color:var(--text);transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.1);}
+.checkin-skip-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:8px;font-weight:500;}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="topbar">
-    <!-- LOGO -->
     <a class="brand" href="javascript:void(0)" onclick="window.location.reload()" title="Ir al inicio">
       <div class="brand-mark">
         <img src="logo.png" alt="Qooentum" width="150" height="43">
       </div>
       <span class="brand-powered">powered by <strong>Bigdaat.com</strong></span>
     </a>
-
-    <!-- AUTH: derecha en desktop, segunda fila en mobile -->
     <div class="topbar-auth">
-      <!-- USER CHIP con dropdown logout -->
       <div class="user-chip-wrap" id="user-chip-wrap" style="display:none;">
         <div class="user-chip" id="user-chip" onclick="toggleUserDropdown()">
           <div class="avatar" id="topbar-avatar">YO</div>
@@ -733,9 +537,7 @@ html,body{
         <div class="user-dropdown" id="user-dropdown">
           <button class="user-dropdown-item" onclick="doLogout()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
             Cerrar sesión
           </button>
@@ -753,18 +555,22 @@ html,body{
     <div class="map-pane">
       <div id="leaflet-map"></div>
 
-      <!-- BUSCADOR FLOTANTE — ancho completo, GPS a la derecha inline -->
       <div class="map-search-wrap" id="map-search-wrap">
         <div class="map-search-bar">
           <svg class="map-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input class="map-search-input" id="map-search-input" type="text" placeholder="Buscar lugar por nombre y dirección para ver cuánta gente hay" autocomplete="off" spellcheck="false">
           <button class="map-search-clear" id="map-search-clear" onclick="clearSearch()">✕</button>
-          <!-- GPS integrado dentro del buscador -->
-          <div class="gps-float-btn" id="gps-btn" onclick="requestGpsPermission()" title="Centrar en mi ubicación" style="width:34px;height:34px;border-radius:9px;flex-shrink:0;box-shadow:none;border-color:var(--border);">
+          <div class="gps-float-btn" id="gps-btn" onclick="onGpsBtnClick()" title="Centrar / seguir mi ubicación" style="width:34px;height:34px;border-radius:9px;flex-shrink:0;box-shadow:none;border-color:var(--border);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-dasharray="2 3"/></svg>
           </div>
         </div>
         <div class="search-results-dropdown" id="search-results-dropdown"></div>
+      </div>
+
+      <!-- Pill que indica "siguiendo tu posición" -->
+      <div class="follow-pill" id="follow-pill">
+        <div class="follow-dot"></div>
+        Siguiendo tu posición
       </div>
 
       <div class="pick-mode-banner" id="pick-mode-banner">
@@ -772,7 +578,6 @@ html,body{
         Tocá el comercio donde estás
       </div>
 
-      <!-- REFRESH BUTTON — flotante centrado arriba del nav -->
       <button class="map-refresh-btn" id="map-refresh-btn" onclick="manualRefresh()" title="Actualizar comercios visibles">
         <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Actualizar
@@ -786,17 +591,6 @@ html,body{
         </div>
         <button class="install-banner-btn" onclick="installPwa()">Instalar</button>
         <button class="install-banner-close" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
-      </div>
-
-      <div class="ad-banner" id="ad-banner" style="display:none">
-        <div class="ad-label">Publicidad</div>
-        <div class="ad-logo">🍕</div>
-        <div class="ad-body">
-          <div class="ad-title">App creada por bigdaat.com</div>
-          <div class="ad-sub">30% OFF va en este box</div>
-        </div>
-        <button class="ad-cta" onclick="showToast('🎉 Cupón copiado: Qooentum30');event.stopPropagation()">Ver oferta</button>
-        <button class="ad-close" onclick="document.getElementById('ad-banner').style.display='none';event.stopPropagation()">✕</button>
       </div>
     </div>
     <nav class="bottom-nav" id="bottom-nav">
@@ -874,11 +668,23 @@ const CONFIG = {
   NEARBY_RADIUS_M: 30,
   REPORT_RADIUS_M: 10,
   GPS_ZOOM: 19,
-  MAX_MOVE_FROM_USER_M: 200,
   CHECKIN_RADIUS_M: 150,
   CHECKIN_NEAR_M: 50,
-  OVERPASS_RADIUS_M: 250,
+  // ── BBOX / CACHE ──
+  // Tamaño del tile de caché en grados (~250m a lat -34)
+  TILE_DEG: 0.0025,
+  // Radio extra alrededor del tile para la bbox de Overpass
+  BBOX_PAD: 0.0012,
+  // Caché válida por 24h (en ms)
+  PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
+  // Distancia mínima de movimiento para cargar nuevos lugares (metros)
+  LOAD_TRIGGER_M: 40,
   VOTE_COOLDOWN_MS: 8 * 60 * 60 * 1000,
+  // ── FOLLOW MODE ──
+  // Distancia mínima de movimiento del usuario antes de mover el mapa (metros)
+  FOLLOW_MIN_MOVE_M: 5,
+  // Zoom usado al activar follow mode
+  FOLLOW_ZOOM: 19,
 };
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
@@ -886,6 +692,8 @@ const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
 const SESSION_STORAGE_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
 const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
+/* ── Caché de lugares en localStorage ── */
+const PLACE_CACHE_KEY = 'qooentum_place_cache_v2'; // v2 = bbox format
 
 /* ─────────────── DATA ─────────────── */
 const STATUS_CFG = [
@@ -902,45 +710,45 @@ const LEVEL_TITLES = ['Novato','Explorador','Cazador de Filas','Maestro del Mapa
 const XP_PER_LEVEL = 150;
 
 const OSM_TYPE_MAP = {
-  supermarket:  {emoji:'🛒', tipo:'Supermercado'},
-  convenience:  {emoji:'🏪', tipo:'Almacén'},
-  pharmacy:     {emoji:'💊', tipo:'Farmacia'},
-  bank:         {emoji:'🏦', tipo:'Banco / Cajeros'},
-  atm:          {emoji:'🏧', tipo:'Cajero automático'},
-  post_office:  {emoji:'📮', tipo:'Correo'},
-  fast_food:    {emoji:'🍔', tipo:'Comida rápida'},
-  restaurant:   {emoji:'🍽️', tipo:'Restaurante'},
-  cafe:         {emoji:'☕', tipo:'Cafetería'},
-  bakery:       {emoji:'🥖', tipo:'Panadería'},
-  butcher:      {emoji:'🥩', tipo:'Carnicería'},
-  hospital:     {emoji:'🏥', tipo:'Hospital'},
-  clinic:       {emoji:'🏥', tipo:'Clínica'},
-  doctors:      {emoji:'👨‍⚕️', tipo:'Consultorio'},
-  dentist:      {emoji:'🦷', tipo:'Odontólogo'},
-  government:   {emoji:'🏛️', tipo:'Oficina pública'},
-  townhall:     {emoji:'🏛️', tipo:'Municipalidad'},
-  fuel:         {emoji:'⛽', tipo:'Estación de servicio'},
-  laundry:      {emoji:'👕', tipo:'Lavandería'},
-  dry_cleaning: {emoji:'👔', tipo:'Tintorería'},
-  hardware:     {emoji:'🔧', tipo:'Ferretería'},
-  clothes:      {emoji:'👗', tipo:'Ropa'},
-  shoes:        {emoji:'👟', tipo:'Calzado'},
-  electronics:  {emoji:'📱', tipo:'Electrónica'},
-  optician:     {emoji:'👓', tipo:'Óptica'},
-  beauty:       {emoji:'💄', tipo:'Estética'},
-  hairdresser:  {emoji:'💇', tipo:'Peluquería'},
-  gym:          {emoji:'🏋️', tipo:'Gimnasio'},
-  veterinary:   {emoji:'🐾', tipo:'Veterinaria'},
-  marketplace:  {emoji:'🛍️', tipo:'Mercado'},
-  kiosk:        {emoji:'📰', tipo:'Kiosco'},
-  newsagent:    {emoji:'📰', tipo:'Kiosco'},
-  greengrocer:  {emoji:'🥦', tipo:'Verdulería'},
-  florist:      {emoji:'💐', tipo:'Florería'},
-  car_wash:     {emoji:'🚗', tipo:'Lavadero'},
-  toy:          {emoji:'🧸', tipo:'Juguetería'},
-  sports:       {emoji:'⚽', tipo:'Artículos deportivos'},
-  stationery:   {emoji:'📚', tipo:'Librería'},
-  general:      {emoji:'🏪', tipo:'Comercio general'},
+  supermarket:{emoji:'🛒',tipo:'Supermercado'},
+  convenience:{emoji:'🏪',tipo:'Almacén'},
+  pharmacy:{emoji:'💊',tipo:'Farmacia'},
+  bank:{emoji:'🏦',tipo:'Banco / Cajeros'},
+  atm:{emoji:'🏧',tipo:'Cajero automático'},
+  post_office:{emoji:'📮',tipo:'Correo'},
+  fast_food:{emoji:'🍔',tipo:'Comida rápida'},
+  restaurant:{emoji:'🍽️',tipo:'Restaurante'},
+  cafe:{emoji:'☕',tipo:'Cafetería'},
+  bakery:{emoji:'🥖',tipo:'Panadería'},
+  butcher:{emoji:'🥩',tipo:'Carnicería'},
+  hospital:{emoji:'🏥',tipo:'Hospital'},
+  clinic:{emoji:'🏥',tipo:'Clínica'},
+  doctors:{emoji:'👨‍⚕️',tipo:'Consultorio'},
+  dentist:{emoji:'🦷',tipo:'Odontólogo'},
+  government:{emoji:'🏛️',tipo:'Oficina pública'},
+  townhall:{emoji:'🏛️',tipo:'Municipalidad'},
+  fuel:{emoji:'⛽',tipo:'Estación de servicio'},
+  laundry:{emoji:'👕',tipo:'Lavandería'},
+  dry_cleaning:{emoji:'👔',tipo:'Tintorería'},
+  hardware:{emoji:'🔧',tipo:'Ferretería'},
+  clothes:{emoji:'👗',tipo:'Ropa'},
+  shoes:{emoji:'👟',tipo:'Calzado'},
+  electronics:{emoji:'📱',tipo:'Electrónica'},
+  optician:{emoji:'👓',tipo:'Óptica'},
+  beauty:{emoji:'💄',tipo:'Estética'},
+  hairdresser:{emoji:'💇',tipo:'Peluquería'},
+  gym:{emoji:'🏋️',tipo:'Gimnasio'},
+  veterinary:{emoji:'🐾',tipo:'Veterinaria'},
+  marketplace:{emoji:'🛍️',tipo:'Mercado'},
+  kiosk:{emoji:'📰',tipo:'Kiosco'},
+  newsagent:{emoji:'📰',tipo:'Kiosco'},
+  greengrocer:{emoji:'🥦',tipo:'Verdulería'},
+  florist:{emoji:'💐',tipo:'Florería'},
+  car_wash:{emoji:'🚗',tipo:'Lavadero'},
+  toy:{emoji:'🧸',tipo:'Juguetería'},
+  sports:{emoji:'⚽',tipo:'Artículos deportivos'},
+  stationery:{emoji:'📚',tipo:'Librería'},
+  general:{emoji:'🏪',tipo:'Comercio general'},
 };
 
 const SEED_PRIZES = [
@@ -957,7 +765,7 @@ const SEED_PRIZES = [
 /* ─────────────── STATE ─────────────── */
 let userPts = 0;
 let currentUser = null;
-let places = [];
+let places = [];         // todos los lugares en memoria
 let nearbyPlaces = [];
 let rankingData = [];
 let prizesData = SEED_PRIZES.map(p=>({...p}));
@@ -967,20 +775,131 @@ let voteCount = 0;
 let pendingVote = null;
 let placeCooldowns = {};
 let gpsWatchId = null;
-let lastLoadedLat = null;
-let lastLoadedLng = null;
 let userMarker = null;
-let mapBoundsCircle = null;
-
+let mapInitialLoaded = false;
 let userLat = null, userLng = null;
 let checkinShown = false;
 let pickModeActive = false;
-let mapInitialLoaded = false;
-
-/* ─────────────── SEARCH STATE ─────────────── */
 let searchTimer = null;
-let searchAbort = null;
 let searchQuery = '';
+
+/* ── CACHÉ TILES ──
+   Guardamos qué tiles (celdas de cuadrícula) ya fueron pedidos a Overpass.
+   Clave: "lat_tile:lng_tile" → { ts: timestamp, placeIds: [id, ...] }
+   Los place objects van en `places` (memoria) y también en localStorage por place_id.
+*/
+let tileCache = {};      // en memoria (reconstruido al iniciar)
+let placeStore = {};     // id → place object (en memoria; flush selectivo a LS)
+
+/* ── FOLLOW MODE ── */
+let followMode = false;  // true = el mapa sigue al usuario automáticamente
+let lastFollowLat = null, lastFollowLng = null;
+
+/* ════════════════════════════════════════════════════════════
+   CACHÉ — localStorage helpers
+   ════════════════════════════════════════════════════════════ */
+
+/** Convierte lat/lng a tile key usando la cuadrícula de CONFIG.TILE_DEG */
+function latLngToTileKey(lat, lng) {
+  const tLat = Math.floor(lat / CONFIG.TILE_DEG);
+  const tLng = Math.floor(lng / CONFIG.TILE_DEG);
+  return `${tLat}:${tLng}`;
+}
+
+/** Guarda el estado completo de caché en localStorage */
+function persistCache() {
+  try {
+    const payload = {
+      tiles: tileCache,
+      places: placeStore,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify(payload));
+  } catch(e) {
+    // localStorage lleno → limpiar tiles viejos y reintentar
+    pruneOldTiles();
+    try {
+      localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify({ tiles: tileCache, places: placeStore, savedAt: Date.now() }));
+    } catch(e2) { console.warn('Cache persist failed:', e2); }
+  }
+}
+
+/** Carga la caché desde localStorage al iniciar */
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(PLACE_CACHE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data || !data.tiles) return;
+    tileCache = data.tiles || {};
+    placeStore = data.places || {};
+    // Reconstruir places[] en memoria desde placeStore
+    Object.values(placeStore).forEach(p => {
+      if (!places.find(x => x.id === p.id)) places.push(p);
+    });
+  } catch(e) { console.warn('Cache load failed:', e); }
+}
+
+/** Elimina tiles cuyo timestamp superó el TTL */
+function pruneOldTiles() {
+  const now = Date.now();
+  Object.keys(tileCache).forEach(key => {
+    if (now - tileCache[key].ts > CONFIG.PLACE_CACHE_TTL_MS) {
+      delete tileCache[key];
+    }
+  });
+  // También limpiar placeStore de places que no están referenciados por ningún tile
+  const allIds = new Set();
+  Object.values(tileCache).forEach(t => (t.placeIds || []).forEach(id => allIds.add(id)));
+  Object.keys(placeStore).forEach(id => { if (!allIds.has(id)) delete placeStore[id]; });
+}
+
+/** Marca un tile como cargado con los ids resultantes */
+function markTileLoaded(tileKey, ids) {
+  tileCache[tileKey] = { ts: Date.now(), placeIds: ids };
+}
+
+/** Devuelve true si un tile está en caché y vigente */
+function isTileCached(tileKey) {
+  const t = tileCache[tileKey];
+  if (!t) return false;
+  return (Date.now() - t.ts) < CONFIG.PLACE_CACHE_TTL_MS;
+}
+
+/** Obtiene las 4 tiles que cubre una posición lat/lng (+ adyacentes para borde) */
+function getRelevantTileKeys(lat, lng) {
+  // El usuario puede estar justo en el borde de un tile → cargamos el tile actual
+  // y sus 3 vecinos si son necesarios (lazy: solo el actual en primera carga)
+  return [latLngToTileKey(lat, lng)];
+}
+
+/** Fusiona places nuevos en memoria y placeStore */
+function mergePlacesIntoCache(newPlaces, tileKey) {
+  const addedIds = [];
+  newPlaces.forEach(p => {
+    placeStore[p.id] = p;
+    addedIds.push(p.id);
+    if (!places.find(x => x.id === p.id)) places.push(p);
+  });
+  if (tileKey) markTileLoaded(tileKey, addedIds);
+}
+
+/* ════════════════════════════════════════════════════════════
+   BBOX helpers
+   ════════════════════════════════════════════════════════════ */
+
+/**
+ * Dado un tile key, devuelve la bbox [minLat, minLng, maxLat, maxLng]
+ * expandida con BBOX_PAD para capturar comercios justo en el borde.
+ */
+function tileToBbox(tileKey) {
+  const [tLat, tLng] = tileKey.split(':').map(Number);
+  const minLat = tLat * CONFIG.TILE_DEG - CONFIG.BBOX_PAD;
+  const minLng = tLng * CONFIG.TILE_DEG - CONFIG.BBOX_PAD;
+  const maxLat = (tLat + 1) * CONFIG.TILE_DEG + CONFIG.BBOX_PAD;
+  const maxLng = (tLng + 1) * CONFIG.TILE_DEG + CONFIG.BBOX_PAD;
+  return [minLat, minLng, maxLat, maxLng];
+}
 
 /* ════════════════════════════════════════════════════════════
    COOLDOWN
@@ -1014,9 +933,7 @@ function applyPlaceCooldown(pid, isoOrMs) {
   if (!pid) return;
   if (isoOrMs) {
     placeCooldowns[pid] = typeof isoOrMs === 'number' ? new Date(isoOrMs) : new Date(isoOrMs);
-  } else {
-    delete placeCooldowns[pid];
-  }
+  } else { delete placeCooldowns[pid]; }
   saveCooldownsToStorage();
 }
 
@@ -1102,7 +1019,9 @@ async function apiPostVote(payload) {
   } catch (err) { console.warn('apiPost falló: vote', err); return { ok: false, network: false, result: null }; }
 }
 
-/* ─────────────── OVERPASS API ─────────────── */
+/* ════════════════════════════════════════════════════════════
+   OVERPASS API — con bbox + caché de tiles
+   ════════════════════════════════════════════════════════════ */
 function osmNodeToPlace(node) {
   const tags = node.tags || {};
   const key = tags.amenity || tags.shop || tags.office || 'general';
@@ -1111,32 +1030,44 @@ function osmNodeToPlace(node) {
   const addr = [tags['addr:street'], tags['addr:housenumber']].filter(Boolean).join(' ') || 'Sin dirección';
   return {
     id: `osm_${node.id}`,
-    name,
-    type: info.tipo,
-    logo: info.emoji,
-    lat: node.lat,
-    lng: node.lon,
-    addr,
-    status: 0,
-    reporters: 0,
+    name, type: info.tipo, logo: info.emoji,
+    lat: node.lat, lng: node.lon, addr,
+    status: 0, reporters: 0,
     rating: (3.5 + Math.random() * 1.4).toFixed(1),
     reviewsN: Math.floor(Math.random() * 200 + 10),
-    open: true,
-    verified: false,
-    fromOSM: true,
+    open: true, verified: false, fromOSM: true,
   };
 }
 
-async function loadOverpassPlaces(lat, lng, radius) {
-  radius = radius || CONFIG.OVERPASS_RADIUS_M;
-  const query = `
-    [out:json][timeout:12];
-    (
-      node["amenity"~"^(supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|fuel|marketplace)$"](around:${radius},${lat},${lng});
-      node["shop"~"^(supermarket|convenience|pharmacy|bakery|butcher|laundry|dry_cleaning|hardware|clothes|shoes|electronics|optician|beauty|hairdresser|toy|sports|stationery|greengrocer|florist|newsagent|kiosk|general)$"](around:${radius},${lat},${lng});
-    );
-    out body;
-  `.trim();
+/**
+ * Pide a Overpass solo los tiles que no están en caché.
+ * Usa bbox en lugar de `around:` → más eficiente y cacheable.
+ */
+async function loadOverpassForTiles(tileKeys) {
+  if (!tileKeys.length) return [];
+
+  // Una única query con union de bboxes — Overpass lo maneja bien
+  const bboxClauses = tileKeys.map(key => {
+    const [s, w, n, e] = tileToBbox(key);
+    return `(${s},${w},${n},${e})`;
+  });
+  const bboxUnion = bboxClauses.join('');
+
+  // Construimos la query con bbox por cada tile (union)
+  // Overpass admite múltiples filtros en el mismo statement
+  const amenityFilter = 'supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|fuel|marketplace';
+  const shopFilter    = 'supermarket|convenience|pharmacy|bakery|butcher|laundry|dry_cleaning|hardware|clothes|shoes|electronics|optician|beauty|hairdresser|toy|sports|stationery|greengrocer|florist|newsagent|kiosk|general';
+
+  // Generamos bloques por tile para mantener el scope separado
+  const blocks = tileKeys.map(key => {
+    const [s, w, n, e] = tileToBbox(key);
+    return `
+      node["amenity"~"^(${amenityFilter})$"](${s},${w},${n},${e});
+      node["shop"~"^(${shopFilter})$"](${s},${w},${n},${e});`;
+  }).join('');
+
+  const query = `[out:json][timeout:15];(${blocks});out body;`.trim();
+
   try {
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
@@ -1154,14 +1085,131 @@ async function loadOverpassPlaces(lat, lng, radius) {
   }
 }
 
+/**
+ * Punto de entrada principal para cargar lugares.
+ * - Detecta qué tiles necesita para lat/lng
+ * - Omite tiles ya en caché
+ * - Pide a Overpass solo los faltantes
+ * - Fusiona resultados con backend
+ */
+async function ensurePlacesLoadedAt(lat, lng) {
+  const tileKey = latLngToTileKey(lat, lng);
+
+  // Tiles adyacentes (para que al acercarse al borde ya estén listos)
+  const adjacentKeys = getAdjacentTileKeys(lat, lng);
+  const allKeys = [tileKey, ...adjacentKeys];
+
+  const missingKeys = allKeys.filter(k => !isTileCached(k));
+
+  if (missingKeys.length === 0) {
+    // Todo en caché: solo actualizar el estado del backend (ligero)
+    await syncBackendStatus(lat, lng);
+    rebuildNearby(lat, lng);
+    buildMapMarkers(nearbyPlaces);
+    updateCrowdBar(calcCrowdPct());
+    return;
+  }
+
+  // Pedir Overpass y backend en paralelo para los tiles que faltan
+  const [osmPlaces, backendResult] = await Promise.all([
+    loadOverpassForTiles(missingKeys),
+    BACKEND_READY
+      ? apiGet('sync_places', { lat, lng, radius: Math.round(CONFIG.TILE_DEG * 111320 * 1.5) })
+      : Promise.resolve(null),
+  ]);
+
+  // Integrar backend places (tienen estado real: reportes, status)
+  const backendPlaces = (backendResult && Array.isArray(backendResult.places))
+    ? backendResult.places : [];
+
+  // Los backend sobreescriben el OSM si tienen el mismo id (tienen datos vivos)
+  const backendById = {};
+  backendPlaces.forEach(p => { backendById[p.id] = p; });
+
+  const merged = osmPlaces.map(p => backendById[p.id] ? { ...p, ...backendById[p.id] } : p);
+  const onlyBackend = backendPlaces.filter(p => !osmPlaces.find(o => o.id === p.id));
+  const allNew = [...merged, ...onlyBackend];
+
+  // Guardar en caché por tile
+  missingKeys.forEach(key => {
+    const [s, w, n, e] = tileToBbox(key);
+    const forThisTile = allNew.filter(p => p.lat >= s && p.lat <= n && p.lng >= w && p.lng <= e);
+    mergePlacesIntoCache(forThisTile, key);
+  });
+
+  persistCache(); // flush a localStorage
+
+  if (!mapInitialLoaded) {
+    mapInitialLoaded = true;
+    // Primera carga: mostrar checkin si corresponde
+    rebuildNearby(lat, lng);
+    buildMapMarkers(nearbyPlaces);
+    updateCrowdBar(calcCrowdPct());
+    if (!checkinShown && nearbyPlaces.length > 0) {
+      checkinShown = true;
+      setTimeout(() => showCheckinModal(lat, lng), 800);
+    }
+  } else {
+    rebuildNearby(lat, lng);
+    buildMapMarkers(nearbyPlaces);
+    updateCrowdBar(calcCrowdPct());
+  }
+}
+
+/** Solo refresca el estado (reporters/status) desde backend, sin re-pedir OSM */
+async function syncBackendStatus(lat, lng) {
+  if (!BACKEND_READY) return;
+  const result = await apiGet('sync_places', { lat, lng, radius: 300, status_only: 1 });
+  if (!result || !Array.isArray(result.places)) return;
+  result.places.forEach(bp => {
+    const p = places.find(x => x.id === bp.id);
+    if (p) {
+      p.status = bp.status ?? p.status;
+      p.reporters = bp.reporters ?? p.reporters;
+      placeStore[p.id] = p;
+    }
+  });
+  // Persistir cambios de estado (sin recrear tiles)
+  persistCache();
+}
+
+/** Calcula los 8 tiles adyacentes — solo los 2 más cercanos al usuario */
+function getAdjacentTileKeys(lat, lng) {
+  const d = CONFIG.TILE_DEG;
+  // Posición relativa dentro del tile (0..1)
+  const relLat = (lat / d) - Math.floor(lat / d);
+  const relLng = (lng / d) - Math.floor(lng / d);
+  const keys = [];
+  // Si estamos en el 30% inferior del tile, precargar el tile de abajo
+  if (relLat < 0.3) keys.push(latLngToTileKey(lat - d, lng));
+  // Si estamos en el 70% superior, precargar el de arriba
+  if (relLat > 0.7) keys.push(latLngToTileKey(lat + d, lng));
+  // Igual para longitud
+  if (relLng < 0.3) keys.push(latLngToTileKey(lat, lng - d));
+  if (relLng > 0.7) keys.push(latLngToTileKey(lat, lng + d));
+  return keys;
+}
+
+function rebuildNearby(lat, lng) {
+  nearbyPlaces = places.filter(p =>
+    distanceMeter(lat, lng, p.lat, p.lng) <= (CONFIG.TILE_DEG * 111320 * 1.2)
+  );
+}
+
+function mergePlacesLegacy(backendPlaces, osmPlaces) {
+  const ids = new Set(backendPlaces.map(p => p.id));
+  const nameCoords = new Set(backendPlaces.map(p => p.name.toLowerCase().trim()));
+  const fresh = osmPlaces.filter(p => !ids.has(p.id) && !nameCoords.has(p.name.toLowerCase().trim()));
+  return [...backendPlaces, ...fresh];
+}
+
+/* ─────────────── SEARCH ─────────────── */
 async function searchPlacesByQuery(query) {
   if (!query || query.length < 2) return [];
-
   const q = query.toLowerCase();
   const localMatches = places.filter(p =>
     p.name.toLowerCase().includes(q) || p.addr.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)
   ).slice(0, 5);
-
   if (localMatches.length >= 3) return localMatches;
 
   try {
@@ -1169,60 +1217,32 @@ async function searchPlacesByQuery(query) {
     const viewboxLng = userLng || CONFIG.DEFAULT_CENTER.lng;
     const delta = 0.05;
     const viewbox = `${viewboxLng-delta},${viewboxLat-delta},${viewboxLng+delta},${viewboxLat+delta}`;
-
-    const url = `https://nominatim.openstreetmap.org/search?` +
-      `q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1` +
-      `&bounded=0&viewbox=${viewbox}&countrycodes=ar` +
-      `&dedupe=1`;
-
-    const res = await fetch(url, {
-      headers: { 'Accept-Language': 'es', 'User-Agent': 'Qooentum/1.0' }
-    });
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1&bounded=0&viewbox=${viewbox}&countrycodes=ar&dedupe=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'es', 'User-Agent': 'Qooentum/1.0' } });
     if (!res.ok) throw new Error('Nominatim error');
     const data = await res.json();
-
-    const relevant = data.filter(r => {
-      return !['highway', 'boundary', 'landuse', 'natural', 'water'].includes(r.class);
-    });
-
+    const relevant = data.filter(r => !['highway','boundary','landuse','natural','water'].includes(r.class));
     return relevant.map(r => {
       const osmId = `osm_${r.osm_type}_${r.osm_id}`;
       const existing = places.find(p => p.id === osmId || (Math.abs(p.lat - parseFloat(r.lat)) < 0.0002 && Math.abs(p.lng - parseFloat(r.lon)) < 0.0002));
       if (existing) return existing;
-
       const key = r.type || r.class || 'general';
       const info = OSM_TYPE_MAP[key] || { emoji: '🏪', tipo: r.type || 'Lugar' };
       const addr = r.display_name.split(',').slice(0,3).join(', ');
       return {
-        id: osmId,
-        name: r.name || r.display_name.split(',')[0],
-        type: info.tipo,
-        logo: info.emoji,
-        lat: parseFloat(r.lat),
-        lng: parseFloat(r.lon),
-        addr,
-        status: 0,
-        reporters: 0,
+        id: osmId, name: r.name || r.display_name.split(',')[0],
+        type: info.tipo, logo: info.emoji,
+        lat: parseFloat(r.lat), lng: parseFloat(r.lon), addr,
+        status: 0, reporters: 0,
         rating: (3.5 + Math.random() * 1.2).toFixed(1),
         reviewsN: Math.floor(Math.random() * 80 + 5),
-        open: true,
-        verified: false,
-        fromOSM: true,
-        fromSearch: true,
+        open: true, verified: false, fromOSM: true, fromSearch: true,
       };
     }).slice(0, 6);
-
   } catch(e) {
     console.warn('Search falló:', e);
     return localMatches;
   }
-}
-
-function mergePlaces(backendPlaces, osmPlaces) {
-  const ids = new Set(backendPlaces.map(p => p.id));
-  const nameCoords = new Set(backendPlaces.map(p => `${p.name.toLowerCase().trim()}`));
-  const fresh = osmPlaces.filter(p => !ids.has(p.id) && !nameCoords.has(p.name.toLowerCase().trim()));
-  return [...backendPlaces, ...fresh];
 }
 
 /* ─────────────── SEARCH UI ─────────────── */
@@ -1237,21 +1257,15 @@ function initSearch() {
     if (input.value.length > 1) searchDropdown().classList.add('open');
   });
   document.addEventListener('click', e => {
-    if (!document.getElementById('map-search-wrap').contains(e.target)) {
+    if (!document.getElementById('map-search-wrap').contains(e.target))
       searchDropdown().classList.remove('open');
-    }
   });
 }
 
 function onSearchInput(e) {
   const val = e.target.value.trim();
   searchClear().classList.toggle('visible', val.length > 0);
-
-  if (val.length < 2) {
-    searchDropdown().classList.remove('open');
-    return;
-  }
-
+  if (val.length < 2) { searchDropdown().classList.remove('open'); return; }
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => runSearch(val), 380);
 }
@@ -1260,14 +1274,11 @@ async function runSearch(query) {
   const dropdown = searchDropdown();
   dropdown.innerHTML = `<div class="search-loading"><div class="search-spinner"></div>Buscando lugares…</div>`;
   dropdown.classList.add('open');
-
   const results = await searchPlacesByQuery(query);
-
   if (!results.length) {
     dropdown.innerHTML = `<div class="search-empty">😕 No encontramos "${query}" cerca de vos.<br>Probá con otro nombre o dirección.</div>`;
     return;
   }
-
   dropdown.innerHTML = results.map((p, i) => {
     const dist = (userLat !== null)
       ? (() => { const d = Math.round(distanceMeter(userLat, userLng, p.lat, p.lng)); return d < 1000 ? `${d}m` : `${(d/1000).toFixed(1)}km`; })()
@@ -1282,7 +1293,6 @@ async function runSearch(query) {
       <div class="search-result-status" style="background:${sc.color}">${sc.label}</div>
     </div>`;
   }).join('');
-
   dropdown.querySelectorAll('.search-result-item').forEach((el, i) => {
     el.addEventListener('click', () => {
       searchDropdown().classList.remove('open');
@@ -1299,16 +1309,16 @@ function clearSearch() {
   searchQuery = '';
 }
 
-/* ── Abrir popup de búsqueda SIN mover el mapa ── */
 function openSearchResultPopup(place) {
   const existing = places.find(p => p.id === place.id);
   if (!existing) places.push(place);
-  // NO hacemos setView — mantenemos la vista intacta
   place._fromSearch = true;
   openPlacePopup(place);
 }
 
-/* ─────────────── REACT POPUP ─────────────── */
+/* ═══════════════════════════════════════════════════════════
+   REACT POPUP
+   ═══════════════════════════════════════════════════════════ */
 const { useState, useEffect, useRef } = React;
 
 const PLACE_PHOTOS = {
@@ -1322,7 +1332,6 @@ const PLACE_PHOTOS = {
   'Hospital': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800&q=80',
 };
 function getPhoto(place) { return place.photo || PLACE_PHOTOS[place.type] || PLACE_PHOTOS.default; }
-
 function canReportThisPlace(place) {
   if (userLat === null || userLng === null) return false;
   return distanceMeter(userLat, userLng, place.lat, place.lng) <= CONFIG.REPORT_RADIUS_M;
@@ -1337,7 +1346,6 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
   const [cooldownMs, setCooldownMs] = useState(cooldownRemainingMs || 0);
   const overlayRef = useRef(null);
   const onCooldown = cooldownMs > 0 && !submitted;
-
   const nearby = canReportThisPlace(place);
   const hasGps = userLat !== null && userLng !== null;
   const distToPlace = hasGps ? Math.round(distanceMeter(userLat, userLng, place.lat, place.lng)) : null;
@@ -1360,7 +1368,6 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
     if (!nearby) return;
     setSelectedVote(idx);
   }
-
   function handleSubmit() {
     if (selectedVote === null || submitted || onCooldown || !nearby) return;
     if (!isLoggedIn) { showToastAction('🔑 Iniciá sesión para reportar y ganar puntos'); return; }
@@ -1389,61 +1396,41 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
     maxHeight:'calc(100dvh - 40px)',display:'flex',flexDirection:'column',
   };
 
-  const tooFarBlock = hasGps && !nearby && !onCooldown && React.createElement('div',{
-    style:{display:'flex',alignItems:'center',gap:10,background:'#F1F5F9',border:'1px solid #E2E8F0',borderRadius:12,padding:'12px 14px',marginBottom:12}
-  },
+  const tooFarBlock = hasGps && !nearby && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#F1F5F9',border:'1px solid #E2E8F0',borderRadius:12,padding:'12px 14px',marginBottom:12}},
     React.createElement('span',{style:{fontSize:20,flexShrink:0}},'📍'),
     React.createElement('div',null,
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#0F172A'}},`Estás a ${distToPlace}m de este comercio`),
-      React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#64748B'}},
-        `Necesitás estar a menos de ${CONFIG.REPORT_RADIUS_M}m para reportar. Entrá al local y volvé a intentar.`
-      )
+      React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#64748B'}},`Necesitás estar a menos de ${CONFIG.REPORT_RADIUS_M}m para reportar. Entrá al local y volvé a intentar.`)
     )
   );
-
-  const noGpsBlock = !hasGps && !onCooldown && React.createElement('div',{
-    style:{display:'flex',alignItems:'center',gap:10,background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'12px 14px',marginBottom:12}
-  },
+  const noGpsBlock = !hasGps && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'12px 14px',marginBottom:12}},
     React.createElement('span',{style:{fontSize:20,flexShrink:0}},'🛰️'),
     React.createElement('div',null,
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#3730A3'}},'Activá tu ubicación para reportar'),
       React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#4338CA'}},'Solo podés reportar si estás físicamente dentro del comercio.')
     )
   );
-
-  const notLoggedBlock = !isLoggedIn && !onCooldown && React.createElement('div',{
-    style:{display:'flex',alignItems:'center',gap:10,background:'#F0FDF9',border:'1px solid #A8EDD8',borderRadius:12,padding:'12px 14px',marginBottom:12}
-  },
+  const notLoggedBlock = !isLoggedIn && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#F0FDF9',border:'1px solid #A8EDD8',borderRadius:12,padding:'12px 14px',marginBottom:12}},
     React.createElement('span',{style:{fontSize:20,flexShrink:0}},'🔑'),
     React.createElement('div',{style:{flex:1}},
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#007A59'}},'Iniciá sesión para reportar'),
       React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#047857'}},'Ganás puntos por cada reporte y podés canjear premios.')
     ),
-    React.createElement('button',{
-      onClick:()=>{doGoogleLogin(document.getElementById('login-topbar-btn'));},
-      style:{background:'linear-gradient(135deg,#00C48C,#009E72)',color:'#fff',border:'none',borderRadius:99,padding:'8px 14px',fontSize:12,fontWeight:800,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'}
-    },'Ingresar')
+    React.createElement('button',{onClick:()=>{doGoogleLogin(document.getElementById('login-topbar-btn'));},style:{background:'linear-gradient(135deg,#00C48C,#009E72)',color:'#fff',border:'none',borderRadius:99,padding:'8px 14px',fontSize:12,fontWeight:800,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'}},'Ingresar')
   );
-
-  const searchBadge = isSearchResult && React.createElement('div',{
-    style:{display:'inline-flex',alignItems:'center',gap:5,background:'linear-gradient(135deg,#6366F1,#4F46E5)',color:'#fff',fontSize:10,fontWeight:800,padding:'3px 9px',borderRadius:99,letterSpacing:'.3px',textTransform:'uppercase',marginBottom:10}
-  },
+  const searchBadge = isSearchResult && React.createElement('div',{style:{display:'inline-flex',alignItems:'center',gap:5,background:'linear-gradient(135deg,#6366F1,#4F46E5)',color:'#fff',fontSize:10,fontWeight:800,padding:'3px 9px',borderRadius:99,letterSpacing:'.3px',textTransform:'uppercase',marginBottom:10}},
     React.createElement('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round',style:{width:11,height:11}},
       React.createElement('circle',{cx:11,cy:11,r:8}),React.createElement('line',{x1:21,y1:21,x2:16.65,y2:16.65})
-    ),
-    'Resultado de búsqueda'
+    ), 'Resultado de búsqueda'
   );
 
   return React.createElement('div',{ref:overlayRef,style:overlayStyle,onClick:handleOverlayClick},
     React.createElement('div',{style:cardStyle},
       React.createElement('div',{style:{overflowY:'auto',msOverflowStyle:'none',scrollbarWidth:'none'}},
         React.createElement('div',{style:{position:'relative',height:'210px',flexShrink:0,background:'#E2E8F0'}},
-          React.createElement('img',{src:photo,alt:place.name,onLoad:()=>setImgLoaded(true),
-            style:{width:'100%',height:'100%',objectFit:'cover',display:'block',opacity:imgLoaded?1:0,transition:'opacity 0.4s ease'}}),
+          React.createElement('img',{src:photo,alt:place.name,onLoad:()=>setImgLoaded(true),style:{width:'100%',height:'100%',objectFit:'cover',display:'block',opacity:imgLoaded?1:0,transition:'opacity 0.4s ease'}}),
           React.createElement('div',{style:{position:'absolute',inset:0,background:'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.68) 100%)'}}),
-          React.createElement('button',{onClick:handleClose,
-            style:{position:'absolute',top:12,right:12,width:32,height:32,borderRadius:'50%',background:'rgba(0,0,0,0.42)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:18,lineHeight:1,backdropFilter:'blur(8px)'}
-          },'✕'),
+          React.createElement('button',{onClick:handleClose,style:{position:'absolute',top:12,right:12,width:32,height:32,borderRadius:'50%',background:'rgba(0,0,0,0.42)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:18,lineHeight:1,backdropFilter:'blur(8px)'}},'✕'),
           React.createElement('div',{style:{position:'absolute',top:12,left:12,background:s.color,borderRadius:99,padding:'4px 10px',display:'flex',alignItems:'center',gap:5}},
             React.createElement('span',{style:{width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'inline-block',flexShrink:0}}),
             React.createElement('span',{style:{fontSize:11,fontWeight:800,color:'#fff'}},s.label)
@@ -1460,7 +1447,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
             React.createElement('div',{style:{display:'flex',alignItems:'center',gap:4,background:'rgba(255,255,255,0.18)',backdropFilter:'blur(8px)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:99,padding:'4px 9px',flexShrink:0}},
               React.createElement('span',{style:{color:'#F59E0B',fontSize:12}},'★'),
               React.createElement('span',{style:{fontSize:12,fontWeight:800,color:'#fff'}},place.rating),
-              React.createElement('span',{style:{fontSize:11,color:'rgba(255,255,255,0.7)'}}, ' · '+place.reviewsN)
+              React.createElement('span',{style:{fontSize:11,color:'rgba(255,255,255,0.7)'}},' · '+place.reviewsN)
             )
           )
         ),
@@ -1474,9 +1461,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
               )
             )
           ),
-          notLoggedBlock,
-          tooFarBlock,
-          noGpsBlock,
+          notLoggedBlock, tooFarBlock, noGpsBlock,
           isLoggedIn && nearby && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:12,padding:'8px 11px',background:'#E8FBF5',borderRadius:10,border:'1px solid #A8EDD8'}},
             React.createElement('span',{style:{fontSize:14}},'✅'),
             React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'#007A59'}},`Estás a ${distToPlace ?? '?'}m · podés reportar`)
@@ -1541,8 +1526,7 @@ function openPlacePopup(place) {
 
 function renderPopup(place) {
   popupRoot.render(React.createElement(PlacePopup, {
-    place,
-    onClose: closePopup,
+    place, onClose: closePopup,
     onVoteSubmit: handlePopupVoteSubmit,
     cooldownRemainingMs: getVoteCooldownRemainingMs(place.id),
     isSearchResult: !!place._fromSearch,
@@ -1559,29 +1543,20 @@ function closePopup() {
 async function handlePopupVoteSubmit(placeId, voteIdx) {
   const p = places.find(x => x.id === placeId);
   if (!p) return;
-
-  if (!isLoggedIn) {
-    showToastAction('🔑 Iniciá sesión para ganar puntos por tu reporte');
-    return;
-  }
-
+  if (!isLoggedIn) { showToastAction('🔑 Iniciá sesión para ganar puntos por tu reporte'); return; }
   if (getVoteCooldownRemainingMs(placeId) > 0) {
     showToast(`⏳ Ya reportaste ${p.name} · próximo en ${formatCooldownRemaining(getVoteCooldownRemainingMs(placeId))}`);
     return;
   }
-
   if (!canReportThisPlace(p)) {
     showToast(`📍 Tenés que estar dentro del comercio para reportar (máx. ${CONFIG.REPORT_RADIUS_M}m)`);
     return;
   }
-
   applyLocalCooldown(placeId);
-  p.status = voteIdx;
-  p.reporters += 1;
-  voteCount++;
+  p.status = voteIdx; p.reporters += 1; voteCount++;
+  placeStore[p.id] = p; // actualizar caché en memoria
   refreshMarkerIcon(p.id);
   updateCrowdBar(calcCrowdPct());
-
   await submitVoteToBackend(p, voteIdx);
 }
 
@@ -1591,7 +1566,6 @@ async function submitVoteToBackend(p, voteIdx) {
     place: { id:p.id,name:p.name,type:p.type,addr:p.addr,lat:p.lat,lng:p.lng,logo:p.logo,rating:p.rating,reviewsN:p.reviewsN,verified:!!p.verified,open:p.open!==false },
     status: voteIdx, email: currentUser.email,
   });
-
   if (res.cooldown) {
     applyPlaceCooldown(p.id, res.nextVoteAt);
     p.reporters = Math.max(0, p.reporters - 1);
@@ -1600,10 +1574,8 @@ async function submitVoteToBackend(p, voteIdx) {
     showToast(`⏳ Ya reportaste ${p.name} · próximo en ${formatCooldownRemaining(getVoteCooldownRemainingMs(p.id))}`);
     return;
   }
-
   if (res.ok && res.result && typeof res.result.points === 'number') {
-    userPts = res.result.points;
-    updateUserHUD(); flashPoints();
+    userPts = res.result.points; updateUserHUD(); flashPoints();
     if (res.result.cooldown) applyPlaceCooldown(res.result.cooldown.placeId, res.result.cooldown.nextVoteAt);
     showToast(`🎉 +${pts} puntos ganados`);
   } else if (res.ok) {
@@ -1618,7 +1590,9 @@ function flashPoints() {
   if (ptsEl) { ptsEl.style.animation='none'; ptsEl.offsetHeight; ptsEl.style.animation='ptsFlash .45s cubic-bezier(.34,1.56,.64,1)'; }
 }
 
-/* ─────────────── MAP ─────────────── */
+/* ════════════════════════════════════════════════════════════
+   MAP — GPS + FOLLOW MODE
+   ════════════════════════════════════════════════════════════ */
 function getLevelInfo(pts) {
   const level = Math.floor(pts / XP_PER_LEVEL) + 1;
   const xpIntoLevel = pts % XP_PER_LEVEL;
@@ -1642,22 +1616,80 @@ function updateUserMarker(lat, lng) {
   } else {
     const userIcon = L.divIcon({
       html: `<div style="width:18px;height:18px;border-radius:50%;background:#6366F1;border:3px solid #fff;box-shadow:0 0 0 3px rgba(99,102,241,.4);"></div>`,
-      className: '',
-      iconAnchor: [9, 9],
+      className: '', iconAnchor: [9, 9],
     });
     userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(leafletMap);
   }
 }
 
-function enforceBounds() {
-  if (!leafletMap || userLat === null) return;
-  const center = leafletMap.getCenter();
-  const dist = distanceMeter(userLat, userLng, center.lat, center.lng);
-  if (dist > CONFIG.MAX_MOVE_FROM_USER_M) {
-    const bearing = Math.atan2(center.lng - userLng, center.lat - userLat);
-    const maxLat = userLat + (CONFIG.MAX_MOVE_FROM_USER_M / 111320) * Math.cos(bearing);
-    const maxLng = userLng + (CONFIG.MAX_MOVE_FROM_USER_M / (111320 * Math.cos(userLat * Math.PI / 180))) * Math.sin(bearing);
-    leafletMap.panTo([maxLat, maxLng], { animate: true, duration: 0.3 });
+/** Actualiza el estado visual del botón GPS según el modo */
+function updateGpsBtnUI() {
+  const btn = document.getElementById('gps-btn');
+  const pill = document.getElementById('follow-pill');
+  if (!btn) return;
+  btn.classList.remove('pulsing', 'active', 'following');
+  if (followMode) {
+    btn.classList.add('following');
+    pill.classList.add('show');
+  } else if (userLat !== null) {
+    btn.classList.add('active');
+    pill.classList.remove('show');
+  } else {
+    pill.classList.remove('show');
+  }
+}
+
+/**
+ * Clic en el botón GPS:
+ * - Si GPS no activo: pedir permiso y activar follow
+ * - Si GPS activo pero no siguiendo: centrar y activar follow
+ * - Si ya siguiendo: desactivar follow (el usuario quiere explorar libre)
+ */
+function onGpsBtnClick() {
+  if (followMode) {
+    // Toggle OFF
+    followMode = false;
+    updateGpsBtnUI();
+    showToast('📍 Modo seguimiento desactivado');
+    return;
+  }
+  if (userLat !== null) {
+    // Ya tenemos GPS → activar follow y centrar ahora
+    followMode = true;
+    updateGpsBtnUI();
+    leafletMap.setView([userLat, userLng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.6 });
+    showToast('📍 Siguiendo tu posición');
+    return;
+  }
+  // Sin GPS: pedir permiso
+  const btn = document.getElementById('gps-btn');
+  btn.classList.add('pulsing');
+  if (!navigator.geolocation) {
+    showToast('⚠️ Tu navegador no soporta GPS');
+    btn.classList.remove('pulsing');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      followMode = true;
+      onGpsSuccess(pos);
+      startGpsWatch();
+    },
+    err => {
+      btn.classList.remove('pulsing');
+      showToast(err.code === 1 ? '🔒 Permiso de ubicación denegado' : '⚠️ No se pudo obtener tu ubicación');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+/** Desactiva follow si el usuario arrastra el mapa manualmente */
+function onMapDragStart() {
+  if (followMode) {
+    followMode = false;
+    updateGpsBtnUI();
+    // Mostrar hint para que el usuario sepa cómo reactivarlo
+    showToast('👆 Arrastraste el mapa · tocá 📍 para seguir de nuevo');
   }
 }
 
@@ -1673,80 +1705,81 @@ function initMap() {
     subdomains: 'abcd', maxZoom: 20,
   }).addTo(leafletMap);
 
-  leafletMap.on('moveend', enforceBounds);
+  // Detectar arrastre manual → salir de follow mode
+  leafletMap.on('dragstart', onMapDragStart);
 
   startGpsWatch();
   initSearch();
 }
 
+let lastLoadTileKey = null; // tile key del último cargado, para no re-pedir
+
 function startGpsWatch() {
   if (!navigator.geolocation) return;
-  if (gpsWatchId !== null) {
-    navigator.geolocation.clearWatch(gpsWatchId);
-  }
+  if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
   gpsWatchId = navigator.geolocation.watchPosition(
     pos => onGpsSuccess(pos),
     err => {
       if (!mapInitialLoaded) {
-        loadPlacesAt(CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng);
+        // Sin GPS: cargar desde posición por defecto
+        const { lat, lng } = CONFIG.DEFAULT_CENTER;
+        ensurePlacesLoadedAt(lat, lng);
+        mapInitialLoaded = true;
       }
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }
   );
 }
 
 function onGpsSuccess(pos) {
-  const { latitude, longitude } = pos.coords;
+  const { latitude: lat, longitude: lng } = pos.coords;
   const isFirst = userLat === null;
 
-  userLat = latitude;
-  userLng = longitude;
+  userLat = lat; userLng = lng;
+  updateUserMarker(lat, lng);
 
-  updateUserMarker(latitude, longitude);
+  // ── FOLLOW MODE: mover el mapa suavemente ──
+  if (followMode) {
+    const moved = lastFollowLat !== null
+      ? distanceMeter(lastFollowLat, lastFollowLng, lat, lng)
+      : Infinity;
+
+    if (moved >= CONFIG.FOLLOW_MIN_MOVE_M) {
+      lastFollowLat = lat; lastFollowLng = lng;
+      // panTo es más suave que setView para movimientos pequeños
+      if (isFirst) {
+        leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.5 });
+      } else {
+        leafletMap.panTo([lat, lng], { animate: true, duration: 0.4, easeLinearity: 0.5 });
+      }
+    }
+  }
 
   if (isFirst) {
-    leafletMap.setView([latitude, longitude], CONFIG.GPS_ZOOM);
-    document.getElementById('gps-btn').classList.add('active');
-    loadPlacesAt(latitude, longitude);
+    if (!followMode) {
+      // Primera posición sin follow: centrar una sola vez
+      leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM);
+    }
+    updateGpsBtnUI();
+    ensurePlacesLoadedAt(lat, lng);
+    lastLoadTileKey = latLngToTileKey(lat, lng);
+  } else {
+    // Carga dinámica: solo pedir si entramos en un tile nuevo
+    const currentTileKey = latLngToTileKey(lat, lng);
+    if (currentTileKey !== lastLoadTileKey) {
+      lastLoadTileKey = currentTileKey;
+      ensurePlacesLoadedAt(lat, lng);
+    }
   }
 
-  if (isFirst && !checkinShown && places.length > 0) {
+  // Checkin
+  if (!checkinShown && places.length > 0) {
     checkinShown = true;
-    setTimeout(() => showCheckinModal(latitude, longitude), 1200);
+    setTimeout(() => showCheckinModal(lat, lng), 1200);
   }
 }
 
-async function loadPlacesAt(lat, lng, showLoading) {
-  if (mapInitialLoaded && !showLoading) return;
-
-  const [backendResult, osmPlaces] = await Promise.all([
-    BACKEND_READY
-      ? apiGet('sync_places', { lat, lng, radius: CONFIG.OVERPASS_RADIUS_M })
-      : Promise.resolve(null),
-    loadOverpassPlaces(lat, lng, CONFIG.OVERPASS_RADIUS_M),
-  ]);
-
-  const backendPlaces = (backendResult && Array.isArray(backendResult.places))
-    ? backendResult.places : [];
-
-  const all = mergePlaces(backendPlaces, osmPlaces);
-
-  all.forEach(p => {
-    if (!places.find(x => x.id === p.id)) places.push(p);
-  });
-
-  nearbyPlaces = all.filter(p => distanceMeter(lat, lng, p.lat, p.lng) <= CONFIG.NEARBY_RADIUS_M);
-
-  mapInitialLoaded = true;
-  buildMapMarkers(nearbyPlaces);
-  updateCrowdBar(calcCrowdPct());
-
-  if (!checkinShown && userLat !== null && nearbyPlaces.length > 0) {
-    checkinShown = true;
-    setTimeout(() => showCheckinModal(userLat, userLng), 800);
-  }
-}
-
+/* ─────────────── MARKERS ─────────────── */
 function makeStatusChipHTML(place) {
   const s = (!place.reporters || place.reporters === 0) ? NO_REPORT_STATUS : STATUS_CFG[place.status];
   return `<div class="fc-card-status" style="background:${s.color}"><div class="s-dot-sm"></div><div class="s-label-sm">${s.label}</div></div>`;
@@ -1763,26 +1796,17 @@ function makeIcon(place) {
 function buildMapMarkers(placesToShow) {
   placesToShow = placesToShow || nearbyPlaces;
   const newIds = new Set(placesToShow.map(p => p.id));
-
   Object.keys(leafletMarkers).forEach(id => {
-    if (!newIds.has(id)) {
-      leafletMarkers[id].remove();
-      delete leafletMarkers[id];
-    }
+    if (!newIds.has(id)) { leafletMarkers[id].remove(); delete leafletMarkers[id]; }
   });
-
   placesToShow.forEach(p => {
     if (leafletMarkers[p.id]) {
       leafletMarkers[p.id].setIcon(makeIcon(p));
     } else {
       const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p) }).addTo(leafletMap);
       marker.on('click', () => {
-        if (pickModeActive) {
-          exitPickMode();
-          openPlacePopup(p);
-        } else {
-          openPlacePopup(p);
-        }
+        if (pickModeActive) { exitPickMode(); openPlacePopup(p); }
+        else { openPlacePopup(p); }
       });
       leafletMarkers[p.id] = marker;
     }
@@ -1811,54 +1835,24 @@ function updateCrowdBar(pct) {
   if (pctLabel) pctLabel.textContent = pct + '%';
 }
 
-function requestGpsPermission() {
-  const btn = document.getElementById('gps-btn');
-  btn.classList.add('pulsing');
-
-  if (!navigator.geolocation) {
-    showToast('⚠️ Tu navegador no soporta GPS');
-    btn.classList.remove('pulsing');
-    return;
-  }
-
-  if (userLat !== null && userLng !== null) {
-    leafletMap.setView([userLat, userLng], CONFIG.GPS_ZOOM);
-    btn.classList.remove('pulsing');
-    btn.classList.add('active');
-    showToast('📍 Centrado en tu ubicación');
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      btn.classList.remove('pulsing');
-      btn.classList.add('active');
-      showToast('📍 Ubicación activada');
-      onGpsSuccess(pos);
-      startGpsWatch();
-    },
-    err => {
-      btn.classList.remove('pulsing');
-      showToast(err.code === 1 ? '🔒 Permiso de ubicación denegado' : '⚠️ No se pudo obtener tu ubicación');
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-}
-
+/** Refresh manual: limpia las tiles cacheadas para el tile actual y recarga */
 async function manualRefresh() {
   const icon = document.getElementById('refresh-icon');
-  icon.style.animation = 'none';
-  icon.offsetHeight;
+  icon.style.animation = 'none'; icon.offsetHeight;
   icon.style.animation = 'rotate .7s cubic-bezier(.34,1.56,.64,1)';
 
   const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
   const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
 
-  mapInitialLoaded = false;
-  places = [];
-  nearbyPlaces = [];
+  // Invalidar solo los tiles cercanos para forzar re-descarga
+  const tileKey = latLngToTileKey(lat, lng);
+  const adjacent = getAdjacentTileKeys(lat, lng);
+  [tileKey, ...adjacent].forEach(k => { delete tileCache[k]; });
+  lastLoadTileKey = null;
 
-  await loadPlacesAt(lat, lng, true);
+  // Limpiar markers del área actual pero conservar places en memoria
+  nearbyPlaces = [];
+  await ensurePlacesLoadedAt(lat, lng);
   showToast('🔄 Locales actualizados');
 }
 
@@ -1871,9 +1865,7 @@ function showCheckinModal(lat, lng) {
     .map(p => ({ ...p, _dist: Math.round(distanceMeter(lat, lng, p.lat, p.lng)) }))
     .sort((a, b) => a._dist - b._dist)
     .slice(0, 3);
-
   if (!sorted.length) return;
-
   const root = document.getElementById('checkin-overlay-root');
 
   function close() {
@@ -1881,7 +1873,6 @@ function showCheckinModal(lat, lng) {
     if (overlay) { overlay.style.opacity = '0'; overlay.style.transition = 'opacity .25s'; }
     setTimeout(() => { root.innerHTML = ''; }, 280);
   }
-
   function choosePlace(p) { close(); setTimeout(() => openPlacePopup(p), 300); }
   function chooseOther() { close(); enterPickMode(); }
 
@@ -1891,12 +1882,11 @@ function showCheckinModal(lat, lng) {
     const cls      = veryNear || nearish ? 'near' : 'far';
     const distLabel = p._dist < 1000 ? `${p._dist}m` : `${(p._dist / 1000).toFixed(1)}km`;
     const distDisplay = veryNear ? `📍 ${p._dist}m` : distLabel;
-    return `
-      <button class="checkin-tab ${cls}" data-place-id="${p.id}">
-        <div class="checkin-tab-logo">${p.logo}</div>
-        <div class="checkin-tab-name">${p.name}</div>
-        <div class="checkin-tab-dist">${distDisplay}</div>
-      </button>`;
+    return `<button class="checkin-tab ${cls}" data-place-id="${p.id}">
+      <div class="checkin-tab-logo">${p.logo}</div>
+      <div class="checkin-tab-name">${p.name}</div>
+      <div class="checkin-tab-dist">${distDisplay}</div>
+    </button>`;
   }).join('');
 
   root.innerHTML = `
@@ -1949,10 +1939,9 @@ function exitPickMode() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   GOOGLE LOGIN — con persistencia de sesión robusta
+   GOOGLE AUTH — sesión persistente
    ═══════════════════════════════════════════════════════════ */
 let tokenClient = null;
-/* Guardamos también el access_token para poder re-validar sin popup */
 const TOKEN_STORAGE_KEY = 'qooentum_gtoken';
 
 function saveTokenToStorage(token, expiresIn) {
@@ -1968,10 +1957,8 @@ function loadTokenFromStorage() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data || !data.token) return null;
-    /* Si el token expiró hace más de 5 min, lo descartamos */
     if (data.expiresAt && Date.now() > data.expiresAt + 5 * 60 * 1000) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      return null;
+      localStorage.removeItem(TOKEN_STORAGE_KEY); return null;
     }
     return data.token;
   } catch(e) { return null; }
@@ -1994,7 +1981,6 @@ function initGoogleTokenClient() {
   return true;
 }
 
-/* ════════════ LOGOUT / DROPDOWN ════════════ */
 function toggleUserDropdown() {
   const wrap = document.getElementById('user-chip-wrap');
   const dd = document.getElementById('user-dropdown');
@@ -2011,10 +1997,8 @@ document.addEventListener('click', function(e) {
 });
 
 function doLogout() {
-  isLoggedIn = false;
-  currentUser = null;
-  userPts = 0;
-  placeCooldowns = {};
+  isLoggedIn = false; currentUser = null; userPts = 0; placeCooldowns = {};
+  followMode = false; updateGpsBtnUI();
   localStorage.removeItem(SESSION_STORAGE_KEY);
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   if (window.google && google.accounts && google.accounts.oauth2) {
@@ -2022,10 +2006,8 @@ function doLogout() {
   }
   document.getElementById('user-chip-wrap').style.display = 'none';
   const btn = document.getElementById('login-topbar-btn');
-  btn.style.display = 'flex';
-  btn.classList.remove('is-loading');
-  const t = btn.querySelector('.gbtn-txt');
-  if (t) t.textContent = 'Ingresar';
+  btn.style.display = 'flex'; btn.classList.remove('is-loading');
+  const t = btn.querySelector('.gbtn-txt'); if (t) t.textContent = 'Ingresar';
   document.getElementById('user-dropdown').classList.remove('open');
   document.getElementById('user-chip-wrap').classList.remove('open');
   updateUserHUD();
@@ -2045,8 +2027,7 @@ function resetLoginButton() {
   const btn = document.getElementById('login-topbar-btn');
   if (!btn) return;
   btn.classList.remove('is-loading');
-  const t = btn.querySelector('.gbtn-txt');
-  if (t) t.textContent = 'Ingresar';
+  const t = btn.querySelector('.gbtn-txt'); if (t) t.textContent = 'Ingresar';
 }
 
 function initialsFromName(name) {
@@ -2075,82 +2056,51 @@ async function handleGoogleTokenResponse(resp) {
   if (!resp || resp.error || !resp.access_token) { resetLoginButton(); showToast('⚠️ No se pudo iniciar sesión con Google'); return; }
   try {
     const profile = await fetchProfileFromToken(resp.access_token);
-
     const deviceEmail = localStorage.getItem(DEVICE_KEY);
     if (deviceEmail && deviceEmail !== profile.email) {
       resetLoginButton();
       showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);
       return;
     }
-
     let backendResult = null;
     if (BACKEND_READY) {
       backendResult = await apiPost('login', { access_token: resp.access_token, email: profile.email, name: profile.name, picture: profile.picture });
     }
-
     currentUser = { email: profile.email, name: profile.name || profile.email, picture: profile.picture || '' };
     if (backendResult && typeof backendResult.points === 'number') userPts = backendResult.points;
     if (backendResult && backendResult.cooldowns) applyCooldownInfo(backendResult.cooldowns);
     isLoggedIn = true;
-
-    /* Persistir sesión y token */
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
     localStorage.setItem(DEVICE_KEY, profile.email);
     saveTokenToStorage(resp.access_token, resp.expires_in);
-
     applyLoggedInUI();
     hideToastAction();
     showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
-
     if (pendingVote) {
-      const { placeId, voteIdx } = pendingVote;
-      pendingVote = null;
+      const { placeId, voteIdx } = pendingVote; pendingVote = null;
       const p = places.find(x => x.id === placeId);
       if (p) await submitVoteToBackend(p, voteIdx);
     }
   } catch (err) {
     console.warn('Error de login:', err);
     showToast('⚠️ Error al iniciar sesión con Google');
-  } finally {
-    resetLoginButton();
-  }
+  } finally { resetLoginButton(); }
 }
 
-/* ════════════════════════════════════════════════════════════
-   RESTORE SESSION — intenta silenciosamente renovar el token
-   si la sesión está guardada. Si el token guardado sigue
-   vigente, re-autentica sin popup. Si expiró, muestra el
-   chip pero no el botón de Google (el usuario ya estuvo
-   logueado) y cuando haga clic en alguna acción se le pedirá
-   que reingrese.
-   ════════════════════════════════════════════════════════════ */
 async function restoreSession() {
   const saved = localStorage.getItem(SESSION_STORAGE_KEY);
   if (!saved) return;
-
-  try { currentUser = JSON.parse(saved); } catch {
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-    currentUser = null; return;
-  }
-  if (!currentUser || !currentUser.email) {
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-    currentUser = null; return;
-  }
-
+  try { currentUser = JSON.parse(saved); } catch { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
+  if (!currentUser || !currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
   const deviceEmail = localStorage.getItem(DEVICE_KEY);
-  if (deviceEmail && deviceEmail !== currentUser.email) {
-    localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return;
-  }
+  if (deviceEmail && deviceEmail !== currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
 
-  /* 1️⃣ Intentar re-validar con el access_token guardado */
   const savedToken = loadTokenFromStorage();
   if (savedToken) {
     try {
       const profile = await fetchProfileFromToken(savedToken);
       if (profile && profile.email === currentUser.email) {
-        /* Token aún válido — sesión completamente restaurada */
         isLoggedIn = true;
-
         if (BACKEND_READY) {
           const me = await apiGet('me', { email: currentUser.email });
           if (me && me.exists) {
@@ -2161,25 +2111,18 @@ async function restoreSession() {
             localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
           }
         }
-
-        applyLoggedInUI();
-        return;
+        applyLoggedInUI(); return;
       }
-    } catch(e) {
-      /* token inválido/expirado — continuar con restauración parcial */
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-    }
+    } catch(e) { localStorage.removeItem(TOKEN_STORAGE_KEY); }
   }
 
-  /* 2️⃣ Token expirado: intentar renovación silenciosa con Google
-        (funciona si el usuario tiene sesión activa en el navegador) */
+  // Intento silencioso de renovación
   const trysilent = () => new Promise(resolve => {
     if (!GOOGLE_AUTH_READY) return resolve(false);
     const waitGoogle = (tries) => {
       if (tries <= 0) return resolve(false);
       if (window.google && google.accounts && google.accounts.oauth2) {
         if (!initGoogleTokenClient()) return resolve(false);
-        /* hint = email conocido, prompt vacío = sin popup */
         const client = google.accounts.oauth2.initTokenClient({
           client_id: CONFIG.GOOGLE_CLIENT_ID,
           scope: 'email profile',
@@ -2193,50 +2136,31 @@ async function restoreSession() {
                 saveTokenToStorage(resp.access_token, resp.expires_in);
                 localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
                 isLoggedIn = true;
-
                 if (BACKEND_READY) {
                   const me = await apiGet('me', { email: currentUser.email });
-                  if (me && me.exists) {
-                    userPts = me.points || 0;
-                    if (me.cooldowns) applyCooldownInfo(me.cooldowns);
-                  }
+                  if (me && me.exists) { userPts = me.points || 0; if (me.cooldowns) applyCooldownInfo(me.cooldowns); }
                 }
-                applyLoggedInUI();
-                resolve(true);
+                applyLoggedInUI(); resolve(true);
               } else resolve(false);
             } catch(e) { resolve(false); }
           },
           error_callback: () => resolve(false),
         });
-        /* prompt: '' = sin popup — solo funciona con sesión Google activa */
         client.requestAccessToken({ prompt: '' });
-      } else {
-        setTimeout(() => waitGoogle(tries - 1), 400);
-      }
+      } else { setTimeout(() => waitGoogle(tries - 1), 400); }
     };
     waitGoogle(10);
   });
 
   const renewed = await trysilent();
   if (!renewed) {
-    /* 3️⃣ No se pudo renovar silenciosamente: mostrar UI parcial
-           (el usuario sabe que estuvo logueado pero necesita reingresar) */
     isLoggedIn = false;
-    /* Mostramos el botón de login con el nombre/avatar del usuario anterior
-       para que sepa con qué cuenta tiene que reentrar */
-    applyLoggedInUI();   /* muestra el chip con la foto cacheada */
-    isLoggedIn = false;  /* pero marca como no logueado para bloquear votos */
-
-    /* Cambiamos el chip a un estado "reingresá" */
+    applyLoggedInUI();
+    isLoggedIn = false;
     const chip = document.getElementById('user-chip');
-    if (chip) {
-      chip.title = 'Tu sesión expiró. Hacé clic para reingresar.';
-      chip.onclick = () => doGoogleLogin(document.getElementById('login-topbar-btn'));
-    }
+    if (chip) { chip.title = 'Tu sesión expiró. Hacé clic para reingresar.'; chip.onclick = () => doGoogleLogin(document.getElementById('login-topbar-btn')); }
     document.getElementById('user-chip-wrap').style.display = 'flex';
     document.getElementById('login-topbar-btn').style.display = 'none';
-
-    /* Fetching del backend de todos modos para obtener puntos */
     if (BACKEND_READY) {
       const me = await apiGet('me', { email: currentUser.email });
       if (me && me.exists) { userPts = me.points || 0; if (me.cooldowns) applyCooldownInfo(me.cooldowns); updateUserHUD(); }
@@ -2282,8 +2206,7 @@ function burstConfetti(originEl) {
 /* ── TOASTS ── */
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
 
@@ -2359,11 +2282,16 @@ function switchTab(tab) {
   if (tab === 'map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 50);
 }
 
-/* ─────────────── INTERVAL ─────────────── */
+/* ─────────────── INTERVALS ─────────────── */
 setInterval(() => { tickCooldownUI(); }, 1000);
+// Limpiar tiles expirados cada hora
+setInterval(() => { pruneOldTiles(); persistCache(); }, 60 * 60 * 1000);
 
+/* ─────────────── INIT ─────────────── */
 window.addEventListener('DOMContentLoaded', () => {
+  loadCache();             // ← primero: reconstruir estado desde localStorage
   loadCooldownsFromStorage();
+  pruneOldTiles();         // limpiar tiles viejos al arrancar
   initMap();
   updateCrowdBar(calcCrowdPct());
   updateUserHUD();
