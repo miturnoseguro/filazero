@@ -32,6 +32,8 @@
   --orange:#F97316; --orange-lt:#FFF7ED;
   --red:#EF4444; --red-lt:#FEF2F2;
   --blue:#6366F1; --blue-lt:#EEF2FF;
+  --purple:#A855F7; --purple-lt:#F5F3FF;
+  --gold:#F59E0B;
   --bg:#F0F4F8; --surface:#FFFFFF; --surface2:#F1F5F9;
   --border:#E2E8F0; --border2:#CBD5E1;
   --text:#0F172A; --text2:#64748B; --text3:#94A3B8;
@@ -198,7 +200,8 @@ html,body{
 .search-result-item{display:flex;align-items:center;gap:11px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(226,232,240,.5);transition:background .15s;}
 .search-result-item:last-child{ border-bottom:none; }
 .search-result-item:hover{ background:var(--green-lt); }
-.search-result-logo{width:36px;height:36px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.search-result-logo{width:36px;height:36px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;}
+.search-result-logo img{width:100%;height:100%;object-fit:contain;}
 .search-result-info{ flex:1;min-width:0; }
 .search-result-name{ font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .search-result-sub{ font-size:11px;color:var(--text2);margin-top:1px; }
@@ -274,8 +277,21 @@ html,body{
 .fc-card-wrap.is-active{filter:drop-shadow(0 6px 20px rgba(0,196,140,.38));}
 .fc-card{width:175px;background:rgba(255,255,255,.98);border:1.5px solid var(--border);border-radius:13px;padding:9px 10px 8px;font-family:'Inter',system-ui,sans-serif;text-align:left;backdrop-filter:blur(8px);}
 .fc-card-wrap.is-active .fc-card{border-color:var(--green);border-width:2px;box-shadow:0 0 0 3px rgba(0,196,140,.14);}
+
+/* ── SPONSOR CARD VARIANTS ── */
+.fc-card-wrap.is-sponsor .fc-card{border-width:2px;}
+.fc-card-wrap.is-sponsor.tier-premium .fc-card{
+  border-color: var(--sponsor-color, #6366F1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sponsor-color, #6366F1) 18%, transparent);
+  background: linear-gradient(160deg, #fff 60%, color-mix(in srgb, var(--sponsor-color, #6366F1) 5%, #fff));
+}
+.fc-card-wrap.is-sponsor.tier-basic .fc-card{
+  border-color: color-mix(in srgb, var(--sponsor-color, #6366F1) 60%, #CBD5E1);
+}
+
 .fc-card-head{display:flex;gap:7px;align-items:center;}
-.fc-card-logo{width:30px;height:30px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;position:relative;}
+.fc-card-logo{width:30px;height:30px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;position:relative;overflow:hidden;}
+.fc-card-logo img{width:100%;height:100%;object-fit:contain;}
 .fc-card-verified{position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:7px;color:#fff;font-weight:900;line-height:1;}
 .fc-card-info{flex:1;min-width:0;}
 .fc-card-name{font-size:12px;font-weight:800;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -286,6 +302,17 @@ html,body{
 .fc-card-status{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;margin-top:7px;}
 .fc-card-status .s-dot-sm{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.5);}
 .fc-card-status .s-label-sm{font-size:10px;font-weight:700;color:#fff;line-height:1.2;}
+
+/* ── SPONSOR BADGE en la card del mapa ── */
+.fc-sponsor-badge{
+  display:flex;align-items:center;gap:3px;
+  font-size:9px;font-weight:800;letter-spacing:.2px;
+  padding:2px 6px;border-radius:99px;
+  color:#fff;
+  margin-top:4px;
+  width:fit-content;
+}
+
 .fc-tail{width:2px;height:6px;background:#CBD5E1;}
 .fc-base{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
 
@@ -498,7 +525,9 @@ html,body{
 .checkin-tab:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,196,140,.2);}
 .checkin-tab:hover::before{opacity:.06;}
 .checkin-tab.near{border-color:rgba(0,196,140,.4);background:linear-gradient(160deg,#fff,#f0fdf9);}
-.checkin-tab-logo{font-size:22px;line-height:1;position:relative;z-index:1;}
+.checkin-tab-logo{font-size:22px;line-height:1;position:relative;z-index:1;width:36px;height:36px;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);}
+.checkin-tab-logo img{width:100%;height:100%;object-fit:contain;}
+.checkin-tab-logo span{font-size:18px;}
 .checkin-tab-name{font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px;line-height:1.2;position:relative;z-index:1;}
 .checkin-tab-dist{font-size:10px;font-weight:700;color:var(--green-dk);margin-top:3px;position:relative;z-index:1;}
 .checkin-tab.far .checkin-tab-dist{color:var(--text3);}
@@ -509,7 +538,8 @@ html,body{
 .checkin-skip-main{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;padding:13px 18px;font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .2s cubic-bezier(.34,1.56,.64,1);letter-spacing:-.1px;margin-top:2px;}
 .checkin-skip-main:hover{background:#fff;border-color:var(--text2);color:var(--text);transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.1);}
 .checkin-skip-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:8px;font-weight:500;}
-  /* ── CLUSTER CARDS ── */
+
+/* ── CLUSTER CARDS ── */
 .cluster-card{
   display:flex;flex-direction:column;align-items:center;
   cursor:pointer;
@@ -532,7 +562,6 @@ html,body{
 .cluster-label strong{display:block;font-size:12px;color:var(--text);font-weight:800;}
 .cluster-tail{width:2px;height:6px;background:#CBD5E1;}
 .cluster-base{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
-/* colores según densidad */
 .cluster-bubble.density-low{border-color:var(--green);}
 .cluster-bubble.density-low .cluster-count{color:var(--green-dk);}
 .cluster-bubble.density-med{border-color:var(--yellow);}
@@ -598,7 +627,6 @@ html,body{
         <div class="search-results-dropdown" id="search-results-dropdown"></div>
       </div>
 
-      <!-- Pill que indica "siguiendo tu posición" -->
       <div class="follow-pill" id="follow-pill">
         <div class="follow-dot"></div>
         Siguiendo tu posición
@@ -811,90 +839,62 @@ let followMode = false;
 let lastFollowLat = null, lastFollowLng = null;
 
 /* ════════════════════════════════════════════════════════════
-   ⭐️ SINCRONIZACIÓN EN TIEMPO REAL DE ESTADOS DE OCUPACIÓN ⭐️
+   SINCRONIZACIÓN EN TIEMPO REAL
    ════════════════════════════════════════════════════════════ */
 let occupancySyncInterval = null;
 
 async function syncOccupancyStatus() {
   if (!BACKEND_READY || !places.length) return;
-  
   try {
     const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
     const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
-    
     const sorted = places
       .map(p => ({ ...p, _dist: distanceMeter(lat, lng, p.lat, p.lng) }))
       .sort((a, b) => a._dist - b._dist)
       .slice(0, 30);
-    
     if (!sorted.length) return;
-    
     const result = await apiGet('sync_places', {
       lat, lng, radius: 1000, status_only: 1,
       place_ids: sorted.map(p => p.id).join(','),
     });
-    
     if (!result || !Array.isArray(result.places)) return;
-    
     let needsMapRefresh = false;
-    
     result.places.forEach(bp => {
       const p = placeIndex.get(bp.id);
       if (!p) return;
-      
-      const oldStatus = p.status;
-      const oldReporters = p.reporters;
-      
+      const oldStatus = p.status, oldReporters = p.reporters;
       p.status = bp.status ?? p.status;
       p.reporters = bp.reporters ?? p.reporters;
-      
       if (oldStatus !== p.status || oldReporters !== p.reporters) {
         needsMapRefresh = true;
         placeStore[p.id] = p;
       }
     });
-    
     if (needsMapRefresh) {
       buildMapMarkers(nearbyPlaces.length ? nearbyPlaces : places);
       updateCrowdBar(calcCrowdPct());
-      
       if (currentPopupPlace) {
         const updated = placeIndex.get(currentPopupPlace.id);
-        if (updated) {
-          Object.assign(currentPopupPlace, updated);
-          renderPopup(currentPopupPlace, isLoggedIn, currentUser);
-        }
+        if (updated) { Object.assign(currentPopupPlace, updated); renderPopup(currentPopupPlace, isLoggedIn, currentUser); }
       }
     }
-    
     persistCache();
-    
-  } catch(e) {
-    console.warn('syncOccupancyStatus error:', e);
-  }
+  } catch(e) { console.warn('syncOccupancyStatus error:', e); }
 }
 
 function startOccupancySync() {
   syncOccupancyStatus();
   if (occupancySyncInterval) clearInterval(occupancySyncInterval);
-  occupancySyncInterval = setInterval(() => {
-    syncOccupancyStatus();
-  }, 15000);
+  occupancySyncInterval = setInterval(() => syncOccupancyStatus(), 15000);
 }
 
 function stopOccupancySync() {
-  if (occupancySyncInterval) {
-    clearInterval(occupancySyncInterval);
-    occupancySyncInterval = null;
-  }
+  if (occupancySyncInterval) { clearInterval(occupancySyncInterval); occupancySyncInterval = null; }
 }
 
 function maybeStartOccupancySync() {
-  if (isLoggedIn && !occupancySyncInterval) {
-    startOccupancySync();
-  } else if (!isLoggedIn && occupancySyncInterval) {
-    stopOccupancySync();
-  }
+  if (isLoggedIn && !occupancySyncInterval) startOccupancySync();
+  else if (!isLoggedIn && occupancySyncInterval) stopOccupancySync();
 }
 
 function getLevelInfo(pts) {
@@ -906,24 +906,15 @@ function titleForLevel(level) { return LEVEL_TITLES[Math.min(level-1, LEVEL_TITL
 
 /* ─────────────── CACHÉ DE LUGARES ─────────────── */
 function latLngToTileKey(lat, lng) {
-  const tLat = Math.floor(lat / CONFIG.TILE_DEG);
-  const tLng = Math.floor(lng / CONFIG.TILE_DEG);
-  return `${tLat}:${tLng}`;
+  return `${Math.floor(lat / CONFIG.TILE_DEG)}:${Math.floor(lng / CONFIG.TILE_DEG)}`;
 }
 
 function persistCache() {
   try {
-    const payload = {
-      tiles: tileCache,
-      places: placeStore,
-      savedAt: Date.now(),
-    };
-    localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify(payload));
+    localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify({ tiles: tileCache, places: placeStore, savedAt: Date.now() }));
   } catch(e) {
     pruneOldTiles();
-    try {
-      localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify({ tiles: tileCache, places: placeStore, savedAt: Date.now() }));
-    } catch(e2) { console.warn('Cache persist failed:', e2); }
+    try { localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify({ tiles: tileCache, places: placeStore, savedAt: Date.now() })); } catch(e2) {}
   }
 }
 
@@ -936,63 +927,47 @@ function loadCache() {
     tileCache = data.tiles || {};
     placeStore = data.places || {};
     Object.values(placeStore).forEach(p => {
-      if (!placeIndex.has(p.id)) {
-        placeIndex.set(p.id, p);
-        places.push(p);
-      }
+      if (!placeIndex.has(p.id)) { placeIndex.set(p.id, p); places.push(p); }
     });
-  } catch(e) { console.warn('Cache load failed:', e); }
+  } catch(e) {}
 }
 
 function pruneOldTiles() {
   const now = Date.now();
   Object.keys(tileCache).forEach(key => {
-    if (now - tileCache[key].ts > CONFIG.PLACE_CACHE_TTL_MS) {
-      delete tileCache[key];
-    }
+    if (now - tileCache[key].ts > CONFIG.PLACE_CACHE_TTL_MS) delete tileCache[key];
   });
   const allIds = new Set();
   Object.values(tileCache).forEach(t => (t.placeIds || []).forEach(id => allIds.add(id)));
   Object.keys(placeStore).forEach(id => { if (!allIds.has(id)) delete placeStore[id]; });
 }
 
-function markTileLoaded(tileKey, ids) {
-  tileCache[tileKey] = { ts: Date.now(), placeIds: ids };
-}
-
+function markTileLoaded(tileKey, ids) { tileCache[tileKey] = { ts: Date.now(), placeIds: ids }; }
 function isTileCached(tileKey) {
   const t = tileCache[tileKey];
-  if (!t) return false;
-  return (Date.now() - t.ts) < CONFIG.PLACE_CACHE_TTL_MS;
+  return t && (Date.now() - t.ts) < CONFIG.PLACE_CACHE_TTL_MS;
 }
-
-function getRelevantTileKeys(lat, lng) {
-  return [latLngToTileKey(lat, lng)];
-}
+function getRelevantTileKeys(lat, lng) { return [latLngToTileKey(lat, lng)]; }
 
 function mergePlacesIntoCache(newPlaces, tileKey) {
   const addedIds = [];
   newPlaces.forEach(p => {
     placeStore[p.id] = p;
     addedIds.push(p.id);
-    if (!placeIndex.has(p.id)) {
-      placeIndex.set(p.id, p);
-      places.push(p);
-    } else {
-      const existing = placeIndex.get(p.id);
-      Object.assign(existing, p);
-    }
+    if (!placeIndex.has(p.id)) { placeIndex.set(p.id, p); places.push(p); }
+    else { const existing = placeIndex.get(p.id); Object.assign(existing, p); }
   });
   if (tileKey) markTileLoaded(tileKey, addedIds);
 }
 
 function tileToBbox(tileKey) {
   const [tLat, tLng] = tileKey.split(':').map(Number);
-  const minLat = tLat * CONFIG.TILE_DEG - CONFIG.BBOX_PAD;
-  const minLng = tLng * CONFIG.TILE_DEG - CONFIG.BBOX_PAD;
-  const maxLat = (tLat + 1) * CONFIG.TILE_DEG + CONFIG.BBOX_PAD;
-  const maxLng = (tLng + 1) * CONFIG.TILE_DEG + CONFIG.BBOX_PAD;
-  return [minLat, minLng, maxLat, maxLng];
+  return [
+    tLat * CONFIG.TILE_DEG - CONFIG.BBOX_PAD,
+    tLng * CONFIG.TILE_DEG - CONFIG.BBOX_PAD,
+    (tLat + 1) * CONFIG.TILE_DEG + CONFIG.BBOX_PAD,
+    (tLng + 1) * CONFIG.TILE_DEG + CONFIG.BBOX_PAD,
+  ];
 }
 
 /* ─────────────── COOLDOWN ─────────────── */
@@ -1002,10 +977,7 @@ function loadCooldownsFromStorage() {
     if (!raw) return;
     const data = JSON.parse(raw);
     const now = Date.now();
-    Object.keys(data).forEach(pid => {
-      const ts = data[pid];
-      if (ts && ts > now) placeCooldowns[pid] = new Date(ts);
-    });
+    Object.keys(data).forEach(pid => { const ts = data[pid]; if (ts && ts > now) placeCooldowns[pid] = new Date(ts); });
   } catch(e) {}
 }
 
@@ -1023,9 +995,8 @@ function saveCooldownsToStorage() {
 
 function applyPlaceCooldown(pid, isoOrMs) {
   if (!pid) return;
-  if (isoOrMs) {
-    placeCooldowns[pid] = typeof isoOrMs === 'number' ? new Date(isoOrMs) : new Date(isoOrMs);
-  } else { delete placeCooldowns[pid]; }
+  if (isoOrMs) { placeCooldowns[pid] = typeof isoOrMs === 'number' ? new Date(isoOrMs) : new Date(isoOrMs); }
+  else { delete placeCooldowns[pid]; }
   saveCooldownsToStorage();
 }
 
@@ -1086,9 +1057,7 @@ async function apiGet(action, params = {}) {
 async function apiPost(action, payload = {}) {
   if (!BACKEND_READY) return null;
   try {
-    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: 'POST', body: JSON.stringify({ action, ...payload }),
-    });
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action, ...payload }) });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Error de backend');
     return data.result;
@@ -1098,9 +1067,7 @@ async function apiPost(action, payload = {}) {
 async function apiPostVote(payload) {
   if (!BACKEND_READY) return { ok: false, network: false, result: null };
   try {
-    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method: 'POST', body: JSON.stringify({ action: 'vote', ...payload }),
-    });
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'vote', ...payload }) });
     const data = await res.json();
     if (!data.ok) {
       const msg = String(data.error || '');
@@ -1133,39 +1100,27 @@ function osmNodeToPlace(node) {
 
 async function loadOverpassForTiles(tileKeys) {
   if (!tileKeys.length) return [];
-
   let minLat = Infinity, minLng = Infinity, maxLat = -Infinity, maxLng = -Infinity;
   tileKeys.forEach(key => {
     const [s, w, n, e] = tileToBbox(key);
-    if (s < minLat) minLat = s;
-    if (w < minLng) minLng = w;
-    if (n > maxLat) maxLat = n;
-    if (e > maxLng) maxLng = e;
+    if (s < minLat) minLat = s; if (w < minLng) minLng = w;
+    if (n > maxLat) maxLat = n; if (e > maxLng) maxLng = e;
   });
-
   const amenityFilter = 'supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|fuel|marketplace';
   const shopFilter    = 'supermarket|convenience|pharmacy|bakery|butcher|laundry|dry_cleaning|hardware|clothes|shoes|electronics|optician|beauty|hairdresser|toy|sports|stationery|greengrocer|florist|newsagent|kiosk|general';
-
   const query = `[out:json][timeout:15];(
     node["amenity"~"^(${amenityFilter})$"](${minLat},${minLng},${maxLat},${maxLng});
     node["shop"~"^(${shopFilter})$"](${minLat},${minLng},${maxLat},${maxLng});
   );out body;`.trim();
-
   try {
     const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
+      method: 'POST', body: 'data=' + encodeURIComponent(query),
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     if (!res.ok) throw new Error('Overpass HTTP ' + res.status);
     const data = await res.json();
-    return (data.elements || [])
-      .filter(n => n.type === 'node' && n.tags && n.tags.name)
-      .map(osmNodeToPlace);
-  } catch (e) {
-    console.warn('Overpass falló:', e);
-    return [];
-  }
+    return (data.elements || []).filter(n => n.type === 'node' && n.tags && n.tags.name).map(osmNodeToPlace);
+  } catch (e) { console.warn('Overpass falló:', e); return []; }
 }
 
 async function ensurePlacesLoadedAt(lat, lng) {
@@ -1175,10 +1130,7 @@ async function ensurePlacesLoadedAt(lat, lng) {
   const missingKeys = allKeys.filter(k => !isTileCached(k));
 
   rebuildNearby(lat, lng);
-  if (nearbyPlaces.length || places.length) {
-    buildMapMarkers(nearbyPlaces.length ? nearbyPlaces : places);
-    updateCrowdBar(calcCrowdPct());
-  }
+  if (nearbyPlaces.length || places.length) { buildMapMarkers(nearbyPlaces.length ? nearbyPlaces : places); updateCrowdBar(calcCrowdPct()); }
 
   if (missingKeys.length === 0) {
     syncBackendStatus(lat, lng).then(() => {
@@ -1188,10 +1140,7 @@ async function ensurePlacesLoadedAt(lat, lng) {
     });
     if (!mapInitialLoaded) {
       mapInitialLoaded = true;
-      if (!checkinShown && nearbyPlaces.length > 0) {
-        checkinShown = true;
-        setTimeout(() => showCheckinModal(lat, lng), 800);
-      }
+      if (!checkinShown && nearbyPlaces.length > 0) { checkinShown = true; setTimeout(() => showCheckinModal(lat, lng), 800); }
     }
     return;
   }
@@ -1200,19 +1149,12 @@ async function ensurePlacesLoadedAt(lat, lng) {
 
   const [osmPlaces, backendResult] = await Promise.all([
     loadOverpassForTiles(missingKeys),
-    BACKEND_READY
-      ? apiGet('sync_places', { lat, lng, radius: Math.round(CONFIG.TILE_DEG * 111320 * 1.5) })
-      : Promise.resolve(null),
+    BACKEND_READY ? apiGet('sync_places', { lat, lng, radius: Math.round(CONFIG.TILE_DEG * 111320 * 1.5) }) : Promise.resolve(null),
   ]);
 
-  const backendPlaces = (backendResult && Array.isArray(backendResult.places))
-    ? backendResult.places : [];
-
+  const backendPlaces = (backendResult && Array.isArray(backendResult.places)) ? backendResult.places : [];
   const backendById = new Map(backendPlaces.map(p => [p.id, p]));
-  const merged = osmPlaces.map(p => {
-    const bp = backendById.get(p.id);
-    return bp ? { ...p, ...bp } : p;
-  });
+  const merged = osmPlaces.map(p => { const bp = backendById.get(p.id); return bp ? { ...p, ...bp } : p; });
   const onlyBackend = backendPlaces.filter(p => !osmPlaces.find(o => o.id === p.id));
   const allNew = [...merged, ...onlyBackend];
 
@@ -1223,15 +1165,11 @@ async function ensurePlacesLoadedAt(lat, lng) {
   });
 
   persistCache();
-
   rebuildNearby(lat, lng);
   buildMapMarkers(nearbyPlaces);
   updateCrowdBar(calcCrowdPct());
 
-  if (!checkinShown && nearbyPlaces.length > 0) {
-    checkinShown = true;
-    setTimeout(() => showCheckinModal(lat, lng), 800);
-  }
+  if (!checkinShown && nearbyPlaces.length > 0) { checkinShown = true; setTimeout(() => showCheckinModal(lat, lng), 800); }
 }
 
 async function syncBackendStatus(lat, lng) {
@@ -1240,19 +1178,14 @@ async function syncBackendStatus(lat, lng) {
   if (!result || !Array.isArray(result.places)) return;
   result.places.forEach(bp => {
     const p = placeIndex.get(bp.id);
-    if (p) {
-      p.status = bp.status ?? p.status;
-      p.reporters = bp.reporters ?? p.reporters;
-      placeStore[p.id] = p;
-    }
+    if (p) { p.status = bp.status ?? p.status; p.reporters = bp.reporters ?? p.reporters; placeStore[p.id] = p; }
   });
   persistCache();
 }
 
 function getAdjacentTileKeys(lat, lng) {
   const d = CONFIG.TILE_DEG;
-  const relLat = (lat / d) - Math.floor(lat / d);
-  const relLng = (lng / d) - Math.floor(lng / d);
+  const relLat = (lat / d) - Math.floor(lat / d), relLng = (lng / d) - Math.floor(lng / d);
   const keys = [];
   if (relLat < 0.3) keys.push(latLngToTileKey(lat - d, lng));
   if (relLat > 0.7) keys.push(latLngToTileKey(lat + d, lng));
@@ -1264,18 +1197,7 @@ function getAdjacentTileKeys(lat, lng) {
 function rebuildNearby(lat, lng) {
   const maxDistM = CONFIG.TILE_DEG * 111320 * 1.2;
   nearbyPlaces = [];
-  placeIndex.forEach(p => {
-    if (distanceMeter(lat, lng, p.lat, p.lng) <= maxDistM) {
-      nearbyPlaces.push(p);
-    }
-  });
-}
-
-function mergePlacesLegacy(backendPlaces, osmPlaces) {
-  const ids = new Set(backendPlaces.map(p => p.id));
-  const nameCoords = new Set(backendPlaces.map(p => p.name.toLowerCase().trim()));
-  const fresh = osmPlaces.filter(p => !ids.has(p.id) && !nameCoords.has(p.name.toLowerCase().trim()));
-  return [...backendPlaces, ...fresh];
+  placeIndex.forEach(p => { if (distanceMeter(lat, lng, p.lat, p.lng) <= maxDistM) nearbyPlaces.push(p); });
 }
 
 /* ─────────────── SEARCH ─────────────── */
@@ -1286,10 +1208,8 @@ async function searchPlacesByQuery(query) {
     p.name.toLowerCase().includes(q) || p.addr.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)
   ).slice(0, 5);
   if (localMatches.length >= 3) return localMatches;
-
   try {
-    const viewboxLat = userLat || CONFIG.DEFAULT_CENTER.lat;
-    const viewboxLng = userLng || CONFIG.DEFAULT_CENTER.lng;
+    const viewboxLat = userLat || CONFIG.DEFAULT_CENTER.lat, viewboxLng = userLng || CONFIG.DEFAULT_CENTER.lng;
     const delta = 0.05;
     const viewbox = `${viewboxLng-delta},${viewboxLat-delta},${viewboxLng+delta},${viewboxLat+delta}`;
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1&bounded=0&viewbox=${viewbox}&countrycodes=ar&dedupe=1`;
@@ -1314,10 +1234,7 @@ async function searchPlacesByQuery(query) {
         open: true, verified: false, fromOSM: true, fromSearch: true,
       };
     }).slice(0, 6);
-  } catch(e) {
-    console.warn('Search falló:', e);
-    return localMatches;
-  }
+  } catch(e) { console.warn('Search falló:', e); return localMatches; }
 }
 
 /* ─────────────── SEARCH UI ─────────────── */
@@ -1328,12 +1245,9 @@ const searchClear = () => document.getElementById('map-search-clear');
 function initSearch() {
   const input = searchInput();
   input.addEventListener('input', onSearchInput);
-  input.addEventListener('focus', () => {
-    if (input.value.length > 1) searchDropdown().classList.add('open');
-  });
+  input.addEventListener('focus', () => { if (input.value.length > 1) searchDropdown().classList.add('open'); });
   document.addEventListener('click', e => {
-    if (!document.getElementById('map-search-wrap').contains(e.target))
-      searchDropdown().classList.remove('open');
+    if (!document.getElementById('map-search-wrap').contains(e.target)) searchDropdown().classList.remove('open');
   });
 }
 
@@ -1359,21 +1273,20 @@ async function runSearch(query) {
       ? (() => { const d = Math.round(distanceMeter(userLat, userLng, p.lat, p.lng)); return d < 1000 ? `${d}m` : `${(d/1000).toFixed(1)}km`; })()
       : '';
     const sc = (!p.reporters || p.reporters === 0) ? NO_REPORT_STATUS : STATUS_CFG[p.status];
+    const logoHtml = (p.sponsor && p.sponsor.logo_url)
+      ? `<img src="${p.sponsor.logo_url}" alt="${p.name}">`
+      : p.logo;
     return `<div class="search-result-item" data-idx="${i}">
-      <div class="search-result-logo">${p.logo}</div>
+      <div class="search-result-logo">${logoHtml}</div>
       <div class="search-result-info">
-        <div class="search-result-name">${p.name}</div>
+        <div class="search-result-name">${p.name}${p.sponsor ? ` <span style="font-size:10px;font-weight:800;color:${p.sponsor.badge_color||'#6366F1'}">✓</span>` : ''}</div>
         <div class="search-result-sub">${p.type}${p.addr !== 'Sin dirección' ? ' · ' + p.addr.split(',')[0] : ''}${dist ? ' · ' + dist : ''}</div>
       </div>
       <div class="search-result-status" style="background:${sc.color}">${sc.label}</div>
     </div>`;
   }).join('');
   dropdown.querySelectorAll('.search-result-item').forEach((el, i) => {
-    el.addEventListener('click', () => {
-      searchDropdown().classList.remove('open');
-      searchInput().blur();
-      openSearchResultPopup(results[i]);
-    });
+    el.addEventListener('click', () => { searchDropdown().classList.remove('open'); searchInput().blur(); openSearchResultPopup(results[i]); });
   });
 }
 
@@ -1392,7 +1305,7 @@ function openSearchResultPopup(place) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   REACT POPUP ⭐️ CON FIX PARA LOGIN
+   REACT POPUP — con soporte completo de sponsors
    ═══════════════════════════════════════════════════════════ */
 const { useState, useEffect, useRef } = React;
 
@@ -1406,13 +1319,36 @@ const PLACE_PHOTOS = {
   'Restaurante': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
   'Hospital': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800&q=80',
 };
-function getPhoto(place) { return place.photo || PLACE_PHOTOS[place.type] || PLACE_PHOTOS.default; }
+
+/**
+ * Devuelve la foto a mostrar en el header del popup.
+ * Prioridad: sponsor.photo_url > place.photo > foto por tipo > default.
+ */
+function getPhoto(place) {
+  if (place.sponsor && place.sponsor.photo_url) return place.sponsor.photo_url;
+  return place.photo || PLACE_PHOTOS[place.type] || PLACE_PHOTOS.default;
+}
+
+/**
+ * Devuelve el elemento de logo a mostrar en el popup.
+ * Prioridad: sponsor.logo_url (imagen) > emoji del lugar.
+ */
+function getLogoEl(place) {
+  if (place.sponsor && place.sponsor.logo_url) {
+    return React.createElement('img', {
+      src: place.sponsor.logo_url,
+      alt: place.name,
+      style: { width:'100%', height:'100%', objectFit:'contain', borderRadius:10 }
+    });
+  }
+  return place.logo;
+}
+
 function canReportThisPlace(place) {
   if (userLat === null || userLng === null) return false;
   return distanceMeter(userLat, userLng, place.lat, place.lng) <= CONFIG.REPORT_RADIUS_M;
 }
 
-// ⭐️ FIX: Ahora PlacePopup recibe isLoggedIn y currentUser como props
 function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearchResult, isLoggedIn, currentUser }) {
   const [visible, setVisible] = useState(false);
   const [cardVisible, setCardVisible] = useState(false);
@@ -1425,6 +1361,8 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
   const nearby = canReportThisPlace(place);
   const hasGps = userLat !== null && userLng !== null;
   const distToPlace = hasGps ? Math.round(distanceMeter(userLat, userLng, place.lat, place.lng)) : null;
+  const sponsor = place.sponsor || null;
+  const sponsorColor = sponsor ? (sponsor.badge_color || '#6366F1') : null;
 
   useEffect(() => {
     requestAnimationFrame(() => { setVisible(true); setTimeout(() => setCardVisible(true), 40); });
@@ -1455,22 +1393,59 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
   const photo = getPhoto(place);
 
   const overlayStyle = {
-    position:'fixed',inset:0,
+    position:'fixed', inset:0,
     background:`rgba(15,23,42,${visible?'.62':'0'})`,
     backdropFilter:`blur(${visible?'6px':'0px'})`,
     WebkitBackdropFilter:`blur(${visible?'6px':'0px'})`,
-    display:'flex',alignItems:'center',justifyContent:'center',
+    display:'flex', alignItems:'center', justifyContent:'center',
     transition:'background 0.3s ease, backdrop-filter 0.3s ease',
-    zIndex:10000,padding:'20px',
+    zIndex:10000, padding:'20px',
   };
   const cardStyle = {
-    width:'100%',maxWidth:'370px',background:'#fff',borderRadius:'22px',overflow:'hidden',
-    boxShadow:'0 24px 64px rgba(15,23,42,.28), 0 8px 24px rgba(15,23,42,.14)',
+    width:'100%', maxWidth:'370px', background:'#fff', borderRadius:'22px', overflow:'hidden',
+    boxShadow: sponsor
+      ? `0 24px 64px rgba(15,23,42,.28), 0 0 0 2px ${sponsorColor}40`
+      : '0 24px 64px rgba(15,23,42,.28), 0 8px 24px rgba(15,23,42,.14)',
     transform:cardVisible?'translateY(0) scale(1)':'translateY(40px) scale(0.93)',
     opacity:cardVisible?1:0,
     transition:'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease',
-    maxHeight:'calc(100dvh - 40px)',display:'flex',flexDirection:'column',
+    maxHeight:'calc(100dvh - 40px)', display:'flex', flexDirection:'column',
   };
+
+  // ── Bloque informativo de sponsor ──
+  const sponsorBlock = sponsor && React.createElement('div', {
+    style: {
+      display:'flex', alignItems:'center', gap:12,
+      background:`linear-gradient(135deg, ${sponsorColor}12, ${sponsorColor}06)`,
+      border:`1px solid ${sponsorColor}30`,
+      borderRadius:12, padding:'11px 14px', marginBottom:12,
+    }
+  },
+    sponsor.logo_url && React.createElement('img', {
+      src: sponsor.logo_url,
+      alt: place.name,
+      style:{ width:38, height:38, objectFit:'contain', borderRadius:9, flexShrink:0, background:'#fff', padding:2, border:`1px solid ${sponsorColor}25` }
+    }),
+    React.createElement('div', { style:{ flex:1, minWidth:0 } },
+      React.createElement('div', { style:{ fontSize:12, fontWeight:800, color:'#0F172A' } }, place.name),
+      sponsor.promo && React.createElement('div', {
+        style:{ fontSize:11, color:sponsorColor, fontWeight:700, marginTop:2 }
+      }, '🏷️ ' + sponsor.promo),
+      sponsor.website && React.createElement('a', {
+        href: sponsor.website, target:'_blank', rel:'noopener',
+        style:{ fontSize:10, color:sponsorColor, opacity:.75, marginTop:2, display:'block', textDecoration:'none', fontWeight:600 }
+      }, '🌐 ' + sponsor.website.replace(/^https?:\/\//, ''))
+    ),
+    React.createElement('div', {
+      style:{
+        background:sponsorColor, color:'#fff',
+        fontSize:9, fontWeight:900, padding:'3px 9px', borderRadius:99,
+        display:'flex', alignItems:'center', gap:3,
+        letterSpacing:'.3px', whiteSpace:'nowrap', flexShrink:0,
+        boxShadow:`0 2px 8px ${sponsorColor}55`,
+      }
+    }, '✓ ' + (sponsor.badge_text || 'Verificado'))
+  );
 
   const tooFarBlock = hasGps && !nearby && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#F1F5F9',border:'1px solid #E2E8F0',borderRadius:12,padding:'12px 14px',marginBottom:12}},
     React.createElement('span',{style:{fontSize:20,flexShrink:0}},'📍'),
@@ -1492,12 +1467,12 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#007A59'}},'Iniciá sesión para reportar'),
       React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#047857'}},'Ganás puntos por cada reporte y podés canjear premios.')
     ),
-    React.createElement('button',{onClick:()=>{doGoogleLogin(document.getElementById('login-topbar-btn'));},style:{background:'linear-gradient(135deg,#00C48C,#009E72)',color:'#fff',border:'none',borderRadius:99,padding:'8px 14px',fontSize:12,fontWeight:800,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'}},'Ingresar')
+    React.createElement('button',{onClick:()=>doGoogleLogin(document.getElementById('login-topbar-btn')),style:{background:'linear-gradient(135deg,#00C48C,#009E72)',color:'#fff',border:'none',borderRadius:99,padding:'8px 14px',fontSize:12,fontWeight:800,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'}},'Ingresar')
   );
   const searchBadge = isSearchResult && React.createElement('div',{style:{display:'inline-flex',alignItems:'center',gap:5,background:'linear-gradient(135deg,#6366F1,#4F46E5)',color:'#fff',fontSize:10,fontWeight:800,padding:'3px 9px',borderRadius:99,letterSpacing:'.3px',textTransform:'uppercase',marginBottom:10}},
     React.createElement('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round',style:{width:11,height:11}},
       React.createElement('circle',{cx:11,cy:11,r:8}),React.createElement('line',{x1:21,y1:21,x2:16.65,y2:16.65})
-    ), 'Resultado de búsqueda'
+    ),' Resultado de búsqueda'
   );
 
   return React.createElement('div',{ref:overlayRef,style:overlayStyle,onClick:handleOverlayClick},
@@ -1511,10 +1486,28 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
             React.createElement('span',{style:{width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'inline-block',flexShrink:0}}),
             React.createElement('span',{style:{fontSize:11,fontWeight:800,color:'#fff'}},s.label)
           ),
+          // ── Badge de sponsor en la foto (top-right, junto al botón cerrar) ──
+          sponsor && React.createElement('div',{style:{
+            position:'absolute', top:12, right:52,
+            background:sponsorColor, borderRadius:99,
+            padding:'3px 9px', display:'flex', alignItems:'center', gap:4,
+            boxShadow:`0 2px 8px ${sponsorColor}55`,
+          }},
+            React.createElement('span',{style:{width:5,height:5,borderRadius:'50%',background:'rgba(255,255,255,.7)',display:'inline-block'}}),
+            React.createElement('span',{style:{fontSize:10,fontWeight:900,color:'#fff',letterSpacing:'.2px'}},
+              sponsor.badge_text || 'Verificado'
+            )
+          ),
           React.createElement('div',{style:{position:'absolute',bottom:13,left:14,right:14,display:'flex',alignItems:'flex-end',gap:10}},
             React.createElement('div',{style:{position:'relative',flexShrink:0}},
-              React.createElement('div',{style:{width:48,height:48,borderRadius:14,background:'#fff',border:'2.5px solid rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}},place.logo),
-              place.verified && React.createElement('div',{style:{position:'absolute',bottom:-3,right:-3,width:17,height:17,background:'#6366F1',borderRadius:'50%',border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:900}},'✓')
+              React.createElement('div',{style:{width:48,height:48,borderRadius:14,background:'#fff',border:'2.5px solid rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,overflow:'hidden'}},
+                getLogoEl(place)
+              ),
+              place.verified && React.createElement('div',{style:{
+                position:'absolute',bottom:-3,right:-3,width:17,height:17,
+                background: sponsorColor || '#6366F1',
+                borderRadius:'50%',border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:900
+              }},'✓')
             ),
             React.createElement('div',{style:{flex:1,minWidth:0}},
               React.createElement('p',{style:{margin:0,fontSize:16,fontWeight:800,color:'#fff',lineHeight:1.2,textShadow:'0 1px 6px rgba(0,0,0,0.5)'}},place.name),
@@ -1537,6 +1530,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
               )
             )
           ),
+          sponsorBlock,
           notLoggedBlock, tooFarBlock, noGpsBlock,
           isLoggedIn && nearby && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:12,padding:'8px 11px',background:'#E8FBF5',borderRadius:10,border:'1px solid #A8EDD8'}},
             React.createElement('span',{style:{fontSize:14}},'✅'),
@@ -1591,7 +1585,6 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
 let popupRoot = null;
 let currentPopupPlace = null;
 
-// ⭐️ FIX: openPlacePopup ahora pasa isLoggedIn y currentUser al renderizar
 function openPlacePopup(place) {
   currentPopupPlace = place;
   currentPopupPlace._wasOnCooldown = getVoteCooldownRemainingMs(place.id) > 0;
@@ -1601,16 +1594,13 @@ function openPlacePopup(place) {
   renderPopup(place, isLoggedIn, currentUser);
 }
 
-// ⭐️ FIX: renderPopup ahora acepta loggedIn y user como parámetros
 function renderPopup(place, loggedIn, user) {
   popupRoot.render(React.createElement(PlacePopup, {
-    place,
-    onClose: closePopup,
+    place, onClose: closePopup,
     onVoteSubmit: handlePopupVoteSubmit,
     cooldownRemainingMs: getVoteCooldownRemainingMs(place.id),
     isSearchResult: !!place._fromSearch,
-    isLoggedIn: loggedIn,
-    currentUser: user,
+    isLoggedIn: loggedIn, currentUser: user,
   }));
 }
 
@@ -1644,7 +1634,7 @@ async function handlePopupVoteSubmit(placeId, voteIdx) {
 async function submitVoteToBackend(p, voteIdx) {
   const pts = VOTE_PTS[voteIdx];
   const res = await apiPostVote({
-    place: { id:p.id,name:p.name,type:p.type,addr:p.addr,lat:p.lat,lng:p.lng,logo:p.logo,rating:p.rating,reviewsN:p.reviewsN,verified:!!p.verified,open:p.open!==false },
+    place: { id:p.id, name:p.name, type:p.type, addr:p.addr, lat:p.lat, lng:p.lng, logo:p.logo, rating:p.rating, reviewsN:p.reviewsN, verified:!!p.verified, open:p.open!==false },
     status: voteIdx, email: currentUser.email,
   });
   if (res.cooldown) {
@@ -1685,9 +1675,8 @@ function addPoints(amount) {
 
 function updateUserMarker(lat, lng) {
   if (!leafletMap) return;
-  if (userMarker) {
-    userMarker.setLatLng([lat, lng]);
-  } else {
+  if (userMarker) { userMarker.setLatLng([lat, lng]); }
+  else {
     const userIcon = L.divIcon({
       html: `<div style="width:18px;height:18px;border-radius:50%;background:#6366F1;border:3px solid #fff;box-shadow:0 0 0 3px rgba(99,102,241,.4);"></div>`,
       className: '', iconAnchor: [9, 9],
@@ -1701,79 +1690,41 @@ function updateGpsBtnUI() {
   const pill = document.getElementById('follow-pill');
   if (!btn) return;
   btn.classList.remove('pulsing', 'active', 'following');
-  if (followMode) {
-    btn.classList.add('following');
-    pill.classList.add('show');
-  } else if (userLat !== null) {
-    btn.classList.add('active');
-    pill.classList.remove('show');
-  } else {
-    pill.classList.remove('show');
-  }
+  if (followMode) { btn.classList.add('following'); pill.classList.add('show'); }
+  else if (userLat !== null) { btn.classList.add('active'); pill.classList.remove('show'); }
+  else { pill.classList.remove('show'); }
 }
 
 function onGpsBtnClick() {
-  if (followMode) {
-    followMode = false;
-    updateGpsBtnUI();
-    showToast('📍 Modo seguimiento desactivado');
-    return;
-  }
+  if (followMode) { followMode = false; updateGpsBtnUI(); showToast('📍 Modo seguimiento desactivado'); return; }
   if (userLat !== null) {
-    followMode = true;
-    updateGpsBtnUI();
+    followMode = true; updateGpsBtnUI();
     leafletMap.setView([userLat, userLng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.6 });
-    showToast('📍 Siguiendo tu posición');
-    return;
+    showToast('📍 Siguiendo tu posición'); return;
   }
   const btn = document.getElementById('gps-btn');
   btn.classList.add('pulsing');
-  if (!navigator.geolocation) {
-    showToast('⚠️ Tu navegador no soporta GPS');
-    btn.classList.remove('pulsing');
-    return;
-  }
+  if (!navigator.geolocation) { showToast('⚠️ Tu navegador no soporta GPS'); btn.classList.remove('pulsing'); return; }
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      followMode = true;
-      onGpsSuccess(pos);
-      startGpsWatch();
-    },
-    err => {
-      btn.classList.remove('pulsing');
-      showToast(err.code === 1 ? '🔒 Permiso de ubicación denegado' : '⚠️ No se pudo obtener tu ubicación');
-    },
+    pos => { followMode = true; onGpsSuccess(pos); startGpsWatch(); },
+    err => { btn.classList.remove('pulsing'); showToast(err.code === 1 ? '🔒 Permiso de ubicación denegado' : '⚠️ No se pudo obtener tu ubicación'); },
     { enableHighAccuracy: true, timeout: 10000 }
   );
 }
 
 function onMapDragStart() {
-  if (followMode) {
-    followMode = false;
-    updateGpsBtnUI();
-    showToast('👆 Arrastraste el mapa · tocá 📍 para seguir de nuevo');
-  }
+  if (followMode) { followMode = false; updateGpsBtnUI(); showToast('👆 Arrastraste el mapa · tocá 📍 para seguir de nuevo'); }
 }
 
 function initMap() {
-  leafletMap = L.map('leaflet-map', {
-    center: [CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng],
-    zoom: 16,
-    zoomControl: false,
-  });
+  leafletMap = L.map('leaflet-map', { center: [CONFIG.DEFAULT_CENTER.lat, CONFIG.DEFAULT_CENTER.lng], zoom: 16, zoomControl: false });
   L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: 'abcd', maxZoom: 20,
   }).addTo(leafletMap);
-
   leafletMap.on('dragstart', onMapDragStart);
-
-  leafletMap.on('zoomend', () => {
-    const toShow = nearbyPlaces.length ? nearbyPlaces : places;
-    if (toShow.length) buildMapMarkers(toShow);
-  });
-
+  leafletMap.on('zoomend', () => { const toShow = nearbyPlaces.length ? nearbyPlaces : places; if (toShow.length) buildMapMarkers(toShow); });
   startGpsWatch();
   initSearch();
 }
@@ -1785,13 +1736,7 @@ function startGpsWatch() {
   if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
   gpsWatchId = navigator.geolocation.watchPosition(
     pos => onGpsSuccess(pos),
-    err => {
-      if (!mapInitialLoaded) {
-        const { lat, lng } = CONFIG.DEFAULT_CENTER;
-        ensurePlacesLoadedAt(lat, lng);
-        mapInitialLoaded = true;
-      }
-    },
+    err => { if (!mapInitialLoaded) { const { lat, lng } = CONFIG.DEFAULT_CENTER; ensurePlacesLoadedAt(lat, lng); mapInitialLoaded = true; } },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }
   );
 }
@@ -1799,44 +1744,26 @@ function startGpsWatch() {
 function onGpsSuccess(pos) {
   const { latitude: lat, longitude: lng } = pos.coords;
   const isFirst = userLat === null;
-
   userLat = lat; userLng = lng;
   updateUserMarker(lat, lng);
-
   if (followMode) {
-    const moved = lastFollowLat !== null
-      ? distanceMeter(lastFollowLat, lastFollowLng, lat, lng)
-      : Infinity;
-
+    const moved = lastFollowLat !== null ? distanceMeter(lastFollowLat, lastFollowLng, lat, lng) : Infinity;
     if (moved >= CONFIG.FOLLOW_MIN_MOVE_M) {
       lastFollowLat = lat; lastFollowLng = lng;
-      if (isFirst) {
-        leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.5 });
-      } else {
-        leafletMap.panTo([lat, lng], { animate: true, duration: 0.4, easeLinearity: 0.5 });
-      }
+      if (isFirst) leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.5 });
+      else leafletMap.panTo([lat, lng], { animate: true, duration: 0.4, easeLinearity: 0.5 });
     }
   }
-
   if (isFirst) {
-    if (!followMode) {
-      leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM);
-    }
+    if (!followMode) leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM);
     updateGpsBtnUI();
     ensurePlacesLoadedAt(lat, lng);
     lastLoadTileKey = latLngToTileKey(lat, lng);
   } else {
     const currentTileKey = latLngToTileKey(lat, lng);
-    if (currentTileKey !== lastLoadTileKey) {
-      lastLoadTileKey = currentTileKey;
-      ensurePlacesLoadedAt(lat, lng);
-    }
+    if (currentTileKey !== lastLoadTileKey) { lastLoadTileKey = currentTileKey; ensurePlacesLoadedAt(lat, lng); }
   }
-
-  if (!checkinShown && places.length > 0) {
-    checkinShown = true;
-    setTimeout(() => showCheckinModal(lat, lng), 1200);
-  }
+  if (!checkinShown && places.length > 0) { checkinShown = true; setTimeout(() => showCheckinModal(lat, lng), 1200); }
 }
 
 /* ─────────────── MARKERS ─────────────── */
@@ -1845,11 +1772,56 @@ function makeStatusChipHTML(place) {
   return `<div class="fc-card-status" style="background:${s.color}"><div class="s-dot-sm"></div><div class="s-label-sm">${s.label}</div></div>`;
 }
 
+/**
+ * Genera el HTML del logo para las cards del mapa.
+ * Si el lugar es sponsor, muestra su imagen de logo; si no, el emoji.
+ */
+function makeLogoHTML(place) {
+  if (place.sponsor && place.sponsor.logo_url) {
+    return `<img src="${place.sponsor.logo_url}" alt="${place.name}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`;
+  }
+  return place.logo;
+}
+
+/**
+ * Genera el ícono Leaflet de una card de lugar.
+ * Los sponsors premium tienen borde y fondo de color; basic tienen borde tenue.
+ * Los sponsors muestran su logo real y un mini-badge de verificación con el color del sponsor.
+ */
 function makeIcon(place) {
-  const verBadge = place.verified ? `<div class="fc-card-verified">✓</div>` : '';
+  const sponsor = place.sponsor;
+  const sponsorColor = sponsor ? (sponsor.badge_color || '#6366F1') : null;
+
+  const verBadgeColor = sponsorColor || '#6366F1';
+  const verBadge = place.verified
+    ? `<div class="fc-card-verified" style="background:${verBadgeColor}">✓</div>`
+    : '';
+
+  const sponsorBadgeHTML = sponsor
+    ? `<div class="fc-sponsor-badge" style="background:${sponsorColor}">✓ ${sponsor.badge_text || 'Verificado'}</div>`
+    : '';
+
+  const sponsorClass = sponsor ? `is-sponsor tier-${sponsor.tier || 'basic'}` : '';
+  const sponsorStyle = sponsor ? `style="--sponsor-color:${sponsorColor}"` : '';
+
   return L.divIcon({
-    html: `<div class="fc-card-wrap"><div class="fc-card"><div class="fc-card-head"><div class="fc-card-logo">${place.logo}${verBadge}</div><div class="fc-card-info"><div class="fc-card-name">${place.name}</div><div class="fc-card-type">${place.type}</div></div><span class="fc-card-open ${place.open?'open':'closed'}">${place.open?'Abierto':'Cerrado'}</span></div>${makeStatusChipHTML(place)}</div><div class="fc-tail"></div><div class="fc-base"></div></div>`,
-    className: '', iconAnchor: [0, 168], popupAnchor: [0, -168],
+    html: `<div class="fc-card-wrap ${sponsorClass}" ${sponsorStyle}>
+      <div class="fc-card">
+        <div class="fc-card-head">
+          <div class="fc-card-logo">${makeLogoHTML(place)}${verBadge}</div>
+          <div class="fc-card-info">
+            <div class="fc-card-name">${place.name}</div>
+            <div class="fc-card-type">${place.type}</div>
+          </div>
+          <span class="fc-card-open ${place.open?'open':'closed'}">${place.open?'Abierto':'Cerrado'}</span>
+        </div>
+        ${makeStatusChipHTML(place)}
+        ${sponsorBadgeHTML}
+      </div>
+      <div class="fc-tail"></div>
+      <div class="fc-base"></div>
+    </div>`,
+    className: '', iconAnchor: [0, 172], popupAnchor: [0, -172],
   });
 }
 
@@ -1862,37 +1834,23 @@ function getClusterGridDeg(zoom) {
 }
 
 function densityClass(count) {
-  if (count <= 5)  return 'density-low';
+  if (count <= 5) return 'density-low';
   if (count <= 15) return 'density-med';
   if (count <= 40) return 'density-high';
   return 'density-max';
 }
 
-function clusterLabel(count) {
-  if (count === 1) return '1 lugar';
-  return `${count} lugares`;
-}
-
 function computeClusters(placesToCluster, gridDeg) {
   const cells = {};
   placesToCluster.forEach(p => {
-    const cx = Math.floor(p.lat / gridDeg);
-    const cy = Math.floor(p.lng / gridDeg);
+    const cx = Math.floor(p.lat / gridDeg), cy = Math.floor(p.lng / gridDeg);
     const key = `${cx}:${cy}`;
-    if (!cells[key]) {
-      cells[key] = {
-        lat: (cx + 0.5) * gridDeg,
-        lng: (cy + 0.5) * gridDeg,
-        places: [],
-      };
-    }
+    if (!cells[key]) cells[key] = { lat: (cx + 0.5) * gridDeg, lng: (cy + 0.5) * gridDeg, places: [] };
     cells[key].places.push(p);
   });
   return Object.values(cells).map(c => ({
-    lat: c.lat,
-    lng: c.lng,
-    count: c.places.length,
-    places: c.places,
+    lat: c.lat, lng: c.lng,
+    count: c.places.length, places: c.places,
     avgStatus: c.places.reduce((s, p) => s + (p.reporters > 0 ? p.status : 0), 0) / c.places.length,
     totalReporters: c.places.reduce((s, p) => s + (p.reporters || 0), 0),
   }));
@@ -1900,10 +1858,8 @@ function computeClusters(placesToCluster, gridDeg) {
 
 function makeClusterIcon(cluster) {
   const dc = densityClass(cluster.count);
-  const label = clusterLabel(cluster.count);
-  const subtitle = cluster.totalReporters > 0
-    ? `${cluster.totalReporters} reportes activos`
-    : 'Sin reportes aún';
+  const label = cluster.count === 1 ? '1 lugar' : `${cluster.count} lugares`;
+  const subtitle = cluster.totalReporters > 0 ? `${cluster.totalReporters} reportes activos` : 'Sin reportes aún';
   return L.divIcon({
     html: `<div class="cluster-card">
       <div class="cluster-bubble ${dc}">
@@ -1913,8 +1869,7 @@ function makeClusterIcon(cluster) {
       <div class="cluster-tail"></div>
       <div class="cluster-base"></div>
     </div>`,
-    className: '',
-    iconAnchor: [65, 62],
+    className: '', iconAnchor: [65, 62],
   });
 }
 
@@ -1932,55 +1887,34 @@ function clearIndividualMarkers() {
 function buildMapMarkers(placesToShow) {
   placesToShow = placesToShow || nearbyPlaces;
   if (!leafletMap || !placesToShow.length) return;
-
   const zoom = leafletMap.getZoom();
 
   if (zoom >= CLUSTER_ZOOM_THRESHOLD) {
     clearClusterMarkers();
-
     const newIdSet = new Set(placesToShow.map(p => p.id));
-
-    Object.keys(leafletMarkers).forEach(id => {
-      if (!newIdSet.has(id)) {
-        leafletMarkers[id].remove();
-        delete leafletMarkers[id];
-      }
-    });
-
+    Object.keys(leafletMarkers).forEach(id => { if (!newIdSet.has(id)) { leafletMarkers[id].remove(); delete leafletMarkers[id]; } });
     placesToShow.forEach(p => {
       if (leafletMarkers[p.id]) {
         const marker = leafletMarkers[p.id];
         if (marker._lastStatus !== p.status || marker._lastReporters !== p.reporters) {
           marker.setIcon(makeIcon(p));
-          marker._lastStatus = p.status;
-          marker._lastReporters = p.reporters;
+          marker._lastStatus = p.status; marker._lastReporters = p.reporters;
         }
       } else {
         const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p) }).addTo(leafletMap);
-        marker._lastStatus = p.status;
-        marker._lastReporters = p.reporters;
-        marker.on('click', () => {
-          if (pickModeActive) { exitPickMode(); openPlacePopup(p); }
-          else { openPlacePopup(p); }
-        });
+        marker._lastStatus = p.status; marker._lastReporters = p.reporters;
+        marker.on('click', () => { if (pickModeActive) { exitPickMode(); openPlacePopup(p); } else { openPlacePopup(p); } });
         leafletMarkers[p.id] = marker;
       }
     });
-
   } else {
     clearIndividualMarkers();
-
     const gridDeg = getClusterGridDeg(zoom);
     const clusters = computeClusters(placesToShow, gridDeg);
-
     clearClusterMarkers();
-
     clusters.forEach((cluster, idx) => {
       const marker = L.marker([cluster.lat, cluster.lng], { icon: makeClusterIcon(cluster) }).addTo(leafletMap);
-      marker.on('click', () => {
-        const targetZoom = Math.min(leafletMap.getZoom() + 3, CLUSTER_ZOOM_THRESHOLD + 1);
-        leafletMap.setView([cluster.lat, cluster.lng], targetZoom, { animate: true, duration: 0.5 });
-      });
+      marker.on('click', () => { const targetZoom = Math.min(leafletMap.getZoom() + 3, CLUSTER_ZOOM_THRESHOLD + 1); leafletMap.setView([cluster.lat, cluster.lng], targetZoom, { animate: true, duration: 0.5 }); });
       clusterMarkers[`cluster_${idx}`] = marker;
     });
   }
@@ -2015,22 +1949,18 @@ async function manualRefresh() {
   const icon = document.getElementById('refresh-icon');
   icon.style.animation = 'none'; icon.offsetHeight;
   icon.style.animation = 'rotate .7s cubic-bezier(.34,1.56,.64,1)';
-
-  const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
-  const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
-
+  const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat, lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
   const tileKey = latLngToTileKey(lat, lng);
   const adjacent = getAdjacentTileKeys(lat, lng);
   [tileKey, ...adjacent].forEach(k => { delete tileCache[k]; });
   lastLoadTileKey = null;
-
   nearbyPlaces = [];
   await ensurePlacesLoadedAt(lat, lng);
   showToast('🔄 Locales actualizados');
 }
 
 /* ══════════════════════════════════════════════
-   CHECK-IN MODAL
+   CHECK-IN MODAL — con soporte de sponsor logos
    ══════════════════════════════════════════════ */
 function showCheckinModal(lat, lng) {
   const pool = nearbyPlaces.length ? nearbyPlaces : places;
@@ -2055,8 +1985,12 @@ function showCheckinModal(lat, lng) {
     const cls      = veryNear || nearish ? 'near' : 'far';
     const distLabel = p._dist < 1000 ? `${p._dist}m` : `${(p._dist / 1000).toFixed(1)}km`;
     const distDisplay = veryNear ? `📍 ${p._dist}m` : distLabel;
+    // Usar logo real si es sponsor
+    const logoContent = (p.sponsor && p.sponsor.logo_url)
+      ? `<img src="${p.sponsor.logo_url}" alt="${p.name}">`
+      : `<span>${p.logo}</span>`;
     return `<button class="checkin-tab ${cls}" data-place-id="${p.id}">
-      <div class="checkin-tab-logo">${p.logo}</div>
+      <div class="checkin-tab-logo">${logoContent}</div>
       <div class="checkin-tab-name">${p.name}</div>
       <div class="checkin-tab-dist">${distDisplay}</div>
     </button>`;
@@ -2074,7 +2008,7 @@ function showCheckinModal(lat, lng) {
           <div class="checkin-tabs">
             ${tabsHtml}
             <button class="checkin-tab other-tab" id="checkin-other-tab">
-              <div class="checkin-tab-logo">🗺️</div>
+              <div class="checkin-tab-logo"><span>🗺️</span></div>
               <div class="checkin-tab-name">Otro</div>
               <div class="checkin-tab-dist">Elegir del mapa</div>
             </button>
@@ -2094,9 +2028,7 @@ function showCheckinModal(lat, lng) {
   });
   root.querySelector('#checkin-other-tab').addEventListener('click', chooseOther);
   root.querySelector('#checkin-skip-btn').addEventListener('click', close);
-  root.querySelector('#checkin-overlay').addEventListener('click', e => {
-    if (e.target.id === 'checkin-overlay') close();
-  });
+  root.querySelector('#checkin-overlay').addEventListener('click', e => { if (e.target.id === 'checkin-overlay') close(); });
 }
 
 function enterPickMode() {
@@ -2112,7 +2044,7 @@ function exitPickMode() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   GOOGLE AUTH — sesión persistente
+   GOOGLE AUTH
    ═══════════════════════════════════════════════════════════ */
 let tokenClient = null;
 const TOKEN_STORAGE_KEY = 'qooentum_gtoken';
@@ -2130,9 +2062,7 @@ function loadTokenFromStorage() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data || !data.token) return null;
-    if (data.expiresAt && Date.now() > data.expiresAt + 5 * 60 * 1000) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY); return null;
-    }
+    if (data.expiresAt && Date.now() > data.expiresAt + 5 * 60 * 1000) { localStorage.removeItem(TOKEN_STORAGE_KEY); return null; }
     return data.token;
   } catch(e) { return null; }
 }
@@ -2169,35 +2099,20 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// ⭐️ FIX: doLogout ahora sincroniza correctamente y re-renderiza popup
 function doLogout() {
-  isLoggedIn = false;
-  currentUser = null;
-  userPts = 0;
-  placeCooldowns = {};
-  followMode = false;
-  updateGpsBtnUI();
+  isLoggedIn = false; currentUser = null; userPts = 0;
+  placeCooldowns = {}; followMode = false; updateGpsBtnUI();
   localStorage.removeItem(SESSION_STORAGE_KEY);
   localStorage.removeItem(TOKEN_STORAGE_KEY);
-  if (window.google && google.accounts && google.accounts.oauth2) {
-    try { google.accounts.oauth2.revoke(); } catch(e) {}
-  }
+  if (window.google && google.accounts && google.accounts.oauth2) { try { google.accounts.oauth2.revoke(); } catch(e) {} }
   document.getElementById('user-chip-wrap').style.display = 'none';
   const btn = document.getElementById('login-topbar-btn');
-  btn.style.display = 'flex';
-  btn.classList.remove('is-loading');
-  const t = btn.querySelector('.gbtn-txt');
-  if (t) t.textContent = 'Ingresar';
+  btn.style.display = 'flex'; btn.classList.remove('is-loading');
+  const t = btn.querySelector('.gbtn-txt'); if (t) t.textContent = 'Ingresar';
   document.getElementById('user-dropdown').classList.remove('open');
   document.getElementById('user-chip-wrap').classList.remove('open');
-  updateUserHUD();
-  
-  stopOccupancySync();
-  
-  if (currentPopupPlace) {
-    renderPopup(currentPopupPlace, isLoggedIn, currentUser);
-  }
-  
+  updateUserHUD(); stopOccupancySync();
+  if (currentPopupPlace) renderPopup(currentPopupPlace, isLoggedIn, currentUser);
   showToast('✅ Sesión cerrada correctamente');
 }
 
@@ -2223,26 +2138,18 @@ function initialsFromName(name) {
   return ((parts[0]||'')[0]||'').toUpperCase() + ((parts[1]||'')[0]||'').toUpperCase() || 'YO';
 }
 
-// ⭐️ FIX: applyLoggedInUI ahora sincroniza y re-renderiza popup
 function applyLoggedInUI() {
   document.getElementById('login-topbar-btn').style.display = 'none';
   document.getElementById('user-chip-wrap').style.display = 'flex';
   const avatarEl = document.getElementById('topbar-avatar');
   if (currentUser.picture) { avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}" referrerpolicy="no-referrer">`; }
   else { avatarEl.textContent = initialsFromName(currentUser.name); }
-  updateUserHUD();
-  
-  maybeStartOccupancySync();
-  
-  if (currentPopupPlace) {
-    renderPopup(currentPopupPlace, isLoggedIn, currentUser);
-  }
+  updateUserHUD(); maybeStartOccupancySync();
+  if (currentPopupPlace) renderPopup(currentPopupPlace, isLoggedIn, currentUser);
 }
 
 async function fetchProfileFromToken(accessToken) {
-  const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
   if (!profileRes.ok) throw new Error('No se pudo obtener el perfil de Google');
   return await profileRes.json();
 }
@@ -2250,23 +2157,15 @@ async function fetchProfileFromToken(accessToken) {
 async function handleGoogleTokenResponse(resp) {
   if (!resp || resp.error || !resp.access_token) {
     resetLoginButton();
-    if (resp && resp.error !== 'user_logged_out' && resp.error !== 'access_denied' && resp.error !== 'immediate_failed') {
-      showToast('⚠️ No se pudo iniciar sesión con Google');
-    }
+    if (resp && resp.error !== 'user_logged_out' && resp.error !== 'access_denied' && resp.error !== 'immediate_failed') showToast('⚠️ No se pudo iniciar sesión con Google');
     return;
   }
   try {
     const profile = await fetchProfileFromToken(resp.access_token);
     const deviceEmail = localStorage.getItem(DEVICE_KEY);
-    if (deviceEmail && deviceEmail !== profile.email) {
-      resetLoginButton();
-      showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);
-      return;
-    }
+    if (deviceEmail && deviceEmail !== profile.email) { resetLoginButton(); showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`); return; }
     let backendResult = null;
-    if (BACKEND_READY) {
-      backendResult = await apiPost('login', { access_token: resp.access_token, email: profile.email, name: profile.name, picture: profile.picture });
-    }
+    if (BACKEND_READY) backendResult = await apiPost('login', { access_token: resp.access_token, email: profile.email, name: profile.name, picture: profile.picture });
     const wasLoggedIn = isLoggedIn;
     currentUser = { email: profile.email, name: profile.name || profile.email, picture: profile.picture || '' };
     if (backendResult && typeof backendResult.points === 'number') userPts = backendResult.points;
@@ -2275,31 +2174,16 @@ async function handleGoogleTokenResponse(resp) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
     localStorage.setItem(DEVICE_KEY, profile.email);
     saveTokenToStorage(resp.access_token, resp.expires_in);
-    applyLoggedInUI();
-    hideToastAction();
-    
-    maybeStartOccupancySync();
-    
-    if (!wasLoggedIn) {
-      showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
-    }
-    if (pendingVote) {
-      const { placeId, voteIdx } = pendingVote; pendingVote = null;
-      const p = places.find(x => x.id === placeId);
-      if (p) await submitVoteToBackend(p, voteIdx);
-    }
-  } catch (err) {
-    console.warn('Error de login:', err);
-    showToast('⚠️ Error al iniciar sesión con Google');
-  } finally { resetLoginButton(); }
+    applyLoggedInUI(); hideToastAction(); maybeStartOccupancySync();
+    if (!wasLoggedIn) showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
+    if (pendingVote) { const { placeId, voteIdx } = pendingVote; pendingVote = null; const p = places.find(x => x.id === placeId); if (p) await submitVoteToBackend(p, voteIdx); }
+  } catch (err) { console.warn('Error de login:', err); showToast('⚠️ Error al iniciar sesión con Google'); }
+  finally { resetLoginButton(); }
 }
 
 async function trySilentRenew() {
   let attempts = 0;
-  while ((!window.google || !google.accounts || !google.accounts.oauth2) && attempts < 20) {
-    await new Promise(r => setTimeout(r, 200));
-    attempts++;
-  }
+  while ((!window.google || !google.accounts || !google.accounts.oauth2) && attempts < 20) { await new Promise(r => setTimeout(r, 200)); attempts++; }
   if (!initGoogleTokenClient()) return;
   tokenClient.requestAccessToken({ prompt: '' });
 }
@@ -2311,9 +2195,7 @@ async function restoreSession() {
   if (!currentUser || !currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
   const deviceEmail = localStorage.getItem(DEVICE_KEY);
   if (deviceEmail && deviceEmail !== currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
-
   applyLoggedInUI();
-
   const savedToken = loadTokenFromStorage();
   if (savedToken) {
     try {
@@ -2330,13 +2212,10 @@ async function restoreSession() {
             localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentUser));
           }
         }
-        updateUserHUD();
-        maybeStartOccupancySync();
-        return;
+        updateUserHUD(); maybeStartOccupancySync(); return;
       }
     } catch(e) { localStorage.removeItem(TOKEN_STORAGE_KEY); }
   }
-
   isLoggedIn = false;
   await trySilentRenew();
 }
@@ -2476,14 +2355,11 @@ window.addEventListener('DOMContentLoaded', () => {
 let deferredInstallPrompt = null;
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed:', err));
-  });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed:', err)); });
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
+  e.preventDefault(); deferredInstallPrompt = e;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   if (!isStandalone) document.getElementById('install-banner').style.display = 'flex';
 });
