@@ -215,7 +215,6 @@ html,body{
 .gps-float-btn.pulsing{animation:gpsPulse .8s ease-in-out infinite;}
 .gps-float-btn.active{border-color:var(--green);background:var(--green-lt);}
 .gps-float-btn.active svg{color:var(--green);}
-/* Estado "siguiendo" — indica que el mapa sigue al usuario */
 .gps-float-btn.following{border-color:var(--green);background:linear-gradient(135deg,var(--green-lt),#D1FAF0);box-shadow:0 0 0 3px rgba(0,196,140,.18),var(--shadow-float);}
 .gps-float-btn.following svg{color:var(--green-dk);}
 @keyframes gpsPulse{0%,100%{box-shadow:var(--shadow-float)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.18),var(--shadow-float)}}
@@ -224,7 +223,7 @@ html,body{
 /* ── FOLLOW-MODE INDICATOR pill ── */
 .follow-pill{
   position:absolute;
-  top:64px; /* debajo del buscador */
+  top:64px;
   left:50%;
   transform:translateX(-50%);
   z-index:998;
@@ -702,20 +701,12 @@ const CONFIG = {
   GPS_ZOOM: 19,
   CHECKIN_RADIUS_M: 150,
   CHECKIN_NEAR_M: 50,
-  // ── BBOX / CACHE ──
-  // Tamaño del tile de caché en grados (~250m a lat -34)
   TILE_DEG: 0.0025,
-  // Radio extra alrededor del tile para la bbox de Overpass
   BBOX_PAD: 0.0012,
-  // Caché válida por 24h (en ms)
   PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-  // Distancia mínima de movimiento para cargar nuevos lugares (metros)
   LOAD_TRIGGER_M: 40,
   VOTE_COOLDOWN_MS: 8 * 60 * 60 * 1000,
-  // ── FOLLOW MODE ──
-  // Distancia mínima de movimiento del usuario antes de mover el mapa (metros)
   FOLLOW_MIN_MOVE_M: 5,
-  // Zoom usado al activar follow mode
   FOLLOW_ZOOM: 19,
 };
 
@@ -724,8 +715,7 @@ const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
 const SESSION_STORAGE_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
 const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
-/* ── Caché de lugares en localStorage ── */
-const PLACE_CACHE_KEY = 'qooentum_place_cache_v2'; // v2 = bbox format
+const PLACE_CACHE_KEY = 'qooentum_place_cache_v2';
 
 /* ─────────────── DATA ─────────────── */
 const STATUS_CFG = [
@@ -797,8 +787,8 @@ const SEED_PRIZES = [
 /* ─────────────── STATE ─────────────── */
 let userPts = 0;
 let currentUser = null;
-let places = [];         // todos los lugares en memoria
-let placeIndex = new Map(); // id → place object  (O(1) lookup)
+let places = [];
+let placeIndex = new Map();
 let nearbyPlaces = [];
 let rankingData = [];
 let prizesData = SEED_PRIZES.map(p=>({...p}));
@@ -815,31 +805,112 @@ let checkinShown = false;
 let pickModeActive = false;
 let searchTimer = null;
 let searchQuery = '';
-
-/* ── CACHÉ TILES ──
-   Guardamos qué tiles (celdas de cuadrícula) ya fueron pedidos a Overpass.
-   Clave: "lat_tile:lng_tile" → { ts: timestamp, placeIds: [id, ...] }
-   Los place objects van en `places` (memoria) y también en localStorage por place_id.
-*/
-let tileCache = {};      // en memoria (reconstruido al iniciar)
-let placeStore = {};     // id → place object (en memoria; flush selectivo a LS)
-
-/* ── FOLLOW MODE ── */
-let followMode = false;  // true = el mapa sigue al usuario automáticamente
+let tileCache = {};
+let placeStore = {};
+let followMode = false;
 let lastFollowLat = null, lastFollowLng = null;
 
 /* ════════════════════════════════════════════════════════════
-   CACHÉ — localStorage helpers
+   ⭐️ SINCRONIZACIÓN EN TIEMPO REAL DE ESTADOS DE OCUPACIÓN ⭐️
    ════════════════════════════════════════════════════════════ */
+let occupancySyncInterval = null;
 
-/** Convierte lat/lng a tile key usando la cuadrícula de CONFIG.TILE_DEG */
+async function syncOccupancyStatus() {
+  if (!BACKEND_READY || !places.length) return;
+  
+  try {
+    const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
+    const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
+    
+    const sorted = places
+      .map(p => ({ ...p, _dist: distanceMeter(lat, lng, p.lat, p.lng) }))
+      .sort((a, b) => a._dist - b._dist)
+      .slice(0, 30);
+    
+    if (!sorted.length) return;
+    
+    const result = await apiGet('sync_places', {
+      lat, lng, radius: 1000, status_only: 1,
+      place_ids: sorted.map(p => p.id).join(','),
+    });
+    
+    if (!result || !Array.isArray(result.places)) return;
+    
+    let needsMapRefresh = false;
+    
+    result.places.forEach(bp => {
+      const p = placeIndex.get(bp.id);
+      if (!p) return;
+      
+      const oldStatus = p.status;
+      const oldReporters = p.reporters;
+      
+      p.status = bp.status ?? p.status;
+      p.reporters = bp.reporters ?? p.reporters;
+      
+      if (oldStatus !== p.status || oldReporters !== p.reporters) {
+        needsMapRefresh = true;
+        placeStore[p.id] = p;
+      }
+    });
+    
+    if (needsMapRefresh) {
+      buildMapMarkers(nearbyPlaces.length ? nearbyPlaces : places);
+      updateCrowdBar(calcCrowdPct());
+      
+      if (currentPopupPlace) {
+        const updated = placeIndex.get(currentPopupPlace.id);
+        if (updated) {
+          Object.assign(currentPopupPlace, updated);
+          renderPopup(currentPopupPlace, isLoggedIn, currentUser);
+        }
+      }
+    }
+    
+    persistCache();
+    
+  } catch(e) {
+    console.warn('syncOccupancyStatus error:', e);
+  }
+}
+
+function startOccupancySync() {
+  syncOccupancyStatus();
+  if (occupancySyncInterval) clearInterval(occupancySyncInterval);
+  occupancySyncInterval = setInterval(() => {
+    syncOccupancyStatus();
+  }, 15000);
+}
+
+function stopOccupancySync() {
+  if (occupancySyncInterval) {
+    clearInterval(occupancySyncInterval);
+    occupancySyncInterval = null;
+  }
+}
+
+function maybeStartOccupancySync() {
+  if (isLoggedIn && !occupancySyncInterval) {
+    startOccupancySync();
+  } else if (!isLoggedIn && occupancySyncInterval) {
+    stopOccupancySync();
+  }
+}
+
+function getLevelInfo(pts) {
+  const level = Math.floor(pts / XP_PER_LEVEL) + 1;
+  const xpIntoLevel = pts % XP_PER_LEVEL;
+  return { level, xpIntoLevel, pct: Math.round((xpIntoLevel / XP_PER_LEVEL) * 100) };
+}
+function titleForLevel(level) { return LEVEL_TITLES[Math.min(level-1, LEVEL_TITLES.length-1)]; }
+
+/* ─────────────── CACHÉ DE LUGARES ─────────────── */
 function latLngToTileKey(lat, lng) {
   const tLat = Math.floor(lat / CONFIG.TILE_DEG);
   const tLng = Math.floor(lng / CONFIG.TILE_DEG);
   return `${tLat}:${tLng}`;
 }
 
-/** Guarda el estado completo de caché en localStorage */
 function persistCache() {
   try {
     const payload = {
@@ -849,7 +920,6 @@ function persistCache() {
     };
     localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify(payload));
   } catch(e) {
-    // localStorage lleno → limpiar tiles viejos y reintentar
     pruneOldTiles();
     try {
       localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify({ tiles: tileCache, places: placeStore, savedAt: Date.now() }));
@@ -857,7 +927,6 @@ function persistCache() {
   }
 }
 
-/** Carga la caché desde localStorage al iniciar */
 function loadCache() {
   try {
     const raw = localStorage.getItem(PLACE_CACHE_KEY);
@@ -866,7 +935,6 @@ function loadCache() {
     if (!data || !data.tiles) return;
     tileCache = data.tiles || {};
     placeStore = data.places || {};
-    // Reconstruir places[] y placeIndex desde placeStore
     Object.values(placeStore).forEach(p => {
       if (!placeIndex.has(p.id)) {
         placeIndex.set(p.id, p);
@@ -876,7 +944,6 @@ function loadCache() {
   } catch(e) { console.warn('Cache load failed:', e); }
 }
 
-/** Elimina tiles cuyo timestamp superó el TTL */
 function pruneOldTiles() {
   const now = Date.now();
   Object.keys(tileCache).forEach(key => {
@@ -884,43 +951,34 @@ function pruneOldTiles() {
       delete tileCache[key];
     }
   });
-  // También limpiar placeStore de places que no están referenciados por ningún tile
   const allIds = new Set();
   Object.values(tileCache).forEach(t => (t.placeIds || []).forEach(id => allIds.add(id)));
   Object.keys(placeStore).forEach(id => { if (!allIds.has(id)) delete placeStore[id]; });
 }
 
-/** Marca un tile como cargado con los ids resultantes */
 function markTileLoaded(tileKey, ids) {
   tileCache[tileKey] = { ts: Date.now(), placeIds: ids };
 }
 
-/** Devuelve true si un tile está en caché y vigente */
 function isTileCached(tileKey) {
   const t = tileCache[tileKey];
   if (!t) return false;
   return (Date.now() - t.ts) < CONFIG.PLACE_CACHE_TTL_MS;
 }
 
-/** Obtiene las 4 tiles que cubre una posición lat/lng (+ adyacentes para borde) */
 function getRelevantTileKeys(lat, lng) {
-  // El usuario puede estar justo en el borde de un tile → cargamos el tile actual
-  // y sus 3 vecinos si son necesarios (lazy: solo el actual en primera carga)
   return [latLngToTileKey(lat, lng)];
 }
 
-/** Fusiona places nuevos en memoria y placeStore */
 function mergePlacesIntoCache(newPlaces, tileKey) {
   const addedIds = [];
   newPlaces.forEach(p => {
     placeStore[p.id] = p;
     addedIds.push(p.id);
-    // O(1) — antes era .find() O(n) por cada place
     if (!placeIndex.has(p.id)) {
       placeIndex.set(p.id, p);
-      places.push(p); // mantener el array por compatibilidad con código existente
+      places.push(p);
     } else {
-      // Actualizar el objeto existente en lugar de duplicarlo
       const existing = placeIndex.get(p.id);
       Object.assign(existing, p);
     }
@@ -928,14 +986,6 @@ function mergePlacesIntoCache(newPlaces, tileKey) {
   if (tileKey) markTileLoaded(tileKey, addedIds);
 }
 
-/* ════════════════════════════════════════════════════════════
-   BBOX helpers
-   ════════════════════════════════════════════════════════════ */
-
-/**
- * Dado un tile key, devuelve la bbox [minLat, minLng, maxLat, maxLng]
- * expandida con BBOX_PAD para capturar comercios justo en el borde.
- */
 function tileToBbox(tileKey) {
   const [tLat, tLng] = tileKey.split(':').map(Number);
   const minLat = tLat * CONFIG.TILE_DEG - CONFIG.BBOX_PAD;
@@ -945,9 +995,7 @@ function tileToBbox(tileKey) {
   return [minLat, minLng, maxLat, maxLng];
 }
 
-/* ════════════════════════════════════════════════════════════
-   COOLDOWN
-   ════════════════════════════════════════════════════════════ */
+/* ─────────────── COOLDOWN ─────────────── */
 function loadCooldownsFromStorage() {
   try {
     const raw = localStorage.getItem(COOLDOWNS_STORAGE_KEY);
@@ -1011,7 +1059,7 @@ function tickCooldownUI() {
   const ms = getVoteCooldownRemainingMs(currentPopupPlace.id);
   if (ms <= 0 && currentPopupPlace._wasOnCooldown) {
     currentPopupPlace._wasOnCooldown = false;
-    renderPopup(currentPopupPlace);
+    renderPopup(currentPopupPlace, isLoggedIn, currentUser);
   }
 }
 
@@ -1064,7 +1112,7 @@ async function apiPostVote(payload) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   OVERPASS API — con bbox + caché de tiles
+   OVERPASS API
    ════════════════════════════════════════════════════════════ */
 function osmNodeToPlace(node) {
   const tags = node.tags || {};
@@ -1083,15 +1131,9 @@ function osmNodeToPlace(node) {
   };
 }
 
-/**
- * Pide a Overpass solo los tiles que no están en caché.
- * Usa bbox en lugar de `around:` → más eficiente y cacheable.
- */
 async function loadOverpassForTiles(tileKeys) {
   if (!tileKeys.length) return [];
 
-  // Una única bbox que engloba todos los tiles pedidos
-  // Es más eficiente que N pares de cláusulas node+shop por tile
   let minLat = Infinity, minLng = Infinity, maxLat = -Infinity, maxLng = -Infinity;
   tileKeys.forEach(key => {
     const [s, w, n, e] = tileToBbox(key);
@@ -1104,8 +1146,6 @@ async function loadOverpassForTiles(tileKeys) {
   const amenityFilter = 'supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|fuel|marketplace';
   const shopFilter    = 'supermarket|convenience|pharmacy|bakery|butcher|laundry|dry_cleaning|hardware|clothes|shoes|electronics|optician|beauty|hairdresser|toy|sports|stationery|greengrocer|florist|newsagent|kiosk|general';
 
-  // Una sola query con dos filtros sobre la bbox combinada
-  // Antes: 2 × N bloques (N = cantidad de tiles). Ahora: siempre 2 bloques.
   const query = `[out:json][timeout:15];(
     node["amenity"~"^(${amenityFilter})$"](${minLat},${minLng},${maxLat},${maxLng});
     node["shop"~"^(${shopFilter})$"](${minLat},${minLng},${maxLat},${maxLng});
@@ -1128,39 +1168,24 @@ async function loadOverpassForTiles(tileKeys) {
   }
 }
 
-/**
- * Punto de entrada principal para cargar lugares.
- * - Detecta qué tiles necesita para lat/lng
- * - Omite tiles ya en caché
- * - Pide a Overpass solo los faltantes
- * - Fusiona resultados con backend
- */
 async function ensurePlacesLoadedAt(lat, lng) {
   const tileKey = latLngToTileKey(lat, lng);
-
-  // Tiles adyacentes (para que al acercarse al borde ya estén listos)
   const adjacentKeys = getAdjacentTileKeys(lat, lng);
   const allKeys = [tileKey, ...adjacentKeys];
-
   const missingKeys = allKeys.filter(k => !isTileCached(k));
 
-  // ── FASE 1: render inmediato con lo que ya está en caché ──
-  // Aunque falten tiles, mostramos todo lo disponible YA.
-  // El usuario ve el mapa cargado en milisegundos, no segundos.
   rebuildNearby(lat, lng);
   if (nearbyPlaces.length || places.length) {
     buildMapMarkers(nearbyPlaces.length ? nearbyPlaces : places);
     updateCrowdBar(calcCrowdPct());
   }
 
-  // Si todo está en caché, solo sincronizar estado del backend (ligero)
   if (missingKeys.length === 0) {
     syncBackendStatus(lat, lng).then(() => {
       rebuildNearby(lat, lng);
       buildMapMarkers(nearbyPlaces);
       updateCrowdBar(calcCrowdPct());
     });
-    // Checkin con lo que ya hay
     if (!mapInitialLoaded) {
       mapInitialLoaded = true;
       if (!checkinShown && nearbyPlaces.length > 0) {
@@ -1171,9 +1196,6 @@ async function ensurePlacesLoadedAt(lat, lng) {
     return;
   }
 
-  // ── FASE 2: cargar tiles faltantes en background ──
-  // No bloqueamos el render: la UI ya está visible desde la Fase 1.
-  // Overpass y backend corren en paralelo; cuando terminan, actualizamos.
   if (!mapInitialLoaded) mapInitialLoaded = true;
 
   const [osmPlaces, backendResult] = await Promise.all([
@@ -1183,11 +1205,9 @@ async function ensurePlacesLoadedAt(lat, lng) {
       : Promise.resolve(null),
   ]);
 
-  // Integrar backend places (tienen estado real: reportes, status)
   const backendPlaces = (backendResult && Array.isArray(backendResult.places))
     ? backendResult.places : [];
 
-  // Merge: backend sobreescribe OSM donde coinciden (tiene estado real)
   const backendById = new Map(backendPlaces.map(p => [p.id, p]));
   const merged = osmPlaces.map(p => {
     const bp = backendById.get(p.id);
@@ -1196,16 +1216,14 @@ async function ensurePlacesLoadedAt(lat, lng) {
   const onlyBackend = backendPlaces.filter(p => !osmPlaces.find(o => o.id === p.id));
   const allNew = [...merged, ...onlyBackend];
 
-  // Guardar en caché por tile
   missingKeys.forEach(key => {
     const [s, w, n, e] = tileToBbox(key);
     const forThisTile = allNew.filter(p => p.lat >= s && p.lat <= n && p.lng >= w && p.lng <= e);
     mergePlacesIntoCache(forThisTile, key);
   });
 
-  persistCache(); // flush a localStorage
+  persistCache();
 
-  // ── FASE 3: actualizar mapa con los datos nuevos ──
   rebuildNearby(lat, lng);
   buildMapMarkers(nearbyPlaces);
   updateCrowdBar(calcCrowdPct());
@@ -1216,35 +1234,28 @@ async function ensurePlacesLoadedAt(lat, lng) {
   }
 }
 
-/** Solo refresca el estado (reporters/status) desde backend, sin re-pedir OSM */
 async function syncBackendStatus(lat, lng) {
   if (!BACKEND_READY) return;
   const result = await apiGet('sync_places', { lat, lng, radius: 300, status_only: 1 });
   if (!result || !Array.isArray(result.places)) return;
   result.places.forEach(bp => {
-    const p = placeIndex.get(bp.id); // O(1)
+    const p = placeIndex.get(bp.id);
     if (p) {
       p.status = bp.status ?? p.status;
       p.reporters = bp.reporters ?? p.reporters;
       placeStore[p.id] = p;
     }
   });
-  // Persistir cambios de estado (sin recrear tiles)
   persistCache();
 }
 
-/** Calcula los 8 tiles adyacentes — solo los 2 más cercanos al usuario */
 function getAdjacentTileKeys(lat, lng) {
   const d = CONFIG.TILE_DEG;
-  // Posición relativa dentro del tile (0..1)
   const relLat = (lat / d) - Math.floor(lat / d);
   const relLng = (lng / d) - Math.floor(lng / d);
   const keys = [];
-  // Si estamos en el 30% inferior del tile, precargar el tile de abajo
   if (relLat < 0.3) keys.push(latLngToTileKey(lat - d, lng));
-  // Si estamos en el 70% superior, precargar el de arriba
   if (relLat > 0.7) keys.push(latLngToTileKey(lat + d, lng));
-  // Igual para longitud
   if (relLng < 0.3) keys.push(latLngToTileKey(lat, lng - d));
   if (relLng > 0.7) keys.push(latLngToTileKey(lat, lng + d));
   return keys;
@@ -1381,7 +1392,7 @@ function openSearchResultPopup(place) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   REACT POPUP
+   REACT POPUP ⭐️ CON FIX PARA LOGIN
    ═══════════════════════════════════════════════════════════ */
 const { useState, useEffect, useRef } = React;
 
@@ -1401,7 +1412,8 @@ function canReportThisPlace(place) {
   return distanceMeter(userLat, userLng, place.lat, place.lng) <= CONFIG.REPORT_RADIUS_M;
 }
 
-function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearchResult }) {
+// ⭐️ FIX: Ahora PlacePopup recibe isLoggedIn y currentUser como props
+function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearchResult, isLoggedIn, currentUser }) {
   const [visible, setVisible] = useState(false);
   const [cardVisible, setCardVisible] = useState(false);
   const [selectedVote, setSelectedVote] = useState(null);
@@ -1464,7 +1476,7 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
     React.createElement('span',{style:{fontSize:20,flexShrink:0}},'📍'),
     React.createElement('div',null,
       React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#0F172A'}},`Estás a ${distToPlace}m de este comercio`),
-      React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#64748B'}},`Necesitás estar a menos de ${CONFIG.REPORT_RADIUS_M}m para reportar. Entrá al local y volvé a intentar.`)
+      React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#64748B'}},'Necesitás estar a menos de ' + CONFIG.REPORT_RADIUS_M + 'm para reportar. Entrá al local y volvé a intentar.')
     )
   );
   const noGpsBlock = !hasGps && !onCooldown && React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'12px 14px',marginBottom:12}},
@@ -1579,21 +1591,26 @@ function PlacePopup({ place, onClose, onVoteSubmit, cooldownRemainingMs, isSearc
 let popupRoot = null;
 let currentPopupPlace = null;
 
+// ⭐️ FIX: openPlacePopup ahora pasa isLoggedIn y currentUser al renderizar
 function openPlacePopup(place) {
   currentPopupPlace = place;
   currentPopupPlace._wasOnCooldown = getVoteCooldownRemainingMs(place.id) > 0;
   const container = document.getElementById('react-popup-root');
   container.classList.add('active');
   if (!popupRoot) popupRoot = ReactDOM.createRoot(container);
-  renderPopup(place);
+  renderPopup(place, isLoggedIn, currentUser);
 }
 
-function renderPopup(place) {
+// ⭐️ FIX: renderPopup ahora acepta loggedIn y user como parámetros
+function renderPopup(place, loggedIn, user) {
   popupRoot.render(React.createElement(PlacePopup, {
-    place, onClose: closePopup,
+    place,
+    onClose: closePopup,
     onVoteSubmit: handlePopupVoteSubmit,
     cooldownRemainingMs: getVoteCooldownRemainingMs(place.id),
     isSearchResult: !!place._fromSearch,
+    isLoggedIn: loggedIn,
+    currentUser: user,
   }));
 }
 
@@ -1618,7 +1635,7 @@ async function handlePopupVoteSubmit(placeId, voteIdx) {
   }
   applyLocalCooldown(placeId);
   p.status = voteIdx; p.reporters += 1; voteCount++;
-  placeStore[p.id] = p; // actualizar caché en memoria
+  placeStore[p.id] = p;
   refreshMarkerIcon(p.id);
   updateCrowdBar(calcCrowdPct());
   await submitVoteToBackend(p, voteIdx);
@@ -1634,7 +1651,7 @@ async function submitVoteToBackend(p, voteIdx) {
     applyPlaceCooldown(p.id, res.nextVoteAt);
     p.reporters = Math.max(0, p.reporters - 1);
     refreshMarkerIcon(p.id); updateCrowdBar(calcCrowdPct());
-    if (currentPopupPlace && currentPopupPlace.id === p.id) renderPopup(p);
+    if (currentPopupPlace && currentPopupPlace.id === p.id) renderPopup(p, isLoggedIn, currentUser);
     showToast(`⏳ Ya reportaste ${p.name} · próximo en ${formatCooldownRemaining(getVoteCooldownRemainingMs(p.id))}`);
     return;
   }
@@ -1657,13 +1674,6 @@ function flashPoints() {
 /* ════════════════════════════════════════════════════════════
    MAP — GPS + FOLLOW MODE
    ════════════════════════════════════════════════════════════ */
-function getLevelInfo(pts) {
-  const level = Math.floor(pts / XP_PER_LEVEL) + 1;
-  const xpIntoLevel = pts % XP_PER_LEVEL;
-  return { level, xpIntoLevel, pct: Math.round((xpIntoLevel / XP_PER_LEVEL) * 100) };
-}
-function titleForLevel(level) { return LEVEL_TITLES[Math.min(level-1, LEVEL_TITLES.length-1)]; }
-
 function addPoints(amount) {
   const prevLevel = getLevelInfo(userPts).level;
   userPts += amount; updateUserHUD();
@@ -1686,7 +1696,6 @@ function updateUserMarker(lat, lng) {
   }
 }
 
-/** Actualiza el estado visual del botón GPS según el modo */
 function updateGpsBtnUI() {
   const btn = document.getElementById('gps-btn');
   const pill = document.getElementById('follow-pill');
@@ -1703,29 +1712,20 @@ function updateGpsBtnUI() {
   }
 }
 
-/**
- * Clic en el botón GPS:
- * - Si GPS no activo: pedir permiso y activar follow
- * - Si GPS activo pero no siguiendo: centrar y activar follow
- * - Si ya siguiendo: desactivar follow (el usuario quiere explorar libre)
- */
 function onGpsBtnClick() {
   if (followMode) {
-    // Toggle OFF
     followMode = false;
     updateGpsBtnUI();
     showToast('📍 Modo seguimiento desactivado');
     return;
   }
   if (userLat !== null) {
-    // Ya tenemos GPS → activar follow y centrar ahora
     followMode = true;
     updateGpsBtnUI();
     leafletMap.setView([userLat, userLng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.6 });
     showToast('📍 Siguiendo tu posición');
     return;
   }
-  // Sin GPS: pedir permiso
   const btn = document.getElementById('gps-btn');
   btn.classList.add('pulsing');
   if (!navigator.geolocation) {
@@ -1747,12 +1747,10 @@ function onGpsBtnClick() {
   );
 }
 
-/** Desactiva follow si el usuario arrastra el mapa manualmente */
 function onMapDragStart() {
   if (followMode) {
     followMode = false;
     updateGpsBtnUI();
-    // Mostrar hint para que el usuario sepa cómo reactivarlo
     showToast('👆 Arrastraste el mapa · tocá 📍 para seguir de nuevo');
   }
 }
@@ -1769,20 +1767,18 @@ function initMap() {
     subdomains: 'abcd', maxZoom: 20,
   }).addTo(leafletMap);
 
-  // Detectar arrastre manual → salir de follow mode
   leafletMap.on('dragstart', onMapDragStart);
 
-  // Re-renderizar markers cuando cambia el zoom
-leafletMap.on('zoomend', () => {
-  const toShow = nearbyPlaces.length ? nearbyPlaces : places;
-  if (toShow.length) buildMapMarkers(toShow);
-});
+  leafletMap.on('zoomend', () => {
+    const toShow = nearbyPlaces.length ? nearbyPlaces : places;
+    if (toShow.length) buildMapMarkers(toShow);
+  });
 
   startGpsWatch();
   initSearch();
 }
 
-let lastLoadTileKey = null; // tile key del último cargado, para no re-pedir
+let lastLoadTileKey = null;
 
 function startGpsWatch() {
   if (!navigator.geolocation) return;
@@ -1791,7 +1787,6 @@ function startGpsWatch() {
     pos => onGpsSuccess(pos),
     err => {
       if (!mapInitialLoaded) {
-        // Sin GPS: cargar desde posición por defecto
         const { lat, lng } = CONFIG.DEFAULT_CENTER;
         ensurePlacesLoadedAt(lat, lng);
         mapInitialLoaded = true;
@@ -1808,7 +1803,6 @@ function onGpsSuccess(pos) {
   userLat = lat; userLng = lng;
   updateUserMarker(lat, lng);
 
-  // ── FOLLOW MODE: mover el mapa suavemente ──
   if (followMode) {
     const moved = lastFollowLat !== null
       ? distanceMeter(lastFollowLat, lastFollowLng, lat, lng)
@@ -1816,7 +1810,6 @@ function onGpsSuccess(pos) {
 
     if (moved >= CONFIG.FOLLOW_MIN_MOVE_M) {
       lastFollowLat = lat; lastFollowLng = lng;
-      // panTo es más suave que setView para movimientos pequeños
       if (isFirst) {
         leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM, { animate: true, duration: 0.5 });
       } else {
@@ -1827,14 +1820,12 @@ function onGpsSuccess(pos) {
 
   if (isFirst) {
     if (!followMode) {
-      // Primera posición sin follow: centrar una sola vez
       leafletMap.setView([lat, lng], CONFIG.FOLLOW_ZOOM);
     }
     updateGpsBtnUI();
     ensurePlacesLoadedAt(lat, lng);
     lastLoadTileKey = latLngToTileKey(lat, lng);
   } else {
-    // Carga dinámica: solo pedir si entramos en un tile nuevo
     const currentTileKey = latLngToTileKey(lat, lng);
     if (currentTileKey !== lastLoadTileKey) {
       lastLoadTileKey = currentTileKey;
@@ -1842,7 +1833,6 @@ function onGpsSuccess(pos) {
     }
   }
 
-  // Checkin
   if (!checkinShown && places.length > 0) {
     checkinShown = true;
     setTimeout(() => showCheckinModal(lat, lng), 1200);
@@ -1863,20 +1853,12 @@ function makeIcon(place) {
   });
 }
 
-/* ════════════════════════════════════
-   ZOOM-BASED CLUSTERING
-   ════════════════════════════════════
-   zoom ≥ 17 → markers individuales
-   zoom 15-16 → clusters por cuadra (~150m)
-   zoom 13-14 → clusters por zona (~500m)
-   zoom ≤ 12  → clusters grandes (~1.5km)
-*/
-const CLUSTER_ZOOM_THRESHOLD = 20; // por encima de esto → markers individuales
+const CLUSTER_ZOOM_THRESHOLD = 20;
 
 function getClusterGridDeg(zoom) {
-  if (zoom >= 15) return 0.0015;   // ~150m — manzana
-  if (zoom >= 13) return 0.005;    // ~500m — barrio
-  return 0.015;                     // ~1.5km — macrozona
+  if (zoom >= 15) return 0.0015;
+  if (zoom >= 13) return 0.005;
+  return 0.015;
 }
 
 function densityClass(count) {
@@ -1891,7 +1873,6 @@ function clusterLabel(count) {
   return `${count} lugares`;
 }
 
-/** Agrupa places en celdas de cuadrícula y devuelve array de clusters */
 function computeClusters(placesToCluster, gridDeg) {
   const cells = {};
   placesToCluster.forEach(p => {
@@ -1912,9 +1893,7 @@ function computeClusters(placesToCluster, gridDeg) {
     lng: c.lng,
     count: c.places.length,
     places: c.places,
-    // status promedio del cluster (para color de urgencia)
     avgStatus: c.places.reduce((s, p) => s + (p.reporters > 0 ? p.status : 0), 0) / c.places.length,
-    // reporte total
     totalReporters: c.places.reduce((s, p) => s + (p.reporters || 0), 0),
   }));
 }
@@ -1939,7 +1918,6 @@ function makeClusterIcon(cluster) {
   });
 }
 
-/** Tracks de markers separados para no mezclar tipos */
 let clusterMarkers = {};
 
 function clearClusterMarkers() {
@@ -1951,10 +1929,6 @@ function clearIndividualMarkers() {
   Object.keys(leafletMarkers).forEach(id => { leafletMarkers[id].remove(); delete leafletMarkers[id]; });
 }
 
-/**
- * Punto de entrada principal — decide qué mostrar según el zoom actual.
- * Llamar desde: ensurePlacesLoadedAt, manualRefresh, y el listener de zoomend.
- */
 function buildMapMarkers(placesToShow) {
   placesToShow = placesToShow || nearbyPlaces;
   if (!leafletMap || !placesToShow.length) return;
@@ -1962,12 +1936,10 @@ function buildMapMarkers(placesToShow) {
   const zoom = leafletMap.getZoom();
 
   if (zoom >= CLUSTER_ZOOM_THRESHOLD) {
-    // ── Zoom alto: markers individuales con diff ──
     clearClusterMarkers();
 
     const newIdSet = new Set(placesToShow.map(p => p.id));
 
-    // Quitar markers que ya no están en la lista
     Object.keys(leafletMarkers).forEach(id => {
       if (!newIdSet.has(id)) {
         leafletMarkers[id].remove();
@@ -1975,10 +1947,8 @@ function buildMapMarkers(placesToShow) {
       }
     });
 
-    // Agregar o actualizar solo los que cambiaron
     placesToShow.forEach(p => {
       if (leafletMarkers[p.id]) {
-        // Solo actualizar el icono si el estado cambió
         const marker = leafletMarkers[p.id];
         if (marker._lastStatus !== p.status || marker._lastReporters !== p.reporters) {
           marker.setIcon(makeIcon(p));
@@ -1986,7 +1956,6 @@ function buildMapMarkers(placesToShow) {
           marker._lastReporters = p.reporters;
         }
       } else {
-        // Marker nuevo
         const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p) }).addTo(leafletMap);
         marker._lastStatus = p.status;
         marker._lastReporters = p.reporters;
@@ -1999,19 +1968,16 @@ function buildMapMarkers(placesToShow) {
     });
 
   } else {
-    // ── Zoom bajo: clusters ──
     clearIndividualMarkers();
 
     const gridDeg = getClusterGridDeg(zoom);
     const clusters = computeClusters(placesToShow, gridDeg);
 
-    // Limpiar clusters viejos
     clearClusterMarkers();
 
     clusters.forEach((cluster, idx) => {
       const marker = L.marker([cluster.lat, cluster.lng], { icon: makeClusterIcon(cluster) }).addTo(leafletMap);
       marker.on('click', () => {
-        // Zoom hacia el cluster → al llegar al threshold se mostrarán markers individuales
         const targetZoom = Math.min(leafletMap.getZoom() + 3, CLUSTER_ZOOM_THRESHOLD + 1);
         leafletMap.setView([cluster.lat, cluster.lng], targetZoom, { animate: true, duration: 0.5 });
       });
@@ -2023,7 +1989,6 @@ function buildMapMarkers(placesToShow) {
 function refreshMarkerIcon(id) {
   const p = places.find(x => x.id === id);
   if (!p) return;
-  // Solo actualizar si estamos en zoom alto (markers individuales)
   if (leafletMap && leafletMap.getZoom() >= CLUSTER_ZOOM_THRESHOLD && leafletMarkers[id]) {
     leafletMarkers[id].setIcon(makeIcon(p));
   }
@@ -2046,7 +2011,6 @@ function updateCrowdBar(pct) {
   if (pctLabel) pctLabel.textContent = pct + '%';
 }
 
-/** Refresh manual: limpia las tiles cacheadas para el tile actual y recarga */
 async function manualRefresh() {
   const icon = document.getElementById('refresh-icon');
   icon.style.animation = 'none'; icon.offsetHeight;
@@ -2055,13 +2019,11 @@ async function manualRefresh() {
   const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
   const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
 
-  // Invalidar solo los tiles cercanos para forzar re-descarga
   const tileKey = latLngToTileKey(lat, lng);
   const adjacent = getAdjacentTileKeys(lat, lng);
   [tileKey, ...adjacent].forEach(k => { delete tileCache[k]; });
   lastLoadTileKey = null;
 
-  // Limpiar markers del área actual pero conservar places en memoria
   nearbyPlaces = [];
   await ensurePlacesLoadedAt(lat, lng);
   showToast('🔄 Locales actualizados');
@@ -2207,9 +2169,14 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// ⭐️ FIX: doLogout ahora sincroniza correctamente y re-renderiza popup
 function doLogout() {
-  isLoggedIn = false; currentUser = null; userPts = 0; placeCooldowns = {};
-  followMode = false; updateGpsBtnUI();
+  isLoggedIn = false;
+  currentUser = null;
+  userPts = 0;
+  placeCooldowns = {};
+  followMode = false;
+  updateGpsBtnUI();
   localStorage.removeItem(SESSION_STORAGE_KEY);
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   if (window.google && google.accounts && google.accounts.oauth2) {
@@ -2217,22 +2184,29 @@ function doLogout() {
   }
   document.getElementById('user-chip-wrap').style.display = 'none';
   const btn = document.getElementById('login-topbar-btn');
-  btn.style.display = 'flex'; btn.classList.remove('is-loading');
-  const t = btn.querySelector('.gbtn-txt'); if (t) t.textContent = 'Ingresar';
+  btn.style.display = 'flex';
+  btn.classList.remove('is-loading');
+  const t = btn.querySelector('.gbtn-txt');
+  if (t) t.textContent = 'Ingresar';
   document.getElementById('user-dropdown').classList.remove('open');
   document.getElementById('user-chip-wrap').classList.remove('open');
   updateUserHUD();
+  
+  stopOccupancySync();
+  
+  if (currentPopupPlace) {
+    renderPopup(currentPopupPlace, isLoggedIn, currentUser);
+  }
+  
   showToast('✅ Sesión cerrada correctamente');
 }
 
-// REEMPLAZAR la función doGoogleLogin existente con esta:
 function doGoogleLogin(btn) {
   if (isLoggedIn) return;
   if (!GOOGLE_AUTH_READY) { showToast('⚠️ El login con Google todavía no está configurado'); return; }
   if (!initGoogleTokenClient()) { showToast('⏳ Google se está cargando, probá de nuevo en un segundo'); return; }
   const loginBtn = btn || document.getElementById('login-topbar-btn');
   if (loginBtn) { loginBtn.classList.add('is-loading'); const t = loginBtn.querySelector('.gbtn-txt'); if (t) t.textContent = 'Conectando…'; }
-  // Intentar renovación silenciosa si ya hubo sesión previa
   const hasPrevSession = !!localStorage.getItem(SESSION_STORAGE_KEY);
   tokenClient.requestAccessToken({ prompt: hasPrevSession ? '' : 'select_account' });
 }
@@ -2249,6 +2223,7 @@ function initialsFromName(name) {
   return ((parts[0]||'')[0]||'').toUpperCase() + ((parts[1]||'')[0]||'').toUpperCase() || 'YO';
 }
 
+// ⭐️ FIX: applyLoggedInUI ahora sincroniza y re-renderiza popup
 function applyLoggedInUI() {
   document.getElementById('login-topbar-btn').style.display = 'none';
   document.getElementById('user-chip-wrap').style.display = 'flex';
@@ -2256,6 +2231,12 @@ function applyLoggedInUI() {
   if (currentUser.picture) { avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}" referrerpolicy="no-referrer">`; }
   else { avatarEl.textContent = initialsFromName(currentUser.name); }
   updateUserHUD();
+  
+  maybeStartOccupancySync();
+  
+  if (currentPopupPlace) {
+    renderPopup(currentPopupPlace, isLoggedIn, currentUser);
+  }
 }
 
 async function fetchProfileFromToken(accessToken) {
@@ -2266,11 +2247,8 @@ async function fetchProfileFromToken(accessToken) {
   return await profileRes.json();
 }
 
-// REEMPLAZAR la función handleGoogleTokenResponse existente con esta:
 async function handleGoogleTokenResponse(resp) {
   if (!resp || resp.error || !resp.access_token) {
-    // Si fue una renovación silenciosa que falló, no mostrar error
-    // El chip ya está visible; el usuario puede hacer clic para reingresar
     resetLoginButton();
     if (resp && resp.error !== 'user_logged_out' && resp.error !== 'access_denied' && resp.error !== 'immediate_failed') {
       showToast('⚠️ No se pudo iniciar sesión con Google');
@@ -2289,7 +2267,7 @@ async function handleGoogleTokenResponse(resp) {
     if (BACKEND_READY) {
       backendResult = await apiPost('login', { access_token: resp.access_token, email: profile.email, name: profile.name, picture: profile.picture });
     }
-    const wasLoggedIn = isLoggedIn; // para saber si es renovación silenciosa
+    const wasLoggedIn = isLoggedIn;
     currentUser = { email: profile.email, name: profile.name || profile.email, picture: profile.picture || '' };
     if (backendResult && typeof backendResult.points === 'number') userPts = backendResult.points;
     if (backendResult && backendResult.cooldowns) applyCooldownInfo(backendResult.cooldowns);
@@ -2299,7 +2277,9 @@ async function handleGoogleTokenResponse(resp) {
     saveTokenToStorage(resp.access_token, resp.expires_in);
     applyLoggedInUI();
     hideToastAction();
-    // Solo saludar si es un login manual (no renovación silenciosa)
+    
+    maybeStartOccupancySync();
+    
     if (!wasLoggedIn) {
       showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
     }
@@ -2314,7 +2294,16 @@ async function handleGoogleTokenResponse(resp) {
   } finally { resetLoginButton(); }
 }
 
-// REEMPLAZAR la función restoreSession existente con esta:
+async function trySilentRenew() {
+  let attempts = 0;
+  while ((!window.google || !google.accounts || !google.accounts.oauth2) && attempts < 20) {
+    await new Promise(r => setTimeout(r, 200));
+    attempts++;
+  }
+  if (!initGoogleTokenClient()) return;
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
 async function restoreSession() {
   const saved = localStorage.getItem(SESSION_STORAGE_KEY);
   if (!saved) return;
@@ -2323,7 +2312,6 @@ async function restoreSession() {
   const deviceEmail = localStorage.getItem(DEVICE_KEY);
   if (deviceEmail && deviceEmail !== currentUser.email) { localStorage.removeItem(SESSION_STORAGE_KEY); currentUser = null; return; }
 
-  // Mostrar chip inmediatamente (UX instantánea)
   applyLoggedInUI();
 
   const savedToken = loadTokenFromStorage();
@@ -2343,30 +2331,14 @@ async function restoreSession() {
           }
         }
         updateUserHUD();
-        return; // Token válido, todo bien
+        maybeStartOccupancySync();
+        return;
       }
     } catch(e) { localStorage.removeItem(TOKEN_STORAGE_KEY); }
   }
 
-  // Token vencido → intentar renovación SILENCIOSA automáticamente
-  // El usuario ya tuvo sesión, no debería tener que volver a elegir cuenta
   isLoggedIn = false;
-  await trysilentRenew();
-}
-
-async function trySilentRenew() {
-  // Esperar a que Google esté listo
-  let attempts = 0;
-  while ((!window.google || !google.accounts || !google.accounts.oauth2) && attempts < 20) {
-    await new Promise(r => setTimeout(r, 200));
-    attempts++;
-  }
-  if (!initGoogleTokenClient()) return;
-
-  // Renovar sin popup — Google puede fallar si el usuario revocó permisos,
-  // en ese caso simplemente dejamos isLoggedIn = false y el chip queda visible
-  // pero inactivo hasta que el usuario haga clic.
-  tokenClient.requestAccessToken({ prompt: '' });
+  await trySilentRenew();
 }
 
 function updateUserHUD() {
@@ -2485,19 +2457,19 @@ function switchTab(tab) {
 
 /* ─────────────── INTERVALS ─────────────── */
 setInterval(() => { tickCooldownUI(); }, 1000);
-// Limpiar tiles expirados cada hora
 setInterval(() => { pruneOldTiles(); persistCache(); }, 60 * 60 * 1000);
 
 /* ─────────────── INIT ─────────────── */
 window.addEventListener('DOMContentLoaded', () => {
-  loadCache();             // ← primero: reconstruir estado desde localStorage
+  loadCache();
   loadCooldownsFromStorage();
-  pruneOldTiles();         // limpiar tiles viejos al arrancar
+  pruneOldTiles();
   initMap();
   updateCrowdBar(calcCrowdPct());
   updateUserHUD();
   initGoogleTokenClient();
   restoreSession();
+  maybeStartOccupancySync();
 });
 
 /* ─────────────── PWA ─────────────── */
