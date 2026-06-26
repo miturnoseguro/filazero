@@ -449,7 +449,7 @@ html,body{
 .cluster-bubble.density-max .cluster-count{color:#B91C1C;}
 
 /* ════════════════════════════════════════
-   PANEL CERCA — estilos
+   PANEL CERCA — estilos mejorados
    ════════════════════════════════════════ */
 #panel-cerca{position:relative;}
 
@@ -701,7 +701,7 @@ html,body{
   </header>
 
   <!-- ═══════════ PANEL MAPA ═══════════ -->
-  <div id="panel-map" class="panel visible" style="position:relative;">
+  <div id="panel-map" class="panel" style="position:relative;">
     <div class="map-pane">
       <div id="leaflet-map"></div>
 
@@ -743,13 +743,13 @@ html,body{
       </div>
     </div>
 
-    <!-- Nav mapa: sin Premios, solo 3 tabs -->
+    <!-- Nav mapa: ahora Mapa es secundario, Cerca es principal -->
     <nav class="bottom-nav" id="bottom-nav">
-      <button class="nav-btn is-main active" id="nav-map-map" onclick="switchTab('map')">
+      <button class="nav-btn" id="nav-map-map" onclick="switchTab('map')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
         Mapa
       </button>
-      <button class="nav-btn" id="nav-cerca-map" onclick="switchTab('cerca')">
+      <button class="nav-btn is-main active" id="nav-cerca-map" onclick="switchTab('cerca')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>
         Cerca
       </button>
@@ -761,7 +761,7 @@ html,body{
   </div>
 
   <!-- ═══════════ PANEL CERCA ═══════════ -->
-  <div id="panel-cerca" class="panel" style="position:relative;">
+  <div id="panel-cerca" class="panel visible" style="position:relative;">
     <div class="panel-header">
       <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>
       Cerca mío
@@ -784,8 +784,10 @@ html,body{
       <span class="cerca-radius-lbl">Radio:</span>
       <button class="cerca-r-btn" data-r="100" onclick="cercaSetRadius(100,this)">100m</button>
       <button class="cerca-r-btn" data-r="300" onclick="cercaSetRadius(300,this)">300m</button>
-      <button class="cerca-r-btn active" data-r="500" onclick="cercaSetRadius(500,this)">500m</button>
-      <button class="cerca-r-btn" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
+      <button class="cerca-r-btn" data-r="500" onclick="cercaSetRadius(500,this)">500m</button>
+      <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
+      <!-- Nuevo: 2 km -->
+      <button class="cerca-r-btn" data-r="2000" onclick="cercaSetRadius(2000,this)">2 km</button>
     </div>
 
     <div class="cerca-filter-row">
@@ -795,6 +797,7 @@ html,body{
       <button class="cerca-f-chip" data-cat="supermarket" onclick="cercaSetCat('supermarket',this)">🛒 Súper</button>
       <button class="cerca-f-chip" data-cat="bank" onclick="cercaSetCat('bank',this)">🏦 Banco</button>
       <button class="cerca-f-chip" data-cat="government" onclick="cercaSetCat('government',this)">🏛️ Gobierno</button>
+      <button class="cerca-f-chip" data-cat="shopping" onclick="cercaSetCat('shopping',this)">🛍️ Tiendas</button>
     </div>
 
     <div class="cerca-stats-bar">
@@ -812,13 +815,13 @@ html,body{
 
     <div class="cerca-list" id="cerca-list"></div>
 
-    <!-- Nav Cerca: sin Premios -->
+    <!-- Nav Cerca: Cerca es el principal y activo -->
     <nav class="bottom-nav" id="bottom-nav-cerca">
-      <button class="nav-btn is-main" onclick="switchTab('map')">
+      <button class="nav-btn" onclick="switchTab('map')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
         Mapa
       </button>
-      <button class="nav-btn active">
+      <button class="nav-btn is-main active">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>
         Cerca
       </button>
@@ -837,10 +840,10 @@ html,body{
       <span class="panel-header-sub">Junio 2026</span>
     </div>
     <div class="rank-list" id="rank-list"></div>
-    <!-- Nav Ranking: sin Premios -->
+    <!-- Nav Ranking -->
     <nav class="bottom-nav" id="bottom-nav-ranking">
-      <button class="nav-btn is-main" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
-      <button class="nav-btn" onclick="switchTab('cerca')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>Cerca</button>
+      <button class="nav-btn" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
+      <button class="nav-btn is-main" onclick="switchTab('cerca')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>Cerca</button>
       <button class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>Ranking</button>
     </nav>
   </div>
@@ -851,8 +854,7 @@ html,body{
       <svg viewBox="0 0 24 24" fill="none" stroke="#00C48C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
       Premios
       <span class="panel-header-sub" id="my-pts-prizes" style="color:var(--green);font-weight:800">0 pts disponibles</span>
-      <!-- Botón volver al mapa -->
-      <button class="prizes-back-btn" onclick="switchTab('map')" title="Volver al mapa">
+      <button class="prizes-back-btn" onclick="switchTab('cerca')" title="Volver a Cerca">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         Volver
       </button>
@@ -869,7 +871,6 @@ html,body{
       </div>
     </div>
     <div class="prizes-list" id="prizes-list"></div>
-    <!-- Sin bottom-nav en premios: el panel se cierra con el botón Volver del header -->
   </div>
 </div>
 
@@ -924,6 +925,7 @@ const VOTE_PTS = [10,10,15,20];
 const LEVEL_TITLES = ['Novato','Explorador','Cazador de Filas','Maestro del Mapa','Leyenda Urbana'];
 const XP_PER_LEVEL = 150;
 
+/* Tipos de establecimientos ampliados */
 const OSM_TYPE_MAP = {
   supermarket:{emoji:'🛒',tipo:'Supermercado'},
   convenience:{emoji:'🏪',tipo:'Almacén'},
@@ -964,6 +966,34 @@ const OSM_TYPE_MAP = {
   sports:{emoji:'⚽',tipo:'Artículos deportivos'},
   stationery:{emoji:'📚',tipo:'Librería'},
   general:{emoji:'🏪',tipo:'Comercio general'},
+  // Nuevos
+  mobile_phone:{emoji:'📱',tipo:'Telefonía'},
+  gift:{emoji:'🎁',tipo:'Regalería'},
+  jewelry:{emoji:'💍',tipo:'Joyería'},
+  furniture:{emoji:'🛋️',tipo:'Muebles'},
+  art:{emoji:'🎨',tipo:'Galería de arte'},
+  bookshop:{emoji:'📖',tipo:'Librería'},
+  music:{emoji:'🎵',tipo:'Música'},
+  video:{emoji:'🎬',tipo:'Video / Cine'},
+  computer:{emoji:'💻',tipo:'Informática'},
+  mobile_phone_repair:{emoji:'📱',tipo:'Reparación de celulares'},
+  laundry_self_service:{emoji:'👕',tipo:'Lavandería autoservicio'},
+  tailor:{emoji:'✂️',tipo:'Sastrería'},
+  shoe_repair:{emoji:'👟',tipo:'Zapatería'},
+  key_cutter:{emoji:'🔑',tipo:'Cerrajería'},
+  locksmith:{emoji:'🔐',tipo:'Cerrajería'},
+  security:{emoji:'🛡️',tipo:'Seguridad'},
+  travel_agency:{emoji:'✈️',tipo:'Agencia de viajes'},
+  insurance:{emoji:'📋',tipo:'Seguros'},
+  real_estate:{emoji:'🏠',tipo:'Inmobiliaria'},
+  lawyer:{emoji:'⚖️',tipo:'Abogado'},
+  accountant:{emoji:'🧾',tipo:'Contador'},
+  photographer:{emoji:'📸',tipo:'Fotografía'},
+  printing:{emoji:'🖨️',tipo:'Impresión / Copias'},
+  pet_shop:{emoji:'🐶',tipo:'Tienda de mascotas'},
+  garden_centre:{emoji:'🌿',tipo:'Jardinería'},
+  construction:{emoji:'🏗️',tipo:'Materiales de construcción'},
+  paint:{emoji:'🎨',tipo:'Pinturería'},
 };
 
 const SEED_PRIZES = [
@@ -1013,6 +1043,10 @@ async function syncOccupancyStatus() {
       buildMapMarkers(nearbyPlaces.length ? nearbyPlaces : places);
       updateCrowdBar(calcCrowdPct());
       if (currentPopupPlace) { const u = placeIndex.get(currentPopupPlace.id); if (u) { Object.assign(currentPopupPlace,u); renderPopup(currentPopupPlace,isLoggedIn,currentUser); } }
+      // Actualizar también el panel Cerca si está visible
+      if (document.getElementById('panel-cerca').classList.contains('visible')) {
+        cercaUpdateFromStore();
+      }
     }
     persistCache();
   } catch(e) { console.warn('syncOccupancyStatus error:',e); }
@@ -1071,14 +1105,18 @@ async function loadOverpassForTiles(tileKeys) {
   if (!tileKeys.length) return [];
   let minLat=Infinity,minLng=Infinity,maxLat=-Infinity,maxLng=-Infinity;
   tileKeys.forEach(key=>{ const [s,w,n,e]=tileToBbox(key); if (s<minLat) minLat=s; if (w<minLng) minLng=w; if (n>maxLat) maxLat=n; if (e>maxLng) maxLng=e; });
-  const amenityFilter='supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|fuel|marketplace';
-  const shopFilter='supermarket|convenience|pharmacy|bakery|butcher|laundry|dry_cleaning|hardware|clothes|shoes|electronics|optician|beauty|hairdresser|toy|sports|stationery|greengrocer|florist|newsagent|kiosk|general';
-  const query=`[out:json][timeout:15];(node["amenity"~"^(${amenityFilter})$"](${minLat},${minLng},${maxLat},${maxLng});node["shop"~"^(${shopFilter})$"](${minLat},${minLng},${maxLat},${maxLng}););out body;`.trim();
+  // Ampliamos la lista de amenity y shop para incluir más comercios
+  const amenityFilter='supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|fuel|marketplace|townhall|veterinary|gym|hairdresser|beauty|optician|car_wash|laundry|dry_cleaning|hardware|electronics|mobile_phone|jewelry|furniture|bookshop|music|video|computer|travel_agency|insurance|real_estate|lawyer|accountant|photographer|printing|pet_shop|garden_centre|construction|paint|key_cutter|locksmith|security';
+  const shopFilter='supermarket|convenience|pharmacy|bakery|butcher|hardware|clothes|shoes|hairdresser|greengrocer|newsagent|kiosk|beauty|optician|sports|toy|stationery|florist|car_wash|laundry|electronics|mobile_phone|gift|jewelry|furniture|art|bookshop|music|video|computer|travel_agency|insurance|real_estate|pet|garden_centre|paint|key_cutter|locksmith|security|tailor|shoe_repair';
+  const maxResults = 200; // más resultados
+  const q=`[out:json][timeout:18];(node["amenity"~"^(${amenityFilter})$"](${minLat},${minLng},${maxLat},${maxLng});node["shop"~"^(${shopFilter})$"](${minLat},${minLng},${maxLat},${maxLng}););out body ${maxResults};`;
   try {
-    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(query),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
     if (!res.ok) throw new Error('Overpass HTTP '+res.status);
     const data=await res.json();
-    return (data.elements||[]).filter(n=>n.type==='node'&&n.tags&&n.tags.name).map(osmNodeToPlace);
+    return (data.elements||[])
+      .filter(n=>n.type==='node'&&n.tags&&n.tags.name)
+      .map(osmNodeToPlace);
   } catch(e) { console.warn('Overpass falló:',e); return []; }
 }
 
@@ -1293,6 +1331,10 @@ async function handlePopupVoteSubmit(placeId,voteIdx) {
   if (!canReportThisPlace(p)){showToast(`📍 Tenés que estar dentro del comercio para reportar`);return;}
   applyLocalCooldown(placeId); p.status=voteIdx; p.reporters+=1; voteCount++;
   placeStore[p.id]=p; refreshMarkerIcon(p.id); updateCrowdBar(calcCrowdPct());
+  // Actualizar panel Cerca en tiempo real
+  if (document.getElementById('panel-cerca').classList.contains('visible')) {
+    cercaUpdateFromStore();
+  }
   await submitVoteToBackend(p,voteIdx);
 }
 
@@ -1415,12 +1457,13 @@ async function manualRefresh(){
 }
 
 /* ════════════════════════════════════════════════════════════
-   PANEL CERCA — lógica completa
+   PANEL CERCA — lógica completa (mejorada)
    ════════════════════════════════════════════════════════════ */
 let cercaAllPlaces=[], cercaFiltered=[];
-let cercaRadius=500, cercaCat='all', cercaSearchQ='', cercaSortMode='distance', cercaSortIdx=0;
+let cercaRadius=1000, cercaCat='all', cercaSearchQ='', cercaSortMode='distance', cercaSortIdx=0;
 let cercaIsLoading=false, cercaLoaded=false, cercaAbortController=null;
 let cercaSearchTimer=null;
+let cercaCitySearchResults=[], cercaCitySearchInFlight=false;
 
 const CERCA_SORT_MODES=['distance','status','rating'];
 const CERCA_SORT_LABELS=['Distancia','Más reportado','Rating'];
@@ -1431,6 +1474,7 @@ const CERCA_CAT_KEYWORDS={
   supermarket:['supermarket','supermercado','carrefour','disco','coto','walmart','jumbo','mercado','almacén','kiosk','minimarket'],
   bank:['bank','banco','cajero','atm','hsbc','galicia','santander','bbva','icbc','pagos','rapipago','pago fácil'],
   government:['gobierno','municipalidad','correo','registro','anses','reniec','dnrpa','oficina','ministerio','juzgado','tribunal'],
+  shopping:['ropa','calzado','zapatería','electrónica','ferretería','bazar','hogar','muebles','deportes','juguetería','librería','papelería','floristería','perfumería','joyería','relojería'],
 };
 
 function cercaGuessCategory(name,type){
@@ -1457,6 +1501,8 @@ function cercaGuessEmoji(name,type){
   if(l.includes('peluquer')) return '💇';
   if(l.includes('veterinar')) return '🐾';
   if(l.includes('ferretera')) return '🔧';
+  if(l.includes('ropa')||l.includes('vestir')||l.includes('indumentaria')) return '👗';
+  if(l.includes('electrónica')||l.includes('computadora')||l.includes('celular')) return '📱';
   return '🏪';
 }
 
@@ -1468,10 +1514,10 @@ async function cercaFetchOverpass(lat,lng,radius){
   const signal=cercaAbortController.signal;
   const pad=0.0006+(radius/111320)*1.3;
   const s=lat-pad,w=lng-pad,n=lat+pad,e=lng+pad;
-  const amenities='supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|marketplace|fuel|townhall|ice_cream|hairdresser|veterinary';
-  const shops='supermarket|convenience|pharmacy|bakery|butcher|hardware|clothes|hairdresser|greengrocer|newsagent|kiosk|beauty|optician|sports|toy|stationery|florist|car_wash|laundry|electronics';
-  const maxResults=radius<=200?50:radius<=500?120:220;
-  const q=`[out:json][timeout:14];(node["amenity"~"^(${amenities})$"](${s},${w},${n},${e});node["shop"~"^(${shops})$"](${s},${w},${n},${e}););out body ${maxResults};`;
+  const amenities='supermarket|pharmacy|bank|atm|fast_food|restaurant|cafe|bakery|hospital|clinic|doctors|dentist|post_office|marketplace|fuel|townhall|veterinary|gym|hairdresser|beauty|optician|car_wash|laundry|dry_cleaning|hardware|electronics|mobile_phone|jewelry|furniture|bookshop|music|video|computer|travel_agency|insurance|real_estate|lawyer|accountant|photographer|printing|pet_shop|garden_centre|construction|paint|key_cutter|locksmith|security';
+  const shops='supermarket|convenience|pharmacy|bakery|butcher|hardware|clothes|shoes|hairdresser|greengrocer|newsagent|kiosk|beauty|optician|sports|toy|stationery|florist|car_wash|laundry|electronics|mobile_phone|gift|jewelry|furniture|art|bookshop|music|video|computer|travel_agency|insurance|real_estate|pet|garden_centre|paint|key_cutter|locksmith|security|tailor|shoe_repair';
+  const maxResults=radius<=200?60:radius<=500?150:radius<=1000?300:500;
+  const q=`[out:json][timeout:20];(node["amenity"~"^(${amenities})$"](${s},${w},${n},${e});node["shop"~"^(${shops})$"](${s},${w},${n},${e}););out body ${maxResults};`;
   const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal});
   if(!res.ok) throw new Error('Overpass HTTP '+res.status);
   const data=await res.json();
@@ -1501,8 +1547,8 @@ async function cercaFetchOverpass(lat,lng,radius){
 
 function cercaShowSkeleton(){
   const list=document.getElementById('cerca-list');
-  list.innerHTML=Array(6).fill(0).map((_,i)=>`
-    <div class="nc-skeleton" style="animation-delay:${i*0.05}s">
+  list.innerHTML=Array(8).fill(0).map((_,i)=>`
+    <div class="nc-skeleton" style="animation-delay:${i*0.04}s">
       <div class="nc-skel-logo skel-anim"></div>
       <div class="nc-skel-body">
         <div class="nc-skel-line skel-anim" style="width:65%"></div>
@@ -1554,6 +1600,8 @@ function cercaBuildDemoPlaces(lat,lng){
     {name:'Hospital Ramos Mejía',type:'Hospital',emoji:'🏥',cat:'health',addr:'Gral. Urquiza 609',dlat:0.0022,dlng:0.0011,open:true,status:2,reporters:16,rating:'3.5',reviewsN:580,verified:false},
     {name:'Disco',type:'Supermercado',emoji:'🏪',cat:'supermarket',addr:'Av. Callao 540',dlat:-0.0008,dlng:-0.0014,open:true,status:3,reporters:22,rating:'3.8',reviewsN:2100,verified:false},
     {name:'Correo Argentino',type:'Correo',emoji:'📮',cat:'government',addr:'Sarmiento 151',dlat:0.0005,dlng:-0.0018,open:true,status:1,reporters:6,rating:'3.1',reviewsN:340,verified:false},
+    {name:'Zara',type:'Ropa',emoji:'👗',cat:'shopping',addr:'Av. Santa Fe 1200',dlat:0.0011,dlng:0.0019,open:true,status:0,reporters:2,rating:'4.3',reviewsN:560,verified:false},
+    {name:'Falabella',type:'Tienda departamental',emoji:'🛍️',cat:'shopping',addr:'Av. Florida 800',dlat:-0.0007,dlng:0.0012,open:true,status:1,reporters:5,rating:'3.9',reviewsN:980,verified:false},
   ];
   return demos.map((d,i)=>{
     const plat=lat+d.dlat,plng=lng+d.dlng;
@@ -1561,8 +1609,6 @@ function cercaBuildDemoPlaces(lat,lng){
     return {id:`demo_${i}`,name:d.name,type:d.type,emoji:d.emoji,cat:d.cat,addr:d.addr,dist,lat:plat,lng:plng,open:d.open,verified:d.verified,rating:d.rating,reviewsN:d.reviewsN,status:d.status,reporters:d.reporters,sponsor:null};
   }).filter(p=>p.dist<=cercaRadius);
 }
-
-let cercaCitySearchResults=[], cercaCitySearchInFlight=false;
 
 async function cercaFetchCitySearch(query, lat, lng){
   const delta=0.14;
@@ -1588,6 +1634,20 @@ async function cercaFetchCitySearch(query, lat, lng){
       })
       .slice(0,30);
   }catch(e){ console.warn('City search falló:',e); return []; }
+}
+
+function cercaUpdateFromStore() {
+  // Actualiza los status/reporters de la lista actual desde placeStore
+  let changed=false;
+  cercaAllPlaces = cercaAllPlaces.map(p => {
+    const stored = placeIndex.get(p.id);
+    if (stored && (stored.status !== p.status || stored.reporters !== p.reporters)) {
+      changed = true;
+      return { ...p, status: stored.status, reporters: stored.reporters };
+    }
+    return p;
+  });
+  if (changed) cercaApplyFilters();
 }
 
 function cercaApplyFilters(){
@@ -1643,7 +1703,7 @@ function cercaRenderList(){
   document.getElementById('cerca-count').textContent=n;
   document.getElementById('cerca-count-lbl').textContent=n===1?' lugar encontrado':' lugares encontrados';
   if(!n){
-    list.innerHTML=`<div class="nc-empty"><div class="nc-empty-icon">🔍</div><div class="nc-empty-title">Sin resultados</div><div class="nc-empty-sub">Probá aumentar el radio o cambiando el filtro de categoría.</div></div>`;
+    list.innerHTML=`<div class="nc-empty"><div class="nc-empty-icon">🔍</div><div class="nc-empty-title">Sin resultados</div><div class="nc-empty-sub">Probá aumentando el radio o cambiando el filtro de categoría.</div></div>`;
     return;
   }
   list.innerHTML=cercaFiltered.map((p,i)=>{
@@ -1656,7 +1716,7 @@ function cercaRenderList(){
     const sponsorClass=p.sponsor?'is-sponsor':'';
     const sponsorStyle=p.sponsor?`style="--sp-color:${sponsorColor}"` :'';
     const reviewsFormatted=typeof p.reviewsN==='number'?p.reviewsN.toLocaleString('es-AR'):p.reviewsN;
-    return `<div class="nc-card ${sponsorClass}" ${sponsorStyle} data-nc-idx="${i}" style="animation-delay:${Math.min(i*0.035,0.25)}s">
+    return `<div class="nc-card ${sponsorClass}" ${sponsorStyle} data-nc-idx="${i}" style="animation-delay:${Math.min(i*0.025,0.3)}s">
       <div class="nc-logo">${logoHtml}${verBadge}</div>
       <div class="nc-body">
         <div class="nc-top">
@@ -1946,21 +2006,6 @@ function switchTab(tab){
 setInterval(()=>{ tickCooldownUI(); }, 1000);
 setInterval(()=>{ pruneOldTiles(); persistCache(); }, 60*60*1000);
 
-setInterval(()=>{
-  if(document.getElementById('panel-cerca').classList.contains('visible') && cercaAllPlaces.length){
-    let changed=false;
-    cercaAllPlaces=cercaAllPlaces.map(p=>{
-      const updated=placeIndex.get(p.id);
-      if(updated && (updated.status!==p.status || updated.reporters!==p.reporters)){
-        changed=true;
-        return {...p, status:updated.status, reporters:updated.reporters};
-      }
-      return p;
-    });
-    if(changed) cercaApplyFilters();
-  }
-}, 3000);
-
 /* ─── INIT ─── */
 window.addEventListener('DOMContentLoaded',()=>{
   loadCache();
@@ -1973,6 +2018,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   initGoogleTokenClient();
   restoreSession();
   maybeStartOccupancySync();
+  // Cargar panel Cerca al inicio
+  setTimeout(()=>{ if(!cercaLoaded) cercaLoadPlaces(); }, 300);
 });
 
 /* ─── PWA ─── */
