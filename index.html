@@ -1609,13 +1609,13 @@ async function cercaLoadPlaces(forceReload) {
   if (cercaIsLoading && !forceReload) return;
   cercaIsLoading = true;
 
-  // ⚠️ Verificamos que exista el banner de error
+  // ✅ Verificamos que exista el banner de error
   const errBanner = document.getElementById('cerca-error-banner');
   if (errBanner) errBanner.style.display = 'none';
 
   cercaShowSkeleton();
 
-  // ⚠️ Verificamos que existan los contadores
+  // ✅ Verificamos los contadores
   const countEl = document.getElementById('cerca-count');
   const countLbl = document.getElementById('cerca-count-lbl');
   if (countEl) countEl.textContent = '…';
@@ -1649,6 +1649,26 @@ async function cercaLoadPlaces(forceReload) {
         return p;
       });
     }
+
+    cercaAllPlaces = placesData;
+    if (!cercaAllPlaces.length) cercaAllPlaces = cercaBuildDemoPlaces(lat, lng);
+
+    const now = new Date();
+    const updatedLbl = document.getElementById('cerca-updated-lbl');
+    if (updatedLbl) {
+      updatedLbl.textContent = `Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    console.warn('Error cargando cerca:', err);
+    if (errBanner) errBanner.style.display = 'flex';
+    cercaAllPlaces = cercaBuildDemoPlaces(lat, lng);
+  } finally {
+    cercaIsLoading = false;
+    cercaLoaded = true;
+    cercaApplyFilters();
+  }
+}
 
     cercaAllPlaces = placesData;
     if (!cercaAllPlaces.length) cercaAllPlaces = cercaBuildDemoPlaces(lat, lng);
