@@ -1605,28 +1605,39 @@ function cercaShowSkeleton(){
     </div>`).join('');
 }
 
-async function cercaLoadPlaces(forceReload){
-  if(cercaIsLoading&&!forceReload) return;
-  cercaIsLoading=true;
-  document.getElementById('cerca-error-banner').style.display='none';
+async function cercaLoadPlaces(forceReload) {
+  if (cercaIsLoading && !forceReload) return;
+  cercaIsLoading = true;
+
+  // ⚠️ Verificamos que exista el banner de error
+  const errBanner = document.getElementById('cerca-error-banner');
+  if (errBanner) errBanner.style.display = 'none';
+
   cercaShowSkeleton();
-  document.getElementById('cerca-count').textContent='…';
-  document.getElementById('cerca-count-lbl').textContent=' cargando';
 
-  const lat=userLat??CONFIG.DEFAULT_CENTER.lat, lng=userLng??CONFIG.DEFAULT_CENTER.lng;
+  // ⚠️ Verificamos que existan los contadores
+  const countEl = document.getElementById('cerca-count');
+  const countLbl = document.getElementById('cerca-count-lbl');
+  if (countEl) countEl.textContent = '…';
+  if (countLbl) countLbl.textContent = ' cargando';
 
-  try{
+  const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
+  const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
+
+  try {
     let placesData = [];
     if (GEOAPIFY_READY) {
       placesData = await cercaFetchGeoapify(lat, lng, cercaRadius);
     }
     if (!placesData.length) {
-      // fallback a demo
       placesData = cercaBuildDemoPlaces(lat, lng);
-      document.getElementById('cerca-error-banner').style.display='flex';
+      if (errBanner) errBanner.style.display = 'flex';
     }
-    // Enriquecer con datos de backend
-    const backendResult = BACKEND_READY ? await apiGet('sync_places', {lat, lng, radius: cercaRadius, status_only: 1}) : null;
+
+    // Enriquecer con backend
+    const backendResult = BACKEND_READY
+      ? await apiGet('sync_places', { lat, lng, radius: cercaRadius, status_only: 1 })
+      : null;
     if (backendResult && Array.isArray(backendResult.places)) {
       const backendMap = new Map(backendResult.places.map(bp => [bp.id, bp]));
       placesData = placesData.map(p => {
@@ -1638,22 +1649,26 @@ async function cercaLoadPlaces(forceReload){
         return p;
       });
     }
+
     cercaAllPlaces = placesData;
-    if (!cercaAllPlaces.length) cercaAllPlaces = cercaBuildDemoPlaces(lat,lng);
-    const now=new Date();
-    document.getElementById('cerca-updated-lbl').textContent=`Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  }catch(err){
-    if(err.name==='AbortError') return;
+    if (!cercaAllPlaces.length) cercaAllPlaces = cercaBuildDemoPlaces(lat, lng);
+
+    const now = new Date();
+    const updatedLbl = document.getElementById('cerca-updated-lbl');
+    if (updatedLbl) {
+      updatedLbl.textContent = `Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
     console.warn('Error cargando cerca:', err);
-    document.getElementById('cerca-error-banner').style.display='flex';
-    cercaAllPlaces=cercaBuildDemoPlaces(lat,lng);
-  }finally{
-    cercaIsLoading=false;
-    cercaLoaded=true;
+    if (errBanner) errBanner.style.display = 'flex';
+    cercaAllPlaces = cercaBuildDemoPlaces(lat, lng);
+  } finally {
+    cercaIsLoading = false;
+    cercaLoaded = true;
     cercaApplyFilters();
   }
 }
-
 async function cercaFetchCitySearch(query, lat, lng){
   if (!GEOAPIFY_READY) return [];
   const url = `https://api.geoapify.com/v2/geocode/search?text=${encodeURIComponent(query)}&filter=circle:${lng},${lat},5000&bias=proximity:${lng},${lat}&limit=25&lang=es&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
