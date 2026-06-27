@@ -1,9 +1,9 @@
-/* Qooentum — Service Worker v3 */
-const CACHE_NAME = 'qooentum-v3';
-const PRECACHE_URLS = [
-  './',
-  './index.html',
-];
+/* Qooentum — Service Worker v4 */
+const CACHE_NAME = 'qooentum-v4';
+
+/* No precacheamos nada — el HTML va siempre a la red (network-first),
+   los assets se cachean on-demand al primer acceso. */
+const PRECACHE_URLS = [];
 
 const NEVER_CACHE_DOMAINS = [
   'api.geoapify.com',
@@ -17,29 +17,15 @@ function shouldNeverCache(url) {
 }
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) =>
-        Promise.all(
-          keys
-            .filter((k) => k !== CACHE_NAME)
-            .map((k) => caches.delete(k))
-        )
+        Promise.all(keys.map((k) => caches.delete(k)))
       )
-      .then(() => caches.open(CACHE_NAME))
-      .then(async (cache) => {
-        const reqs = await cache.keys();
-        const toDelete = reqs.filter((r) => shouldNeverCache(new URL(r.url)));
-        await Promise.all(toDelete.map((r) => cache.delete(r)));
-      })
       .then(() => self.clients.claim())
   );
 });
@@ -49,11 +35,13 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
+  /* 1. APIs externas → siempre red, nunca caché */
   if (shouldNeverCache(url)) {
     event.respondWith(fetch(req));
     return;
   }
 
+  /* 2. HTML de mismo origen → siempre red primero */
   if (
     req.mode === 'navigate' ||
     (url.origin === self.location.origin &&
@@ -66,13 +54,12 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((c) => c.put(req, clone));
           return res;
         })
-        .catch(() =>
-          caches.match(req).then((r) => r || caches.match('./index.html'))
-        )
+        .catch(() => caches.match(req))
     );
     return;
   }
 
+  /* 3. Assets estáticos → cache-first */
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(req).then((cached) => {
@@ -87,6 +74,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  /* 4. Cross-origin → stale-while-revalidate */
   event.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req)
