@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1372,6 +1373,9 @@ function cercaClearSearch(){
 }
 
 function initCercaSearch(){
+  /* Sincronizar cercaRadius desde el botón activo en el DOM */
+  const activeRBtn=document.querySelector('.cerca-r-btn.active');
+  if(activeRBtn&&activeRBtn.dataset.r){cercaRadius=parseInt(activeRBtn.dataset.r,10)||1000;}
   const input=document.getElementById('cerca-search-input'),clear=document.getElementById('cerca-search-clear');
   input.addEventListener('input',e=>{
     const val=e.target.value.trim();
