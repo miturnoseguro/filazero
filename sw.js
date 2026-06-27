@@ -1,5 +1,5 @@
-/* Qooentum — Service Worker v4 (Foursquare fix + session persistence) */
-const CACHE_NAME = 'qooentum-v4';
+/* Qooentum — Service Worker v5 (fix Foursquare CORS) */
+const CACHE_NAME = 'qooentum-v5';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -72,18 +72,12 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  /* 1. Dominios críticos → siempre red, sin caché, sin modificar el request
-        Se pasa el request tal cual para que los headers Authorization se preserven */
+  /* 1. Dominios críticos → NO interceptar en absoluto.
+        Si llamamos event.respondWith() con fetch(req) para requests cross-origin
+        que tienen headers Authorization, Chrome los bloquea con "provisional headers".
+        La solución correcta es no interceptar — el browser lo maneja directamente. */
   if (shouldNeverCache(url)) {
-    event.respondWith(
-      fetch(req.clone())
-        .catch(() => {
-          return new Response(
-            JSON.stringify({ error: 'Sin conexión a internet' }),
-            { status: 503, headers: { 'Content-Type': 'application/json' } }
-          );
-        })
-    );
+    // No llamamos event.respondWith() → el browser maneja el request nativamente
     return;
   }
 
@@ -148,4 +142,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('✅ Service Worker v4 registrado (Foursquare + sesión persistente)');
+console.log('✅ Service Worker v5 — Foursquare requests pasan directo al browser');
