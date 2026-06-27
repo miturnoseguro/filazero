@@ -857,7 +857,34 @@ async function gplacesSearch(lat, lng, radius) {
   } catch(e) { console.warn('gplacesSearch falló:', e); return []; }
 }
 
-
+async function gplacesAutocomplete(query, lat, lng) {
+  if (!GPLACES_READY || !query) return [];
+  const cacheKey = `ac_${query.toLowerCase()}_${Math.floor(lat*100)}_${Math.floor(lng*100)}`;
+  const cached = GPLACES_CACHE.get(cacheKey);
+  if (cached && Date.now() - cached.ts < GPLACES_CACHE_TTL) return cached.data;
+  try {
+    const body = {
+      textQuery: query,
+      locationBias: { circle: { center: { latitude: lat, longitude: lng }, radius: 5000 } },
+      maxResultCount: 5,
+    };
+    const res = await fetch(`${GPLACES_CONFIG.API_BASE}/places:searchText`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GPLACES_CONFIG.API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.types,places.formattedAddress,places.rating,places.userRatingCount,places.regularOpeningHours,places.shortFormattedAddress',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('Google Places Autocomplete HTTP ' + res.status);
+    const data = await res.json();
+    incrementQueryCounter(1);
+    const results = (data.places || []).map(p => gplacesToPlace(p, lat, lng));
+    GPLACES_CACHE.set(cacheKey, { data: results, ts: Date.now() });
+    return results;
+  } catch(e) { console.warn('gplacesAutocomplete falló:', e); return []; }
+}
 
 /* ─── CARGA DE LUGARES PARA TILES (mapa principal) ─── */
 async function loadPlacesForTiles(tileKeys){
@@ -865,21 +892,9 @@ async function loadPlacesForTiles(tileKeys){
   tileKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);if(s<minLat)minLat=s;if(w<minLng)minLng=w;if(n>maxLat)maxLat=n;if(e>maxLng)maxLng=e;});
   const centerLat=(minLat+maxLat)/2,centerLng=(minLng+maxLng)/2;
   const radius=Math.min(Math.round(Math.max(maxLat-minLat,maxLng-minLng)*111320*1.4),1500);
-  return fsqSearch(centerLat,centerLng,radius);
+  return gplacesSearch(centerLat,centerLng,radius);
 }
 
-/* ─── SEARCH (mapa) ─── */
-async function searchPlacesByQuery(query){
-  if(!query||query.length<2)return[];
-  const q=query.toLowerCase();
-  const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,5);
-  if(localMatches.length>=3)return localMatches;
-  if(userLat!==null&&userLng!==null){
-    const results=await gplacesAutocomplete(query,userLat,userLng);
-    if(results.length)return results;
-  }
-  return localMatches;
-}
 async function ensurePlacesLoadedAt(lat,lng){
   const tileKey=latLngToTileKey(lat,lng);
   const adjacentKeys=getAdjacentTileKeys(lat,lng);
@@ -893,11 +908,11 @@ async function ensurePlacesLoadedAt(lat,lng){
     return;
   }
   if(!mapInitialLoaded)mapInitialLoaded=true;
-  const[fsqPlaces,backendResult]=await Promise.all([loadPlacesForTiles(missingKeys),BACKEND_READY?apiGet('sync_places',{lat,lng,radius:Math.round(CONFIG.TILE_DEG*111320*1.5)}):Promise.resolve(null)]);
+  const[gpPlaces,backendResult]=await Promise.all([loadPlacesForTiles(missingKeys),BACKEND_READY?apiGet('sync_places',{lat,lng,radius:Math.round(CONFIG.TILE_DEG*111320*1.5)}):Promise.resolve(null)]);
   const backendPlaces=(backendResult&&Array.isArray(backendResult.places))?backendResult.places:[];
   const backendById=new Map(backendPlaces.map(p=>[p.id,p]));
-  const merged=fsqPlaces.map(p=>{const bp=backendById.get(p.id);return bp?{...p,...bp}:p;});
-  const onlyBackend=backendPlaces.filter(p=>!fsqPlaces.find(o=>o.id===p.id));
+  const merged=gpPlaces.map(p=>{const bp=backendById.get(p.id);return bp?{...p,...bp}:p;});
+  const onlyBackend=backendPlaces.filter(p=>!gpPlaces.find(o=>o.id===p.id));
   const allNew=[...merged,...onlyBackend];
   missingKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);const forThisTile=allNew.filter(p=>p.lat>=s&&p.lat<=n&&p.lng>=w&&p.lng<=e);mergePlacesIntoCache(forThisTile,key);});
   persistCache();rebuildNearby(lat,lng);buildMapMarkers(nearbyPlaces);updateCrowdBar(calcCrowdPct());
@@ -1509,9 +1524,18 @@ function applyLoggedInUI(){
 async function fetchProfileFromToken(accessToken){const profileRes=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:`Bearer ${accessToken}`}});if(!profileRes.ok)throw new Error('No se pudo obtener el perfil de Google');return await profileRes.json();}
 
 async function handleGoogleTokenResponse(resp){
-  if(!resp||resp.error||!resp.access_token){resetLoginButton();if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')showToast('⚠️ No se pudo iniciar sesión con Google');return;}
+  if(!resp||resp.error||!resp.access_token){
+    // Si ya hay sesión activa, no mostrar error por renovación silenciosa fallida
+    if(!isLoggedIn){resetLoginButton();if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')showToast('⚠️ No se pudo iniciar sesión con Google');}
+    return;
+  }
   try{
     const profile=await fetchProfileFromToken(resp.access_token);
+    // Si ya estamos logueados con el mismo usuario, solo actualizar el token silenciosamente
+    if(isLoggedIn&&currentUser&&currentUser.email===profile.email){
+      saveTokenToStorage(resp.access_token,resp.expires_in);
+      return;
+    }
     const deviceEmail=localStorage.getItem(DEVICE_KEY);
     if(deviceEmail&&deviceEmail!==profile.email){resetLoginButton();showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);return;}
     let backendResult=null;
@@ -1527,16 +1551,23 @@ async function handleGoogleTokenResponse(resp){
     applyLoggedInUI();hideToastAction();maybeStartOccupancySync();
     if(!wasLoggedIn)showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
     if(pendingVote){const{placeId,voteIdx}=pendingVote;pendingVote=null;const p=places.find(x=>x.id===placeId);if(p)await submitVoteToBackend(p,voteIdx);}
-  }catch(err){console.warn('Error de login:',err);showToast('⚠️ Error al iniciar sesión con Google');}
+  }catch(err){console.warn('Error de login:',err);if(!isLoggedIn)showToast('⚠️ Error al iniciar sesión con Google');}
   finally{resetLoginButton();}
 }
 
 async function trySilentRenew(){
-  if(!GOOGLE_AUTH_READY)return;
+  if(!GOOGLE_AUTH_READY||!isLoggedIn)return;
   let attempts=0;
   while((!window.google||!google.accounts||!google.accounts.oauth2)&&attempts<20){await new Promise(r=>setTimeout(r,200));attempts++;}
   if(!initGoogleTokenClient())return;
-  try{tokenClient.requestAccessToken({prompt:''});}catch(e){console.warn('Silent renew falló:',e);}
+  // Solo renovamos el token OAuth en background; nunca afecta la sesión del usuario
+  // Si falla, la sesión sigue activa igual (usa localStorage)
+  try{
+    tokenClient.requestAccessToken({prompt:'none'});
+  }catch(e){
+    // Silencioso: si falla la renovación, la sesión persiste de todas formas
+    console.log('Silent token renew no disponible (normal en algunos navegadores)');
+  }
 }
 
 async function restoreSession(){
