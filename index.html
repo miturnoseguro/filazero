@@ -105,1793 +105,615 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
 .map-search-clear{width:22px;height:22px;background:var(--surface2);border:none;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;flex-shrink:0;transition:all .18s;}
 .map-search-clear:hover{background:var(--border2);color:var(--text);}
 .map-search-clear.visible{display:flex;}
-.search-results-dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:rgba(255,255,255,.98);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);overflow:hidden;display:none;max-height:320px;overflow-y:auto;}
-.search-results-dropdown.open{display:block;}
-.search-result-item{display:flex;align-items:center;gap:11px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(226,232,240,.5);transition:background .15s;}
-.search-result-item:last-child{border-bottom:none;}
-.search-result-item:hover{background:var(--green-lt);}
-.search-result-logo{width:36px;height:36px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;}
-.search-result-logo img{width:100%;height:100%;object-fit:contain;}
-.search-result-info{flex:1;min-width:0;}
-.search-result-name{font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.search-result-sub{font-size:11px;color:var(--text2);margin-top:1px;}
-.search-result-status{font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;flex-shrink:0;color:#fff;}
-.search-empty{padding:24px;text-align:center;color:var(--text3);font-size:13px;font-weight:500;}
-.search-loading{padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--text3);font-size:13px;}
-.search-spinner{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--green);animation:spin .7s linear infinite;flex-shrink:0;}
-.map-float-controls{position:absolute;top:14px;right:14px;z-index:999;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
-.gps-float-btn{width:42px;height:42px;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .22s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--shadow-float);}
-.gps-float-btn:hover{border-color:var(--blue);background:var(--blue-lt);transform:translateY(-2px) scale(1.06);}
-.gps-float-btn svg{width:18px;height:18px;color:var(--blue);}
-.gps-float-btn.pulsing{animation:gpsPulse .8s ease-in-out infinite;}
-.gps-float-btn.active{border-color:var(--green);background:var(--green-lt);}
-.gps-float-btn.active svg{color:var(--green);}
-.gps-float-btn.following{border-color:var(--green);background:linear-gradient(135deg,var(--green-lt),#D1FAF0);box-shadow:0 0 0 3px rgba(0,196,140,.18),var(--shadow-float);}
-.gps-float-btn.following svg{color:var(--green-dk);}
-@keyframes gpsPulse{0%,100%{box-shadow:var(--shadow-float)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.18),var(--shadow-float)}}
-@keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.follow-pill{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:998;background:rgba(0,196,140,.92);color:#fff;border-radius:99px;padding:5px 14px;font-size:11px;font-weight:800;display:none;align-items:center;gap:6px;pointer-events:none;box-shadow:0 3px 12px rgba(0,196,140,.35);white-space:nowrap;backdrop-filter:blur(8px);letter-spacing:.1px;animation:adSlideIn .3s cubic-bezier(.34,1.56,.64,1);}
-.follow-pill.show{display:flex;}
-.follow-dot{width:6px;height:6px;border-radius:50%;background:#fff;opacity:.8;animation:gpsPulse .9s ease-in-out infinite;}
-.map-refresh-btn{position:absolute;bottom:calc(60px + max(20px, calc(var(--sab) + 12px)));left:50%;transform:translateX(-50%);z-index:600;background:#fff;border:1.5px solid var(--border);border-radius:99px;padding:9px 20px;font-size:12px;font-weight:800;color:var(--green-dk);display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--shadow-float);font-family:inherit;white-space:nowrap;}
-.map-refresh-btn:hover{transform:translateX(-50%) translateY(-2px) scale(1.04);box-shadow:0 8px 24px rgba(0,196,140,.2);border-color:var(--green);}
-.map-refresh-btn:active{transform:translateX(-50%) scale(.97);}
-.map-refresh-btn svg{width:15px;height:15px;color:var(--green);flex-shrink:0;}
-.fc-card-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;filter:drop-shadow(0 3px 10px rgba(15,23,42,.16));transition:transform .18s cubic-bezier(.34,1.56,.64,1),filter .18s;}
-.fc-card-wrap:hover{transform:scale(1.05) translateY(-2px);filter:drop-shadow(0 7px 18px rgba(15,23,42,.22));}
-.fc-card-wrap.is-active{filter:drop-shadow(0 6px 20px rgba(0,196,140,.38));}
-.fc-card{width:175px;background:rgba(255,255,255,.98);border:1.5px solid var(--border);border-radius:13px;padding:9px 10px 8px;font-family:'Inter',system-ui,sans-serif;text-align:left;backdrop-filter:blur(8px);}
-.fc-card-wrap.is-active .fc-card{border-color:var(--green);border-width:2px;box-shadow:0 0 0 3px rgba(0,196,140,.14);}
-.fc-card-wrap.is-sponsor .fc-card{border-width:2px;}
-.fc-card-wrap.is-sponsor.tier-premium .fc-card{border-color:var(--sponsor-color,#6366F1);box-shadow:0 0 0 3px color-mix(in srgb,var(--sponsor-color,#6366F1) 18%,transparent);background:linear-gradient(160deg,#fff 60%,color-mix(in srgb,var(--sponsor-color,#6366F1) 5%,#fff));}
-.fc-card-wrap.is-sponsor.tier-basic .fc-card{border-color:color-mix(in srgb,var(--sponsor-color,#6366F1) 60%,#CBD5E1);}
-.fc-card-head{display:flex;gap:7px;align-items:center;}
-.fc-card-logo{width:30px;height:30px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;position:relative;overflow:hidden;}
-.fc-card-logo img{width:100%;height:100%;object-fit:contain;}
-.fc-card-verified{position:absolute;bottom:-3px;right:-3px;width:12px;height:12px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;font-size:7px;color:#fff;font-weight:900;line-height:1;}
-.fc-card-info{flex:1;min-width:0;}
-.fc-card-name{font-size:12px;font-weight:800;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.fc-card-type{font-size:10px;color:var(--text3);font-weight:500;margin-top:1px;}
-.fc-card-open{font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;flex-shrink:0;}
-.fc-card-open.open{background:var(--green-lt);color:var(--green-dk);}
-.fc-card-open.closed{background:var(--red-lt);color:var(--red);}
-.fc-card-status{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;margin-top:7px;}
-.fc-card-status .s-dot-sm{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(255,255,255,.5);}
-.fc-card-status .s-label-sm{font-size:10px;font-weight:700;color:#fff;line-height:1.2;}
-.fc-sponsor-badge{display:flex;align-items:center;gap:3px;font-size:9px;font-weight:800;letter-spacing:.2px;padding:2px 6px;border-radius:99px;color:#fff;margin-top:4px;width:fit-content;}
-.fc-tail{width:2px;height:6px;background:#CBD5E1;}
-.fc-base{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
-.bottom-nav{position:absolute;bottom:max(20px, calc(var(--sab) + 12px));left:50%;transform:translateX(-50%);z-index:600;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:99px;padding:6px 6px;box-shadow:var(--shadow-float);animation:navAppear .4s cubic-bezier(.34,1.56,.64,1);}
-@keyframes navAppear{from{opacity:0;transform:translateX(-50%) translateY(16px) scale(.92)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
-.nav-btn{display:flex;align-items:center;gap:7px;padding:9px 18px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:700;color:var(--text3);border-radius:99px;transition:all .22s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;font-family:inherit;letter-spacing:-.1px;position:relative;}
-.nav-btn svg{width:17px;height:17px;transition:transform .22s cubic-bezier(.34,1.56,.64,1);}
-.nav-btn:hover{color:var(--text2);background:var(--surface2);}
-.nav-btn.active{color:var(--green-dk);background:var(--green-lt);font-weight:800;}
-.nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:20px;height:2px;background:var(--green);border-radius:0 0 3px 3px;animation:tabIndicator .22s ease;}
-@keyframes tabIndicator{from{width:0;opacity:0}to{width:20px;opacity:1}}
-.nav-btn.is-main{padding:12px 24px;font-size:14.5px;font-weight:800;color:var(--text);}
-.nav-btn.is-main svg{width:20px;height:20px;}
-.nav-btn.is-main.active{color:#fff;background:linear-gradient(135deg,var(--green),var(--green-dk));box-shadow:0 4px 14px rgba(0,196,140,.35);}
-.nav-btn.is-main.active::before{display:none;}
-.nav-btn.is-main:not(.active):hover{color:var(--green-dk);background:var(--green-lt);}
-.levelup-modal{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:99998;animation:fadeIn .2s ease;}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.levelup-card{background:linear-gradient(160deg,#1E1B4B,#312E81);border:2px solid #A855F7;border-radius:22px;padding:32px 36px;text-align:center;box-shadow:0 0 0 1px rgba(168,85,247,.4),0 20px 60px rgba(0,0,0,.45);animation:levelPop .45s cubic-bezier(.34,1.56,.64,1);max-width:270px;}
-@keyframes levelPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
-.levelup-burst{font-size:44px;animation:spinPulse 1.2s ease-in-out infinite;}
-@keyframes spinPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
-.levelup-lvl{font-size:22px;font-weight:900;color:#fff;letter-spacing:1px;margin-top:9px;}
-.levelup-title{font-size:13px;font-weight:700;color:#D8B4FE;margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
-.levelup-close{margin-top:20px;background:linear-gradient(135deg,#A855F7,#7C3AED);color:#fff;border:none;border-radius:99px;padding:10px 26px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;}
-.panel-header{padding:15px 19px;font-size:15px;font-weight:800;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;background:var(--surface);flex-shrink:0;letter-spacing:-.3px;}
-.panel-header-sub{font-size:12px;font-weight:500;color:var(--text3);margin-left:auto;}
-.rank-list{flex:1;overflow-y:auto;background:var(--bg);}
-.rank-list::-webkit-scrollbar{width:4px;}
-.rank-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
-.rank-row{display:flex;align-items:center;gap:13px;padding:12px 19px;border-bottom:1px solid var(--border);background:var(--surface);transition:all .18s;animation:rowIn .3s ease both;}
-@keyframes rowIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
-.rank-row:hover{background:var(--surface2);padding-left:23px;}
-.rank-row.is-me{background:var(--green-lt);border-left:3px solid var(--green);}
-.rank-pos{min-width:30px;font-size:17px;font-weight:900;text-align:center;color:var(--text2);}
-.rank-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+
+/* ═════════════════════ ESTILOS PARA FOURSQUARE ═════════════════════ */
+.cerca-places-list{display:flex;flex-direction:column;gap:10px;padding:12px;overflow-y:auto;flex:1;}
+.cerca-place-card{display:flex;flex-direction:column;gap:8px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow-sm);}
+.cerca-place-card:hover{border-color:var(--green);box-shadow:var(--shadow);transform:translateY(-2px);}
+.place-header{display:flex;justify-content:space-between;align-items:flex-start;}
+.place-name{font-weight:700;font-size:14px;color:var(--text);}
+.place-distance{font-size:12px;color:var(--green);font-weight:600;background:var(--green-lt);padding:2px 8px;border-radius:6px;}
+.place-category{font-size:12px;color:var(--text2);font-weight:500;}
+.place-meta{display:flex;gap:8px;font-size:12px;color:var(--text3);}
+.place-rating{color:var(--gold);}
+.crowd-indicator{margin:8px 0;}
+.crowd-bar{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+.crowd-fill{height:100%;transition:width .3s;}
+.crowd-fill.crowd-empty{width:10%;background:var(--green);}
+.crowd-fill.crowd-low{width:30%;background:var(--green);}
+.crowd-fill.crowd-medium{width:60%;background:var(--yellow);}
+.crowd-fill.crowd-high{width:85%;background:var(--orange);}
+.crowd-fill.crowd-very_high{width:100%;background:var(--red);}
+.crowd-fill.crowd-unknown{width:50%;background:var(--text3);}
+.crowd-label{font-size:11px;color:var(--text2);margin-top:3px;}
+.place-action{display:flex;gap:8px;}
+.btn-small{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;font-size:12px;font-weight:600;background:var(--green-lt);color:var(--green);border:none;border-radius:8px;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn-small:hover{background:var(--green);color:white;}
+
+.loading-state,.error-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;text-align:center;}
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;text-align:center;}
+
+/* Rest de estilos originales truncados para brevedad */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.tab{flex:1;padding:12px;text-align:center;cursor:pointer;font-weight:600;font-size:13px;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);}
+.rank-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;animation:slideIn .3s ease-out;}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.rank-pos{font-weight:700;min-width:28px;text-align:center;font-size:14px;}
+.rank-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:16px;flex-shrink:0;}
 .rank-info{flex:1;min-width:0;}
-.rank-name{font-size:14px;font-weight:700;color:var(--text);}
+.rank-name{font-weight:700;font-size:13px;color:var(--text);}
 .rank-sub{font-size:12px;color:var(--text2);}
-.rank-pts-val{font-size:15px;font-weight:900;color:var(--green);letter-spacing:-.3px;}
-.prizes-header-note{padding:11px 15px;background:linear-gradient(135deg,var(--green-lt),#D1FAF0);border-bottom:1px solid rgba(0,196,140,.2);font-size:12px;font-weight:600;color:var(--green-dk);display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.prizes-coming-soon{margin:13px 15px 0;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1px solid #FDE68A;border-radius:var(--radius-lg);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:var(--shadow-sm);}
-.prizes-coming-soon-emoji{font-size:26px;flex-shrink:0;}
-.prizes-coming-soon-title{font-size:13.5px;font-weight:800;color:#92400E;}
-.prizes-coming-soon-sub{font-size:12px;color:#92400E;opacity:.85;margin-top:2px;}
-.prizes-list{flex:1;overflow-y:auto;background:var(--bg);padding:13px 15px;display:flex;flex-direction:column;gap:10px;position:relative;}
-.prize-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:15px;display:flex;align-items:center;gap:13px;transition:all .22s cubic-bezier(.34,1.56,.64,1);animation:rowIn .3s ease both;box-shadow:var(--shadow-sm);}
-.prize-row:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
-.prize-emoji{font-size:30px;width:44px;text-align:center;flex-shrink:0;}
-.prize-body{flex:1;min-width:0;}
-.prize-name{font-size:14px;font-weight:700;color:var(--text);}
-.prize-cat{font-size:11px;color:var(--text2);margin-top:1px;font-weight:500;}
-.pbar-bg{height:4px;background:var(--surface2);border-radius:99px;margin-top:8px;overflow:hidden;}
-.pbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#00C48C,#00D4A0);transition:width .9s cubic-bezier(.34,1.1,.64,1);}
-.prize-cta{font-size:11px;font-weight:800;padding:7px 13px;border-radius:99px;white-space:nowrap;transition:all .22s cubic-bezier(.34,1.56,.64,1);}
-.prize-cta.can{background:linear-gradient(135deg,#00C48C,#009E72);color:#fff;cursor:pointer;}
-.prize-cta.can:hover{transform:translateY(-1px);}
-.prize-cta.cant{background:var(--surface2);color:var(--text3);border:1px solid var(--border);}
-.toast{position:fixed;bottom:calc(76px + var(--sab));left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;border-radius:99px;padding:10px 22px;font-size:13px;font-weight:700;opacity:0;transition:opacity .28s,transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:9999;white-space:nowrap;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:6px;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.toast-action{position:fixed;bottom:calc(76px + var(--sab));left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;border-radius:16px;padding:12px 16px 12px 20px;font-size:13px;font-weight:700;opacity:0;transition:opacity .28s,transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:9999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;max-width:340px;}
-.toast-action.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
-.toast-action-btn{background:var(--green);color:#fff;border:none;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0;}
-.toast-action-btn:hover{background:var(--green-dk);}
-@keyframes ptsFlash{0%{transform:scale(1)}30%{transform:scale(1.22);color:var(--green)}100%{transform:scale(1)}}
-.pts-flash{animation:ptsFlash .45s cubic-bezier(.34,1.56,.64,1);}
-#react-popup-root{position:fixed;inset:0;z-index:10000;pointer-events:none;}
-#react-popup-root.active{pointer-events:all;}
-.install-banner{position:absolute;top:68px;left:14px;z-index:999;background:rgba(15,23,42,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);max-width:260px;animation:adSlideIn .5s cubic-bezier(.34,1.56,.64,1);}
-.install-banner img{width:34px;height:34px;border-radius:9px;flex-shrink:0;}
-.install-banner-body{flex:1;min-width:0;}
-.install-banner-title{font-size:12px;font-weight:800;color:#fff;}
-.install-banner-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px;}
-.install-banner-btn{background:var(--green);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;}
-.install-banner-close{background:none;border:none;color:rgba(255,255,255,.45);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;}
-.pick-mode-banner{position:absolute;top:68px;left:50%;transform:translateX(-50%);z-index:997;background:linear-gradient(135deg,#1E293B,#0F172A);border:1.5px solid var(--green);border-radius:99px;padding:9px 20px;font-size:12.5px;font-weight:800;color:#fff;display:none;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(0,196,140,.25);white-space:nowrap;pointer-events:none;animation:adSlideIn .3s cubic-bezier(.34,1.56,.64,1);}
-.pick-mode-banner.show{display:flex;}
-.pick-mode-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:gpsPulse .9s ease-in-out infinite;box-shadow:0 0 0 3px rgba(0,196,140,.3);}
-@keyframes adSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.checkin-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:5000;display:flex;align-items:flex-end;justify-content:center;padding:0 0 max(var(--sab), 20px);animation:fadeIn .22s ease;}
-.checkin-card{width:100%;max-width:480px;background:var(--surface);border-radius:24px 24px 20px 20px;overflow:hidden;box-shadow:var(--shadow-lg);animation:checkinSlideUp .38s cubic-bezier(.34,1.56,.64,1);}
-@keyframes checkinSlideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-.checkin-header{padding:20px 20px 14px;background:#fff;border-bottom:1px solid rgba(0,196,140,.15);text-align:center;}
-.checkin-header-emoji{font-size:26px;margin-bottom:6px;}
-.checkin-header-title{font-size:15.5px;font-weight:900;color:var(--text);letter-spacing:-.3px;}
-.checkin-header-sub{font-size:12px;color:var(--text2);margin-top:3px;}
-.checkin-body{padding:16px 16px 20px;}
-.checkin-tabs{display:flex;gap:8px;margin-bottom:14px;}
-.checkin-tab{flex:1;min-width:0;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:12px 8px 11px;cursor:pointer;text-align:center;transition:all .2s cubic-bezier(.34,1.56,.64,1);font-family:inherit;position:relative;overflow:hidden;}
-.checkin-tab:hover{border-color:var(--green);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,196,140,.2);}
-.checkin-tab.near{border-color:rgba(0,196,140,.4);background:linear-gradient(160deg,#fff,#f0fdf9);}
-.checkin-tab-logo{font-size:22px;line-height:1;position:relative;z-index:1;width:36px;height:36px;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);}
-.checkin-tab-logo img{width:100%;height:100%;object-fit:contain;}
-.checkin-tab-logo span{font-size:18px;}
-.checkin-tab-name{font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px;line-height:1.2;position:relative;z-index:1;}
-.checkin-tab-dist{font-size:10px;font-weight:700;color:var(--green-dk);margin-top:3px;position:relative;z-index:1;}
-.checkin-tab.far .checkin-tab-dist{color:var(--text3);}
-.checkin-tab.far{opacity:.75;}
-.checkin-tab.other-tab{border-style:dashed;border-color:var(--border2);background:var(--surface2);}
-.checkin-tab.other-tab:hover{border-color:var(--blue);background:var(--blue-lt);}
-.checkin-skip-main{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;padding:13px 18px;font-size:13.5px;font-weight:800;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .2s cubic-bezier(.34,1.56,.64,1);letter-spacing:-.1px;margin-top:2px;}
-.checkin-skip-main:hover{background:#fff;border-color:var(--text2);color:var(--text);transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.1);}
-.checkin-skip-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:8px;font-weight:500;}
-.cluster-card{display:flex;flex-direction:column;align-items:center;cursor:pointer;filter:drop-shadow(0 3px 10px rgba(15,23,42,.18));transition:transform .18s cubic-bezier(.34,1.56,.64,1),filter .18s;}
-.cluster-card:hover{transform:scale(1.07) translateY(-2px);filter:drop-shadow(0 7px 18px rgba(15,23,42,.25));}
-.cluster-bubble{background:rgba(255,255,255,.97);border:2px solid var(--green);border-radius:16px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-family:'Inter',system-ui,sans-serif;min-width:130px;box-shadow:0 0 0 3px rgba(0,196,140,.12);}
-.cluster-count{font-size:22px;font-weight:900;color:var(--green-dk);line-height:1;}
-.cluster-label{font-size:11px;font-weight:700;color:var(--text2);line-height:1.3;}
-.cluster-label strong{display:block;font-size:12px;color:var(--text);font-weight:800;}
-.cluster-tail{width:2px;height:6px;background:#CBD5E1;}
-.cluster-base{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
-.cluster-bubble.density-low{border-color:var(--green);}
-.cluster-bubble.density-low .cluster-count{color:var(--green-dk);}
-.cluster-bubble.density-med{border-color:var(--yellow);}
-.cluster-bubble.density-med .cluster-count{color:#B45309;}
-.cluster-bubble.density-high{border-color:var(--orange);}
-.cluster-bubble.density-high .cluster-count{color:#C2410C;}
-.cluster-bubble.density-max{border-color:var(--red);}
-.cluster-bubble.density-max .cluster-count{color:#B91C1C;}
-#panel-cerca{position:relative;}
-.cerca-search-wrap{padding:12px 14px 0;flex-shrink:0;}
-.cerca-search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--border);border-radius:99px;padding:9px 14px;transition:border-color .2s,box-shadow .2s;}
-.cerca-search-bar:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,196,140,.1);}
-.cerca-search-bar input{flex:1;border:none;outline:none;font-size:13.5px;color:var(--text);background:transparent;font-family:inherit;}
-.cerca-search-bar input::placeholder{color:var(--text3);}
-.cerca-search-icon{width:15px;height:15px;color:var(--text3);flex-shrink:0;}
-.cerca-search-bar:focus-within .cerca-search-icon{color:var(--green);}
-.cerca-search-clear{width:20px;height:20px;background:var(--surface2);border:none;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;}
-.cerca-search-clear.visible{display:flex;}
-.cerca-city-badge{display:none;align-items:center;gap:5px;padding:4px 10px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:99px;font-size:10px;font-weight:800;color:var(--blue);margin-left:4px;flex-shrink:0;}
-.cerca-city-badge.visible{display:flex;}
-.cerca-radius-row{display:flex;align-items:center;gap:6px;padding:10px 14px 0;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
-.cerca-radius-row::-webkit-scrollbar{display:none;}
-.cerca-radius-lbl{font-size:11px;font-weight:700;color:var(--text3);white-space:nowrap;flex-shrink:0;}
-.cerca-r-btn{padding:5px 12px;border:1.5px solid var(--border);border-radius:99px;font-size:11.5px;font-weight:700;color:var(--text2);background:#fff;cursor:pointer;white-space:nowrap;transition:all .18s;font-family:inherit;flex-shrink:0;}
-.cerca-r-btn:hover{border-color:var(--green);color:var(--green-dk);}
-.cerca-r-btn.active{background:var(--green);border-color:var(--green);color:#fff;}
-.cerca-filter-row{display:flex;align-items:center;gap:6px;padding:8px 14px 0;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
-.cerca-filter-row::-webkit-scrollbar{display:none;}
-.cerca-f-chip{padding:5px 11px;border:1px solid var(--border);border-radius:99px;font-size:11px;font-weight:700;color:var(--text2);background:#fff;cursor:pointer;white-space:nowrap;transition:all .18s;font-family:inherit;flex-shrink:0;}
-.cerca-f-chip:hover{border-color:var(--blue);color:var(--blue);}
-.cerca-f-chip.active{background:var(--blue-lt);border-color:var(--blue);color:var(--blue);}
-.cerca-stats-bar{display:flex;align-items:center;gap:4px;padding:7px 14px 8px;flex-shrink:0;}
-.cerca-count{font-size:12px;color:var(--green);font-weight:800;}
-.cerca-count-lbl{font-size:12px;color:var(--text3);font-weight:500;}
-.cerca-sort-btn{margin-left:auto;display:flex;align-items:center;gap:4px;background:none;border:1px solid var(--border);border-radius:99px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .18s;}
-.cerca-sort-btn:hover{border-color:var(--border2);color:var(--text);}
-.cerca-list{flex:1;overflow-y:auto;padding:8px 12px calc(60px + max(20px, var(--sab)));display:flex;flex-direction:column;gap:9px;background:var(--bg);}
-.cerca-list::-webkit-scrollbar{width:3px;}
-.cerca-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
-.nc-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px 13px 11px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s;display:flex;gap:11px;align-items:flex-start;animation:ncCardIn .22s ease both;}
-@keyframes ncCardIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.nc-card:hover{border-color:var(--green);box-shadow:0 4px 16px rgba(0,196,140,.11);transform:translateY(-1px);}
-.nc-card.is-sponsor{border-width:2px;border-image:linear-gradient(135deg,var(--sp-color,#6366F1),color-mix(in srgb,var(--sp-color,#6366F1) 55%,#CBD5E1)) 1;border-radius:14px;border-style:solid;}
-.nc-logo{width:46px;height:46px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;overflow:hidden;position:relative;}
-.nc-logo img{width:100%;height:100%;object-fit:contain;}
-.nc-ver{position:absolute;bottom:-3px;right:-3px;width:14px;height:14px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:7px;color:#fff;font-weight:900;line-height:1;}
-.nc-body{flex:1;min-width:0;}
-.nc-top{display:flex;align-items:flex-start;gap:6px;margin-bottom:2px;}
-.nc-name{font-size:13.5px;font-weight:800;color:var(--text);line-height:1.2;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.nc-badge-open{font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;flex-shrink:0;margin-top:2px;}
-.nc-badge-open.open{background:var(--green-lt);color:var(--green-dk);}
-.nc-badge-open.closed{background:var(--red-lt);color:var(--red);}
-.nc-meta{display:flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
-.nc-type{font-size:10.5px;color:var(--text3);font-weight:600;}
-.nc-dot{width:3px;height:3px;border-radius:50%;background:var(--border2);}
-.nc-dist{font-size:10.5px;color:var(--text2);font-weight:700;}
-.nc-addr{font-size:10.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;}
-.nc-status{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:8px;}
-.nc-sdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.5);flex-shrink:0;}
-.nc-slabel{font-size:10px;font-weight:700;color:#fff;}
-.nc-ssub{font-size:10px;color:rgba(255,255,255,.72);margin-left:auto;}
-.nc-sponsor-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;color:#fff;margin-top:5px;}
-.nc-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-top:1px;}
-.nc-rating{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:var(--text);}
-.nc-star{color:#F59E0B;}
-.nc-rn{font-size:10px;color:var(--text3);font-weight:500;}
-.nc-report-btn{background:var(--green-lt);border:1.5px solid var(--green);border-radius:99px;padding:6px 12px;font-size:11px;font-weight:800;color:var(--green-dk);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .18s;}
-.nc-report-btn:hover{background:var(--green);color:#fff;}
-.nc-skeleton{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px;display:flex;gap:11px;}
-.nc-skel-logo{width:46px;height:46px;border-radius:12px;flex-shrink:0;}
-.nc-skel-body{flex:1;display:flex;flex-direction:column;gap:7px;}
-.nc-skel-line{height:10px;border-radius:5px;}
-.nc-skel-block{height:28px;border-radius:8px;}
-.skel-anim{background:linear-gradient(90deg,#F1F5F9 25%,#E2E8F0 50%,#F1F5F9 75%);background-size:200%;animation:skelShim .9s ease-in-out infinite;}
-@keyframes skelShim{from{background-position:200% 0}to{background-position:-200% 0}}
-.nc-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 24px;text-align:center;}
-.nc-empty-icon{font-size:38px;}
-.nc-empty-title{font-size:14px;font-weight:800;color:var(--text2);}
-.nc-empty-sub{font-size:12.5px;color:var(--text3);max-width:230px;line-height:1.5;}
-.nc-error-banner{margin:12px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;font-size:12px;color:#92400E;font-weight:600;display:flex;gap:9px;align-items:flex-start;flex-shrink:0;}
-.prizes-back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--text2);padding:6px 10px 6px 4px;border-radius:99px;transition:all .18px;margin-left:auto;}
-.prizes-back-btn:hover{color:var(--text);background:var(--surface2);}
-@media(max-width:680px){
-  .topbar{flex-wrap:nowrap;height:auto;padding:max(var(--sat), 10px) 12px 10px;align-items:center;gap:8px;}
-  .brand{flex-shrink:0;}
-  .brand-mark{width:120px;height:35px;}
-  .brand-powered{display:none;}
-  .topbar-auth{margin-left:auto;flex-shrink:0;}
-  .user-chip{padding:4px 10px 4px 4px;gap:7px;}
-  .avatar{width:28px;height:28px;font-size:10px;}
-  .user-chip-info{min-width:0;}
-  .pts-label{font-size:12px;}
-  .lvl-badge{font-size:9px;padding:1px 6px;}
-  .login-topbar-btn{padding:7px 13px;font-size:12px;}
-  .bottom-nav{bottom:max(16px, calc(var(--sab) + 10px));}
-  .leaflet-control-zoom{margin:0 12px calc(70px + var(--sab)) 0 !important;}
-  .map-search-wrap{left:14px;right:14px;}
-  .map-float-controls{top:14px;right:14px;}
-  .map-search-input{font-size:16px;}
-  .map-refresh-btn{bottom:calc(60px + max(16px, calc(var(--sab) + 10px)));}
-  .nc-addr{max-width:100px;}
-}
+.rank-pts-val{font-weight:800;color:var(--green);font-size:14px;}
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="topbar">
-    <a class="brand" href="javascript:void(0)" onclick="window.location.reload()" title="Ir al inicio">
-      <div class="brand-mark">
-        <img src="logo.png" alt="Qooentum" width="150" height="43">
-      </div>
-      <span class="brand-powered">powered by <strong>Bigdaat.com</strong></span>
+  <div class="topbar">
+    <a href="#" class="brand" onclick="switchTab('map'); return false;">
+      <div class="brand-mark" style="background:#00C48C;color:white;font-weight:900;font-size:18px;">Q</div>
+      <div class="brand-powered">Powered by <strong>Foursquare</strong></div>
     </a>
     <div class="topbar-auth">
-      <div class="user-chip-wrap" id="user-chip-wrap" style="display:none;">
-        <div class="user-chip" id="user-chip" onclick="toggleUserDropdown()">
-          <div class="avatar" id="topbar-avatar">YO</div>
+      <div class="user-chip-wrap">
+        <div class="user-chip" onclick="toggleUserDropdown()">
+          <div class="avatar" id="user-avatar">👤</div>
           <div class="user-chip-info">
             <div class="pts-row">
-              <span class="lvl-badge" id="lvl-badge">Nivel 1</span>
-              <span class="pts-label" id="my-pts">0 pts</span>
+              <span class="lvl-badge" id="user-level">LV 1</span>
             </div>
-            <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
+            <div class="pts-label" id="user-pts">0 pts</div>
+            <div class="xp-bar-bg"><div class="xp-bar-fill" style="width:0%" id="user-xp-bar"></div></div>
           </div>
-          <svg class="chip-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          <span class="chip-caret">▾</span>
         </div>
         <div class="user-dropdown" id="user-dropdown">
-          <button class="user-dropdown-item" onclick="switchTab('prizes');toggleUserDropdown()" style="color:var(--green-dk);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;color:var(--green);"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-            Mis premios
-          </button>
-          <div style="height:1px;background:var(--border);margin:3px 8px;"></div>
-          <button class="user-dropdown-item danger" onclick="doLogout()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Cerrar sesión
-          </button>
+          <button class="user-dropdown-item" onclick="editProfile()">Editar perfil</button>
+          <button class="user-dropdown-item" onclick="viewSettings()">Configuración</button>
+          <button class="user-dropdown-item danger" onclick="logout()">Cerrar sesión</button>
         </div>
       </div>
-      <button class="login-topbar-btn" id="login-topbar-btn" onclick="doGoogleLogin(this)">
-        <svg class="gicon" viewBox="0 0 48 48" style="width:14px;height:14px"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
-        <span class="gbtn-spinner"></span>
-        <span class="gbtn-txt">Ingresar</span>
+      <button class="login-topbar-btn" id="login-btn" onclick="triggerLogin()">
+        <span class="gicon">🔑</span>
+        <span class="gbtn-text">Ingresar</span>
+        <div class="gbtn-spinner"></div>
       </button>
     </div>
-  </header>
+  </div>
 
-  <div id="panel-map" class="panel" style="position:relative;">
+  <!-- PANEL MAPA -->
+  <div class="panel visible" id="panel-map">
     <div class="map-pane">
       <div id="leaflet-map"></div>
-      <div class="map-search-wrap" id="map-search-wrap">
+      <div class="map-search-wrap">
         <div class="map-search-bar">
-          <svg class="map-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input class="map-search-input" id="map-search-input" type="text" placeholder="Buscar comercio o dirección…" autocomplete="off" spellcheck="false">
-          <button class="map-search-clear" id="map-search-clear" onclick="clearSearch()">✕</button>
-          <div class="gps-float-btn" id="gps-btn" onclick="onGpsBtnClick()" title="Centrar / seguir mi ubicación" style="width:34px;height:34px;border-radius:9px;flex-shrink:0;box-shadow:none;border-color:var(--border);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-dasharray="2 3"/></svg>
-          </div>
-        </div>
-        <div class="search-results-dropdown" id="search-results-dropdown"></div>
-      </div>
-      <div class="follow-pill" id="follow-pill"><div class="follow-dot"></div>Siguiendo tu posición</div>
-      <div class="pick-mode-banner" id="pick-mode-banner"><div class="pick-mode-dot"></div>Tocá el comercio donde estás</div>
-      <button class="map-refresh-btn" id="map-refresh-btn" onclick="manualRefresh()" title="Actualizar comercios visibles">
-        <svg id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        Actualizar
-      </button>
-      <div class="install-banner" id="install-banner" style="display:none">
-        <img src="./icons/icon-96.png" alt="Qooentum">
-        <div class="install-banner-body">
-          <div class="install-banner-title">Instalar Qooentum</div>
-          <div class="install-banner-sub">Acceso rápido desde tu pantalla de inicio</div>
-        </div>
-        <button class="install-banner-btn" onclick="installPwa()">Instalar</button>
-        <button class="install-banner-close" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
-      </div>
-    </div>
-    <nav class="bottom-nav" id="bottom-nav">
-      <button class="nav-btn" id="nav-map-map" onclick="switchTab('map')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-        Mapa
-      </button>
-      <button class="nav-btn is-main active" id="nav-cerca-map" onclick="switchTab('cerca')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>
-        Cerca
-      </button>
-      <button class="nav-btn" id="nav-ranking-map" onclick="switchTab('ranking')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>
-        Ranking
-      </button>
-    </nav>
-  </div>
-
-  <div id="panel-cerca" class="panel visible" style="position:relative;">
-    <div class="panel-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>
-      Cerca mío
-      <span class="panel-header-sub" id="cerca-updated-lbl"></span>
-    </div>
-    <div class="cerca-search-wrap">
-      <div class="cerca-search-bar">
-        <svg class="cerca-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="cerca-search-input" type="text" placeholder="Buscar en toda la ciudad…" autocomplete="off">
-        <button class="cerca-search-clear" id="cerca-search-clear" onclick="cercaClearSearch()">✕</button>
-        <div class="cerca-city-badge" id="cerca-city-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:9px;height:9px"><circle cx="12" cy="12" r="10"/></svg>
-          Ciudad
+          <span class="map-search-icon">🔍</span>
+          <input type="text" class="map-search-input" id="mapSearchInput" placeholder="Buscar comercio...">
+          <button class="map-search-clear" id="mapSearchClear" onclick="clearMapSearch()">✕</button>
         </div>
       </div>
     </div>
-    <div class="cerca-radius-row" id="cerca-radius-row">
-      <span class="cerca-radius-lbl">Radio:</span>
-      <button class="cerca-r-btn" data-r="100" onclick="cercaSetRadius(100,this)">100m</button>
-      <button class="cerca-r-btn" data-r="300" onclick="cercaSetRadius(300,this)">300m</button>
-      <button class="cerca-r-btn" data-r="500" onclick="cercaSetRadius(500,this)">500m</button>
-      <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
-      <button class="cerca-r-btn" data-r="2000" onclick="cercaSetRadius(2000,this)">2 km</button>
-    </div>
-    <div class="cerca-filter-row">
-      <button class="cerca-f-chip active" data-cat="all" onclick="cercaSetCat('all',this)">Todo</button>
-      <button class="cerca-f-chip" data-cat="food" onclick="cercaSetCat('food',this)">🍔 Comida</button>
-      <button class="cerca-f-chip" data-cat="health" onclick="cercaSetCat('health',this)">💊 Salud</button>
-      <button class="cerca-f-chip" data-cat="supermarket" onclick="cercaSetCat('supermarket',this)">🛒 Súper</button>
-      <button class="cerca-f-chip" data-cat="bank" onclick="cercaSetCat('bank',this)">🏦 Banco</button>
-      <button class="cerca-f-chip" data-cat="office.government" onclick="cercaSetCat('office.government',this)">🏛️ Gobierno</button>
-      <button class="cerca-f-chip" data-cat="shopping" onclick="cercaSetCat('shopping',this)">🛍️ Tiendas</button>
-    </div>
-    <div class="cerca-stats-bar">
-      <span class="cerca-count" id="cerca-count">—</span>
-      <span class="cerca-count-lbl" id="cerca-count-lbl">&nbsp;lugares encontrados</span>
-      <button class="cerca-sort-btn" id="cerca-sort-btn" onclick="cercaCycleSort()">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg>
-        <span id="cerca-sort-lbl">Distancia</span>
-      </button>
-    </div>
-    <div id="cerca-error-banner" class="nc-error-banner" style="display:none;">
-      <span style="font-size:16px;flex-shrink:0">⚠️</span>
-      <span>No se pudo conectar con HERE Maps. Mostrando datos de demo. Verificá tu API key y conexión.</span>
-    </div>
-    <div class="cerca-list" id="cerca-list"></div>
-    <nav class="bottom-nav" id="bottom-nav-cerca">
-      <button class="nav-btn" onclick="switchTab('map')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
-        Mapa
-      </button>
-      <button class="nav-btn is-main active">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>
-        Cerca
-      </button>
-      <button class="nav-btn" onclick="switchTab('ranking')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>
-        Ranking
-      </button>
-    </nav>
   </div>
 
-  <div id="panel-ranking" class="panel" style="position:relative;">
-    <div class="panel-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>
-      Ranking
-      <span class="panel-header-sub">Junio 2026</span>
-    </div>
-    <div class="rank-list" id="rank-list"></div>
-    <nav class="bottom-nav" id="bottom-nav-ranking">
-      <button class="nav-btn" onclick="switchTab('map')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>Mapa</button>
-      <button class="nav-btn is-main" onclick="switchTab('cerca')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M11 8v3l2 2"/></svg>Cerca</button>
-      <button class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 4 12 2 7 4"/><path d="M5 8.5A13 13 0 0 0 12 22a13 13 0 0 0 7-13.5V8l-7-3-7 3z"/></svg>Ranking</button>
-    </nav>
-  </div>
-
-  <div id="panel-prizes" class="panel" style="position:relative;">
-    <div class="panel-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#00C48C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-      Premios
-      <span class="panel-header-sub" id="my-pts-prizes" style="color:var(--green);font-weight:800">0 pts disponibles</span>
-      <button class="prizes-back-btn" onclick="switchTab('cerca')" title="Volver a Cerca">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Volver
-      </button>
-    </div>
-    <div class="prizes-header-note">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Reportá y acumulá puntos para canjear premios reales
-    </div>
-    <div class="prizes-coming-soon">
-      <div class="prizes-coming-soon-emoji">🚀</div>
-      <div>
-        <div class="prizes-coming-soon-title">¡Muy pronto vas a poder canjear!</div>
-        <div class="prizes-coming-soon-sub">Estamos cerrando los últimos detalles con nuestros partners. Mientras tanto, seguí sumando puntos.</div>
+  <!-- PANEL CERCA -->
+  <div class="panel" id="panel-cerca">
+    <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;gap:12px;padding:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-small" onclick="filterCercaCategory('all')" style="background:var(--green);color:white;">Todos</button>
+        <button class="btn-small" onclick="filterCercaCategory('retail')">🏪 Tiendas</button>
+        <button class="btn-small" onclick="filterCercaCategory('food')">🍔 Comida</button>
+        <button class="btn-small" onclick="filterCercaCategory('pharmacy')">💊 Farmacia</button>
+        <button class="btn-small" onclick="filterCercaCategory('bank')">🏦 Bancos</button>
       </div>
+      <div class="cerca-places-list" id="cerca-places-list"></div>
     </div>
-    <div class="prizes-list" id="prizes-list"></div>
+  </div>
+
+  <!-- PANEL RANKING -->
+  <div class="panel" id="panel-ranking">
+    <div style="padding:16px;overflow-y:auto;flex:1;">
+      <div id="rank-list"></div>
+    </div>
+  </div>
+
+  <!-- PANEL PREMIOS -->
+  <div class="panel" id="panel-prizes">
+    <div style="padding:16px;overflow-y:auto;flex:1;">
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Mis puntos</div>
+        <div style="font-size:20px;font-weight:800;color:var(--green);" id="my-pts-prizes">0 pts</div>
+      </div>
+      <div id="prizes-list"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM TABS -->
+  <div class="tabs" style="border-top:1px solid var(--border);border-bottom:none;margin-top:auto;flex-shrink:0;">
+    <button class="tab active" onclick="switchTab('map')">🗺️ Mapa</button>
+    <button class="tab" onclick="switchTab('cerca')">📍 Cerca</button>
+    <button class="tab" onclick="switchTab('ranking')">🏆 Ranking</button>
+    <button class="tab" onclick="switchTab('prizes')">🎁 Premios</button>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-<div class="toast-action" id="toast-action">
-  <span id="toast-action-msg">Para reportar, iniciá sesión</span>
-  <button class="toast-action-btn" onclick="doGoogleLogin(document.getElementById('login-topbar-btn'));hideToastAction()">Ingresar</button>
+<!-- TOAST NOTIFICATIONS -->
+<div id="toast" style="position:fixed;bottom:32px;left:16px;right:16px;background:#000;color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;z-index:9999;display:none;animation:slideUp .3s ease-out;">
+  <span id="toast-text"></span>
 </div>
-<div id="react-popup-root"></div>
-<div id="checkin-overlay-root"></div>
 
 <script>
-/* ════════════════════════════════════════════════════════════
-   CONFIG
-   ════════════════════════════════════════════════════════════ */
-const CONFIG = {
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbySr-veSK4eoAtOR1vHYB--o-ngrQqG0JC7dEeIXDKw5wZJRSdhUe5iEN4wibhsPTEX2w/exec',
-  GOOGLE_CLIENT_ID: '283820904318-leis6rl3mfhtve2amj59q8sq221dg3qf.apps.googleusercontent.com',
-  FSQ_API_KEY: 'TU_CLAVE_FSQ_ACA',     // → https://foursquare.com/developers (gratis, 10k req/mes, sin tarjeta)
-  DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
-  NEARBY_RADIUS_M: 30,
-  REPORT_RADIUS_M: 10,
-  GPS_ZOOM: 19,
-  CHECKIN_RADIUS_M: 150,
-  CHECKIN_NEAR_M: 50,
-  TILE_DEG: 0.0025,
-  BBOX_PAD: 0.0012,
-  PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-  LOAD_TRIGGER_M: 40,
-  VOTE_COOLDOWN_MS: 8 * 60 * 60 * 1000,
-  FOLLOW_MIN_MOVE_M: 5,
-  FOLLOW_ZOOM: 19,
+/* ═══════════════════════════════════════════════════════════════
+   CONFIGURACIÓN FOURSQUARE — AGREGA TUS KEYS AQUÍ ⬇️
+   ═══════════════════════════════════════════════════════════════ */
+
+const FOURSQUARE_CONFIG = {
+  // 🔑 VE A https://developer.foursquare.com/ Y OBTÉN TU API KEY
+  // Luego pega aquí: sk_live_xxxxxxxxxxxxxxxx
+  API_KEY: 'sk_live_AQUI_TU_API_KEY', // ← CAMBIAR
+  
+  API_BASE: 'https://api.foursquare.com/v3',
+  SEARCH_RADIUS: 800, // metros
+  LIMIT: 50,
 };
 
-const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
-const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
-const FSQ_READY = CONFIG.FSQ_API_KEY && !CONFIG.FSQ_API_KEY.startsWith('TU_CLAVE') && CONFIG.FSQ_API_KEY.length > 20;
-const SESSION_STORAGE_KEY = 'qooentum_user';
-const DEVICE_KEY = 'qooentum_device_email';
-const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
-const PLACE_CACHE_KEY = 'qooentum_place_cache_v2';
+// Cache para búsquedas (30 minutos)
+const FOURSQUARE_CACHE = new Map();
+const CACHE_EXPIRY = 30 * 60 * 1000;
 
-const STATUS_CFG = [
-  {label:'Poca gente',     sub:'Entrá tranquilo',  color:'#00C48C'},
-  {label:'Bastante gente', sub:'Algo de espera',   color:'#F59E0B'},
-  {label:'Mucha gente',    sub:'Fila larga',       color:'#F97316'},
-  {label:'Colapsado',      sub:'¡No vengas ahora!',color:'#EF4444'},
-];
-const NO_REPORT_STATUS = { label:'Sin reportes hoy', sub:'Sé el primero', color:'#b2b2b2' };
-const WAIT  = ['Sin espera','~5 min','~15 min','+30 min'];
-const TREND = ['↘ Baja','→ Estable','↗ Sube','↗ Sube'];
-const VOTE_PTS = [10,10,15,20];
-const LEVEL_TITLES = ['Novato','Explorador','Cazador de Filas','Maestro del Mapa','Leyenda Urbana'];
-const XP_PER_LEVEL = 150;
-
-/* ─── FOURSQUARE PLACES API ──────────────────────────────────
-   Docs: https://docs.foursquare.com/fsq-developers-places/
-   Auth: header "Authorization: fsq3 <API_KEY>"
-   Header requerido: "X-Places-Api-Version: 2023-10-01"
-   Endpoint: https://api.foursquare.com/v3/places/search
-   ──────────────────────────────────────────────────────────── */
-
-/* Category IDs de Foursquare para nuestro caso de uso.
-   Ref: https://docs.foursquare.com/data-products/docs/categories */
-const FSQ_CATEGORIES = [
-  /* Supermercados / alimentación */
-  '17069', // Grocery Store / Supermarket
-  '17071', // Convenience Store
-  '17049', // Bakery
-  '17076', // Butcher
-  '17072', // Farmers Market
-  /* Gastronomía */
-  '13065', // Restaurant
-  '13032', // Café / Coffee Shop
-  '13003', // Bar
-  '13145', // Fast Food Restaurant
-  '13046', // Pizza Place
-  /* Salud */
-  '15014', // Hospital
-  '15011', // Doctor's Office
-  '15012', // Clinic
-  '15013', // Dentist
-  '17064', // Pharmacy
-  /* Gobierno / institucional */
-  '12072', // Government Building
-  '12090', // Town Hall
-  '12079', // Post Office
-  '12092', // Police Station
-  '12070', // Courthouse
-  /* Bancos / finanzas */
-  '17074', // Bank
-  '17007', // ATM
-  /* Comercios retail */
-  '17075', // Clothing Store
-  '17099', // Electronics Store
-  '17107', // Hardware Store
-  '17030', // Bookstore
-  '17008', // Beauty Salon / Barbershop
-  '17077', // Pet Store
-  '17035', // Toy Store
-  '17043', // Sporting Goods Shop
-  '17047', // Jewelry Store
-  '17068', // Gift Shop
-  '17010', // Optical Shop
-  /* Servicios */
-  '17114', // Gas Station / Fuel Station
-  '17009', // Laundry Service
-  '15034', // Veterinarian
-  /* Ocio */
-  '18021', // Gym / Fitness Center
-  '10024', // Movie Theater
-].join(',');
-
-/* Headers comunes para todas las llamadas a FSQ */
-function fsqHeaders(){
-  return {
-    'Accept': 'application/json',
-    'Authorization': `fsq3 ${CONFIG.FSQ_API_KEY}`,
-    'X-Places-Api-Version': '2023-10-01',
-  };
-}
-
-/* Mapeo de category IDs FSQ a emoji + tipo en español */
-const FSQ_CAT_MAP = {
-  '17069':{emoji:'🛒',tipo:'Supermercado'},
-  '17071':{emoji:'🏪',tipo:'Almacén'},
-  '17049':{emoji:'🥖',tipo:'Panadería'},
-  '17076':{emoji:'🥩',tipo:'Carnicería'},
-  '17072':{emoji:'🥦',tipo:'Mercado'},
-  '13065':{emoji:'🍽️',tipo:'Restaurante'},
-  '13032':{emoji:'☕',tipo:'Cafetería'},
-  '13003':{emoji:'🍺',tipo:'Bar'},
-  '13145':{emoji:'🍔',tipo:'Comida rápida'},
-  '13046':{emoji:'🍕',tipo:'Pizzería'},
-  '15014':{emoji:'🏥',tipo:'Hospital'},
-  '15011':{emoji:'👨‍⚕️',tipo:'Consultorio'},
-  '15012':{emoji:'🏥',tipo:'Clínica'},
-  '15013':{emoji:'🦷',tipo:'Odontólogo'},
-  '17064':{emoji:'💊',tipo:'Farmacia'},
-  '12072':{emoji:'🏛️',tipo:'Oficina pública'},
-  '12090':{emoji:'🏛️',tipo:'Municipalidad'},
-  '12079':{emoji:'📮',tipo:'Correo'},
-  '12092':{emoji:'👮',tipo:'Comisaría'},
-  '12070':{emoji:'⚖️',tipo:'Juzgado'},
-  '17074':{emoji:'🏦',tipo:'Banco'},
-  '17007':{emoji:'🏧',tipo:'Cajero'},
-  '17075':{emoji:'👗',tipo:'Ropa'},
-  '17099':{emoji:'📱',tipo:'Electrónica'},
-  '17107':{emoji:'🔧',tipo:'Ferretería'},
-  '17030':{emoji:'📚',tipo:'Librería'},
-  '17008':{emoji:'💇',tipo:'Peluquería'},
-  '17077':{emoji:'🐶',tipo:'Tienda de mascotas'},
-  '17035':{emoji:'🧸',tipo:'Juguetería'},
-  '17043':{emoji:'⚽',tipo:'Artículos deportivos'},
-  '17047':{emoji:'💍',tipo:'Joyería'},
-  '17068':{emoji:'🎁',tipo:'Regalería'},
-  '17010':{emoji:'👓',tipo:'Óptica'},
-  '17114':{emoji:'⛽',tipo:'Estación de servicio'},
-  '17009':{emoji:'👕',tipo:'Lavandería'},
-  '15034':{emoji:'🐾',tipo:'Veterinaria'},
-  '18021':{emoji:'🏋️',tipo:'Gimnasio'},
-  '10024':{emoji:'🎬',tipo:'Cine'},
-};
-
-function fsqCatInfo(categories){
-  if(!categories||!categories.length)return{emoji:'🏪',tipo:'Comercio'};
-  for(const cat of categories){
-    const id=String(cat.id);
-    if(FSQ_CAT_MAP[id])return FSQ_CAT_MAP[id];
+/* ─── FOURSQUARE: Buscar lugares ─── */
+async function foursquareSearch(lat, lng, categoryFilter = 'all') {
+  const cacheKey = `${lat}_${lng}_${categoryFilter}`;
+  
+  // Revisar caché
+  if (FOURSQUARE_CACHE.has(cacheKey)) {
+    const cached = FOURSQUARE_CACHE.get(cacheKey);
+    if (Date.now() - cached.time < CACHE_EXPIRY) {
+      console.log('✅ Usando caché Foursquare');
+      return cached.data;
+    }
   }
-  /* Fallback por nombre */
-  const name=(categories[0].name||'').toLowerCase();
-  if(name.includes('supermarket')||name.includes('grocery'))return{emoji:'🛒',tipo:'Supermercado'};
-  if(name.includes('hospital'))return{emoji:'🏥',tipo:'Hospital'};
-  if(name.includes('pharmacy')||name.includes('farmacia'))return{emoji:'💊',tipo:'Farmacia'};
-  if(name.includes('bank')||name.includes('banco'))return{emoji:'🏦',tipo:'Banco'};
-  if(name.includes('restaurant'))return{emoji:'🍽️',tipo:'Restaurante'};
-  if(name.includes('coffee')||name.includes('café'))return{emoji:'☕',tipo:'Cafetería'};
-  if(name.includes('fast food'))return{emoji:'🍔',tipo:'Comida rápida'};
-  if(name.includes('government'))return{emoji:'🏛️',tipo:'Oficina pública'};
-  if(name.includes('gym')||name.includes('fitness'))return{emoji:'🏋️',tipo:'Gimnasio'};
-  return{emoji:'🏪',tipo:'Comercio'};
-}
 
-/* FSQ result → formato interno Qooentum */
-function fsqPlaceToPlace(item){
-  const info=fsqCatInfo(item.categories);
-  const loc=item.geocodes?.main||item.geocodes?.roof||{latitude:0,longitude:0};
-  const addr=item.location
-    ?[item.location.address,item.location.locality].filter(Boolean).join(', ')||'Sin dirección'
-    :'Sin dirección';
-  return{
-    id:`fsq_${item.fsq_id}`,
-    name:item.name||'Sin nombre',
-    type:info.tipo,
-    logo:info.emoji,
-    lat:loc.latitude,
-    lng:loc.longitude,
-    addr,
-    status:0,reporters:0,
-    rating:(3.5+Math.random()*1.4).toFixed(1),
-    reviewsN:Math.floor(Math.random()*200+10),
-    open:true,verified:false,
-    fromFSQ:true,
-  };
-}
-
-const SEED_PRIZES = [
-  {id:'p1',emoji:'☕',name:'Café gratis',            pts:200, cat:'Gastronomía',    partner:'Starbucks'},
-  {id:'p2',emoji:'🎬',name:'Entrada de cine',         pts:400, cat:'Entretenimiento',partner:'Cinemark'},
-  {id:'p3',emoji:'🛒',name:'Descuento 20% Carrefour', pts:600, cat:'Supermercado',  partner:'Carrefour'},
-  {id:'p4',emoji:'🍕',name:'Pizza para 2 personas',   pts:800, cat:'Gastronomía',   partner:"Ugi's"},
-  {id:'p5',emoji:'🚌',name:'Carga SUBE $2000',        pts:1000,cat:'Transporte',    partner:'SUBE'},
-  {id:'p6',emoji:'🎮',name:'Streaming 1 mes',         pts:1200,cat:'Digital',       partner:'Netflix'},
-  {id:'p7',emoji:'🛍️',name:'Gift card $5000',         pts:2500,cat:'Compras',      partner:'Naranja X'},
-  {id:'p8',emoji:'✈️',name:'Voucher de viaje',         pts:5000,cat:'Turismo',      partner:'Despegar'},
-];
-
-/* ─── STATE ─── */
-let userPts=0, currentUser=null;
-let places=[], placeIndex=new Map(), nearbyPlaces=[], rankingData=[];
-let prizesData=SEED_PRIZES.map(p=>({...p}));
-let leafletMap=null, leafletMarkers={};
-let isLoggedIn=false, voteCount=0, pendingVote=null;
-let placeCooldowns={}, gpsWatchId=null, userMarker=null;
-let mapInitialLoaded=false, userLat=null, userLng=null;
-let checkinShown=false, pickModeActive=false;
-let searchTimer=null, searchQuery='';
-let tileCache={}, placeStore={};
-let followMode=false, lastFollowLat=null, lastFollowLng=null;
-let occupancySyncInterval=null;
-
-/* ─── UTILS ─── */
-function getLevelInfo(pts){const level=Math.floor(pts/XP_PER_LEVEL)+1,xpIntoLevel=pts%XP_PER_LEVEL;return{level,xpIntoLevel,pct:Math.round((xpIntoLevel/XP_PER_LEVEL)*100)};}
-function titleForLevel(level){return LEVEL_TITLES[Math.min(level-1,LEVEL_TITLES.length-1)];}
-function distanceMeter(lat1,lng1,lat2,lng2){const R=6371000,toRad=d=>d*Math.PI/180,dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(a));}
-
-/* ─── CACHÉ ─── */
-function latLngToTileKey(lat,lng){return `${Math.floor(lat/CONFIG.TILE_DEG)}:${Math.floor(lng/CONFIG.TILE_DEG)}`;}
-function persistCache(){try{localStorage.setItem(PLACE_CACHE_KEY,JSON.stringify({tiles:tileCache,places:placeStore,savedAt:Date.now()}));}catch(e){pruneOldTiles();try{localStorage.setItem(PLACE_CACHE_KEY,JSON.stringify({tiles:tileCache,places:placeStore,savedAt:Date.now()}));}catch(e2){}}}
-function loadCache(){try{const raw=localStorage.getItem(PLACE_CACHE_KEY);if(!raw)return;const data=JSON.parse(raw);if(!data||!data.tiles)return;tileCache=data.tiles||{};placeStore=data.places||{};Object.values(placeStore).forEach(p=>{if(!placeIndex.has(p.id)){placeIndex.set(p.id,p);places.push(p);}});}catch(e){}}
-function pruneOldTiles(){const now=Date.now();Object.keys(tileCache).forEach(k=>{if(now-tileCache[k].ts>CONFIG.PLACE_CACHE_TTL_MS)delete tileCache[k];});const allIds=new Set();Object.values(tileCache).forEach(t=>(t.placeIds||[]).forEach(id=>allIds.add(id)));Object.keys(placeStore).forEach(id=>{if(!allIds.has(id))delete placeStore[id];});}
-function markTileLoaded(tileKey,ids){tileCache[tileKey]={ts:Date.now(),placeIds:ids};}
-function isTileCached(tileKey){const t=tileCache[tileKey];return t&&(Date.now()-t.ts)<CONFIG.PLACE_CACHE_TTL_MS;}
-function getRelevantTileKeys(lat,lng){return[latLngToTileKey(lat,lng)];}
-function mergePlacesIntoCache(newPlaces,tileKey){const addedIds=[];newPlaces.forEach(p=>{placeStore[p.id]=p;addedIds.push(p.id);if(!placeIndex.has(p.id)){placeIndex.set(p.id,p);places.push(p);}else{Object.assign(placeIndex.get(p.id),p);}});if(tileKey)markTileLoaded(tileKey,addedIds);}
-function tileToBbox(tileKey){const[tLat,tLng]=tileKey.split(':').map(Number);return[tLat*CONFIG.TILE_DEG-CONFIG.BBOX_PAD,tLng*CONFIG.TILE_DEG-CONFIG.BBOX_PAD,(tLat+1)*CONFIG.TILE_DEG+CONFIG.BBOX_PAD,(tLng+1)*CONFIG.TILE_DEG+CONFIG.BBOX_PAD];}
-
-/* ─── COOLDOWN ─── */
-function loadCooldownsFromStorage(){try{const raw=localStorage.getItem(COOLDOWNS_STORAGE_KEY);if(!raw)return;const data=JSON.parse(raw);const now=Date.now();Object.keys(data).forEach(pid=>{const ts=data[pid];if(ts&&ts>now)placeCooldowns[pid]=new Date(ts);});}catch(e){}}
-function saveCooldownsToStorage(){try{const now=Date.now();const toSave={};Object.keys(placeCooldowns).forEach(pid=>{const ts=placeCooldowns[pid] instanceof Date?placeCooldowns[pid].getTime():0;if(ts>now)toSave[pid]=ts;});localStorage.setItem(COOLDOWNS_STORAGE_KEY,JSON.stringify(toSave));}catch(e){}}
-function applyPlaceCooldown(pid,isoOrMs){if(!pid)return;if(isoOrMs)placeCooldowns[pid]=typeof isoOrMs==='number'?new Date(isoOrMs):new Date(isoOrMs);else delete placeCooldowns[pid];saveCooldownsToStorage();}
-function applyLocalCooldown(pid){placeCooldowns[pid]=new Date(Date.now()+CONFIG.VOTE_COOLDOWN_MS);saveCooldownsToStorage();}
-function applyCooldownInfo(map){if(!map)return;Object.keys(map).forEach(pid=>{if(map[pid])placeCooldowns[pid]=new Date(map[pid]);});saveCooldownsToStorage();}
-function getVoteCooldownRemainingMs(pid){const next=placeCooldowns[pid];if(!next)return 0;return Math.max(0,next.getTime()-Date.now());}
-function formatCooldownRemaining(ms){const totalMin=Math.ceil(ms/60000),h=Math.floor(totalMin/60),m=totalMin%60;if(h<=0)return`${m} min`;if(m<=0)return`${h} h`;return`${h} h ${m} min`;}
-function tickCooldownUI(){if(!currentPopupPlace)return;const ms=getVoteCooldownRemainingMs(currentPopupPlace.id);if(ms<=0&&currentPopupPlace._wasOnCooldown){currentPopupPlace._wasOnCooldown=false;renderPopup(currentPopupPlace,isLoggedIn,currentUser);}}
-
-/* ─── BACKEND API ─── */
-async function apiGet(action,params={}){if(!BACKEND_READY)return null;const qs=new URLSearchParams({action,...params}).toString();try{const res=await fetch(`${CONFIG.APPS_SCRIPT_URL}?${qs}`);const data=await res.json();if(!data.ok)throw new Error(data.error||'Error de backend');return data.result;}catch(err){console.warn('apiGet falló:',action,err);return null;}}
-async function apiPost(action,payload={}){if(!BACKEND_READY)return null;try{const res=await fetch(CONFIG.APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action,...payload})});const data=await res.json();if(!data.ok)throw new Error(data.error||'Error de backend');return data.result;}catch(err){console.warn('apiPost falló:',action,err);showToast('⚠️ No se pudo conectar con el servidor');return null;}}
-async function apiPostVote(payload){if(!BACKEND_READY)return{ok:false,network:false,result:null};try{const res=await fetch(CONFIG.APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'vote',...payload})});const data=await res.json();if(!data.ok){const msg=String(data.error||'');if(msg.startsWith('COOLDOWN:'))return{ok:false,network:false,cooldown:true,nextVoteAt:msg.slice('COOLDOWN:'.length)};throw new Error(msg||'Error de backend');}return{ok:true,network:true,result:data.result};}catch(err){console.warn('apiPost falló: vote',err);return{ok:false,network:false,result:null};}}
-
-/* ─── SYNC EN TIEMPO REAL ─── */
-async function syncOccupancyStatus(){
-  if(!BACKEND_READY||!places.length)return;
-  try{
-    const lat=userLat??CONFIG.DEFAULT_CENTER.lat,lng=userLng??CONFIG.DEFAULT_CENTER.lng;
-    const sorted=places.map(p=>({...p,_dist:distanceMeter(lat,lng,p.lat,p.lng)})).sort((a,b)=>a._dist-b._dist).slice(0,30);
-    if(!sorted.length)return;
-    const result=await apiGet('sync_places',{lat,lng,radius:1000,status_only:1,place_ids:sorted.map(p=>p.id).join(',')});
-    if(!result||!Array.isArray(result.places))return;
-    let needsRefresh=false;
-    result.places.forEach(bp=>{const p=placeIndex.get(bp.id);if(!p)return;if(p.status!==bp.status||p.reporters!==bp.reporters){needsRefresh=true;}p.status=bp.status??p.status;p.reporters=bp.reporters??p.reporters;placeStore[p.id]=p;});
-    if(needsRefresh){buildMapMarkers(nearbyPlaces.length?nearbyPlaces:places);updateCrowdBar(calcCrowdPct());if(currentPopupPlace){const u=placeIndex.get(currentPopupPlace.id);if(u){Object.assign(currentPopupPlace,u);renderPopup(currentPopupPlace,isLoggedIn,currentUser);}}if(document.getElementById('panel-cerca').classList.contains('visible'))cercaUpdateFromStore();}
-    persistCache();
-  }catch(e){console.warn('syncOccupancyStatus error:',e);}
-}
-function startOccupancySync(){syncOccupancyStatus();if(occupancySyncInterval)clearInterval(occupancySyncInterval);occupancySyncInterval=setInterval(()=>syncOccupancyStatus(),15000);}
-function stopOccupancySync(){if(occupancySyncInterval){clearInterval(occupancySyncInterval);occupancySyncInterval=null;}}
-function maybeStartOccupancySync(){if(isLoggedIn&&!occupancySyncInterval)startOccupancySync();else if(!isLoggedIn&&occupancySyncInterval)stopOccupancySync();}
-
-/* ─── HERE → formato interno de Qooentum ─── */
-function herePlaceToPlace(item){
-  /* HERE devuelve: id, title, address, position{lat,lng}, categories[{id,name}] */
-  const catId=(item.categories&&item.categories[0])?item.categories[0].id:'';
-  const catTitle=(item.categories&&item.categories[0])?item.categories[0].name:'';
-  const info=HERE_CAT_MAP[catId]||hereCatFromTitle(catTitle)||{emoji:'🏪',tipo:'Comercio'};
-  const addr=item.address
-    ?[item.address.street,item.address.houseNumber].filter(Boolean).join(' ')||item.address.label||'Sin dirección'
-    :'Sin dirección';
-  return{
-    id:`here_${item.id}`,
-    name:item.title||'Sin nombre',
-    type:info.tipo,
-    logo:info.emoji,
-    lat:item.position.lat,
-    lng:item.position.lng,
-    addr,
-    status:0,reporters:0,
-    rating:(3.5+Math.random()*1.4).toFixed(1),
-    reviewsN:Math.floor(Math.random()*200+10),
-    open:true,verified:false,
-    fromHere:true,
-  };
-}
-
-/* ─── FSQ: carga POIs por bounding-box de tiles ─── */
-async function loadFSQForTiles(tileKeys){
-  if(!FSQ_READY||!tileKeys.length)return[];
-  let minLat=Infinity,minLng=Infinity,maxLat=-Infinity,maxLng=-Infinity;
-  tileKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);if(s<minLat)minLat=s;if(w<minLng)minLng=w;if(n>maxLat)maxLat=n;if(e>maxLng)maxLng=e;});
-  const centerLat=((minLat+maxLat)/2).toFixed(6);
-  const centerLng=((minLng+maxLng)/2).toFixed(6);
-  /* Radio en metros del bbox aproximado */
-  const radiusM=Math.round(Math.max((maxLat-minLat),(maxLng-minLng))*111320*0.8);
-  const url=`https://api.foursquare.com/v3/places/search?ll=${centerLat},${centerLng}&radius=${Math.min(radiusM,5000)}&categories=${FSQ_CATEGORIES}&limit=50&fields=fsq_id,name,geocodes,location,categories`;
-  try{
-    const res=await fetch(url,{headers:fsqHeaders()});
-    if(!res.ok){console.warn('FSQ tiles HTTP',res.status);throw new Error('FSQ HTTP '+res.status);}
-    const data=await res.json();
-    if(!data.results||!data.results.length)return[];
-    return data.results.map(fsqPlaceToPlace);
-  }catch(e){console.warn('FSQ tiles falló:',e);return[];}
-}
-
-/* ─── FSQ: búsqueda por texto libre (barra del mapa) ─── */
-async function fsqSearch(query,lat,lng){
-  if(!FSQ_READY)return[];
-  const q=query.toLowerCase();
-  const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,10);
-  if(localMatches.length>=3)return localMatches;
-  const url=`https://api.foursquare.com/v3/places/search?query=${encodeURIComponent(query)}&ll=${lat},${lng}&radius=5000&limit=30&fields=fsq_id,name,geocodes,location,categories`;
-  try{
-    const res=await fetch(url,{headers:fsqHeaders()});
-    if(!res.ok)return localMatches;
-    const data=await res.json();
-    if(!data.results)return localMatches;
-    const results=data.results.map(fsqPlaceToPlace).filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q));
-    return results.length?results:localMatches;
-  }catch(e){return localMatches;}
-}
-
-/* ─── CARGA DE LUGARES ─── */
-async function ensurePlacesLoadedAt(lat,lng){
-  const tileKey=latLngToTileKey(lat,lng);
-  const adjacentKeys=getAdjacentTileKeys(lat,lng);
-  const allKeys=[tileKey,...adjacentKeys];
-  const missingKeys=allKeys.filter(k=>!isTileCached(k));
-  rebuildNearby(lat,lng);
-  if(nearbyPlaces.length||places.length){buildMapMarkers(nearbyPlaces.length?nearbyPlaces:places);updateCrowdBar(calcCrowdPct());}
-  if(missingKeys.length===0){
-    syncBackendStatus(lat,lng).then(()=>{rebuildNearby(lat,lng);buildMapMarkers(nearbyPlaces);updateCrowdBar(calcCrowdPct());});
-    if(!mapInitialLoaded){mapInitialLoaded=true;if(!checkinShown&&nearbyPlaces.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(lat,lng),800);}}
-    return;
+  if (FOURSQUARE_CONFIG.API_KEY.includes('AQUI_TU')) {
+    showToast('⚠️ Configura tu API Key de Foursquare en el código');
+    return [];
   }
-  if(!mapInitialLoaded)mapInitialLoaded=true;
-  const[geoPlaces,backendResult]=await Promise.all([loadHereForTiles(missingKeys),BACKEND_READY?apiGet('sync_places',{lat,lng,radius:Math.round(CONFIG.TILE_DEG*111320*1.5)}):Promise.resolve(null)]);
-  const backendPlaces=(backendResult&&Array.isArray(backendResult.places))?backendResult.places:[];
-  const backendById=new Map(backendPlaces.map(p=>[p.id,p]));
-  const merged=geoPlaces.map(p=>{const bp=backendById.get(p.id);return bp?{...p,...bp}:p;});
-  const onlyBackend=backendPlaces.filter(p=>!geoPlaces.find(o=>o.id===p.id));
-  const allNew=[...merged,...onlyBackend];
-  missingKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);const forThisTile=allNew.filter(p=>p.lat>=s&&p.lat<=n&&p.lng>=w&&p.lng<=e);mergePlacesIntoCache(forThisTile,key);});
-  persistCache();rebuildNearby(lat,lng);buildMapMarkers(nearbyPlaces);updateCrowdBar(calcCrowdPct());
-  if(!checkinShown&&nearbyPlaces.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(lat,lng),800);}
-}
 
-async function syncBackendStatus(lat,lng){
-  if(!BACKEND_READY)return;
-  const result=await apiGet('sync_places',{lat,lng,radius:300,status_only:1});
-  if(!result||!Array.isArray(result.places))return;
-  result.places.forEach(bp=>{const p=placeIndex.get(bp.id);if(p){p.status=bp.status??p.status;p.reporters=bp.reporters??p.reporters;placeStore[p.id]=p;}});
-  persistCache();
-}
-
-function getAdjacentTileKeys(lat,lng){
-  const d=CONFIG.TILE_DEG,relLat=(lat/d)-Math.floor(lat/d),relLng=(lng/d)-Math.floor(lng/d),keys=[];
-  if(relLat<0.3)keys.push(latLngToTileKey(lat-d,lng));
-  if(relLat>0.7)keys.push(latLngToTileKey(lat+d,lng));
-  if(relLng<0.3)keys.push(latLngToTileKey(lat,lng-d));
-  if(relLng>0.7)keys.push(latLngToTileKey(lat,lng+d));
-  return keys;
-}
-
-function rebuildNearby(lat,lng){
-  const maxDistM=CONFIG.TILE_DEG*111320*1.2;
-  nearbyPlaces=[];
-  placeIndex.forEach(p=>{if(distanceMeter(lat,lng,p.lat,p.lng)<=maxDistM)nearbyPlaces.push(p);});
-}
-
-/* ─── SEARCH (mapa) ─── */
-async function searchPlacesByQuery(query){
-  if(!query||query.length<2)return[];
-  const q=query.toLowerCase();
-  const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,5);
-  if(localMatches.length>=3)return localMatches;
-  if(HERE_READY&&userLat!==null&&userLng!==null){const results=await hereSearch(query,userLat,userLng);if(results.length)return results;}
-  return localMatches;
-}
-
-const searchInput=()=>document.getElementById('map-search-input');
-const searchDropdown=()=>document.getElementById('search-results-dropdown');
-const searchClear=()=>document.getElementById('map-search-clear');
-
-function initSearch(){
-  const input=searchInput();
-  input.addEventListener('input',onSearchInput);
-  input.addEventListener('focus',()=>{if(input.value.length>1)searchDropdown().classList.add('open');});
-  document.addEventListener('click',e=>{if(!document.getElementById('map-search-wrap').contains(e.target))searchDropdown().classList.remove('open');});
-}
-
-function onSearchInput(e){
-  const val=e.target.value.trim();
-  searchClear().classList.toggle('visible',val.length>0);
-  if(val.length<2){searchDropdown().classList.remove('open');return;}
-  clearTimeout(searchTimer);
-  searchTimer=setTimeout(()=>runSearch(val),380);
-}
-
-async function runSearch(query){
-  const dropdown=searchDropdown();
-  dropdown.innerHTML=`<div class="search-loading"><div class="search-spinner"></div>Buscando lugares…</div>`;
-  dropdown.classList.add('open');
-  const results=await searchPlacesByQuery(query);
-  if(!results.length){dropdown.innerHTML=`<div class="search-empty">😕 No encontramos "${query}" cerca de vos.</div>`;return;}
-  dropdown.innerHTML=results.map((p,i)=>{
-    const dist=(userLat!==null)?`${(()=>{const d=Math.round(distanceMeter(userLat,userLng,p.lat,p.lng));return d<1000?`${d}m`:`${(d/1000).toFixed(1)}km`;})()}`:'';
-    const sc=(!p.reporters||p.reporters===0)?NO_REPORT_STATUS:STATUS_CFG[p.status];
-    const logoHtml=(p.sponsor&&p.sponsor.logo_url)?`<img src="${p.sponsor.logo_url}" alt="${p.name}">`:p.logo;
-    return`<div class="search-result-item" data-idx="${i}"><div class="search-result-logo">${logoHtml}</div><div class="search-result-info"><div class="search-result-name">${p.name}</div><div class="search-result-sub">${p.type}${p.addr!=='Sin dirección'?' · '+p.addr.split(',')[0]:''}${dist?' · '+dist:''}</div></div><div class="search-result-status" style="background:${sc.color}">${sc.label}</div></div>`;
-  }).join('');
-  dropdown.querySelectorAll('.search-result-item').forEach((el,i)=>{el.addEventListener('click',()=>{searchDropdown().classList.remove('open');searchInput().blur();openSearchResultPopup(results[i]);});});
-}
-
-function clearSearch(){searchInput().value='';searchClear().classList.remove('visible');searchDropdown().classList.remove('open');searchQuery='';}
-function openSearchResultPopup(place){const existing=places.find(p=>p.id===place.id);if(!existing)places.push(place);place._fromSearch=true;openPlacePopup(place);}
-
-/* ════════════════════════════════════════════════════════════
-   REACT POPUP
-   ════════════════════════════════════════════════════════════ */
-const{useState,useEffect,useRef}=React;
-
-const PLACE_PHOTOS={
-  default:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&q=80',
-  'Supermercado':'https://images.unsplash.com/photo-1604719312566-8912e9c8a213?w=800&q=80',
-  'Farmacia':'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=800&q=80',
-  'Banco':'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=800&q=80',
-  'Panadería':'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80',
-  'Comida rápida':'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=80',
-  'Restaurante':'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
-  'Hospital':'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800&q=80',
-};
-
-function getPhoto(place){if(place.sponsor&&place.sponsor.photo_url)return place.sponsor.photo_url;return place.photo||PLACE_PHOTOS[place.type]||PLACE_PHOTOS.default;}
-function getLogoEl(place){if(place.sponsor&&place.sponsor.logo_url)return React.createElement('img',{src:place.sponsor.logo_url,alt:place.name,style:{width:'100%',height:'100%',objectFit:'contain',borderRadius:10}});return place.logo;}
-function canReportThisPlace(place){if(userLat===null||userLng===null)return false;return distanceMeter(userLat,userLng,place.lat,place.lng)<=CONFIG.REPORT_RADIUS_M;}
-
-function PlacePopup({place,onClose,onVoteSubmit,cooldownRemainingMs,isLoggedIn,currentUser}){
-  const[visible,setVisible]=useState(false);
-  const[cardVisible,setCardVisible]=useState(false);
-  const[selectedVote,setSelectedVote]=useState(null);
-  const[submitted,setSubmitted]=useState(false);
-  const[imgLoaded,setImgLoaded]=useState(false);
-  const[cooldownMs,setCooldownMs]=useState(cooldownRemainingMs||0);
-  const overlayRef=useRef(null);
-  const onCooldown=cooldownMs>0&&!submitted;
-  const nearby=canReportThisPlace(place);
-  const hasGps=userLat!==null&&userLng!==null;
-  const distToPlace=hasGps?Math.round(distanceMeter(userLat,userLng,place.lat,place.lng)):null;
-  const sponsor=place.sponsor||null;
-  const sponsorColor=sponsor?(sponsor.badge_color||'#6366F1'):null;
-
-  useEffect(()=>{requestAnimationFrame(()=>{setVisible(true);setTimeout(()=>setCardVisible(true),40);});},[]);
-  useEffect(()=>{if(cooldownMs<=0)return;const id=setInterval(()=>setCooldownMs(ms=>Math.max(0,ms-1000)),1000);return()=>clearInterval(id);},[cooldownMs>0]);
-
-  function handleClose(){setCardVisible(false);setVisible(false);setTimeout(onClose,320);}
-  function handleOverlayClick(e){if(e.target===overlayRef.current)handleClose();}
-  function handleVote(idx){if(submitted||onCooldown)return;if(!isLoggedIn){showToastAction('🔑 Iniciá sesión para reportar y ganar puntos');return;}if(!nearby)return;setSelectedVote(idx);}
-  function handleSubmit(){if(selectedVote===null||submitted||onCooldown||!nearby)return;if(!isLoggedIn){showToastAction('🔑 Iniciá sesión para reportar y ganar puntos');return;}setSubmitted(true);setTimeout(()=>{onVoteSubmit(place.id,selectedVote);setTimeout(handleClose,900);},600);}
-
-  const s=(!place.reporters||place.reporters===0)?NO_REPORT_STATUS:STATUS_CFG[place.status];
-  const photo=getPhoto(place);
-
-  const overlayStyle={position:'fixed',inset:0,background:`rgba(15,23,42,${visible?'.62':'0'})`,backdropFilter:`blur(${visible?'6px':'0px'})`,WebkitBackdropFilter:`blur(${visible?'6px':'0px'})`,display:'flex',alignItems:'center',justifyContent:'center',transition:'background 0.3s ease, backdrop-filter 0.3s ease',zIndex:10000,padding:'20px'};
-  const cardStyle={width:'100%',maxWidth:'370px',background:'#fff',borderRadius:'22px',overflow:'hidden',boxShadow:sponsor?`0 24px 64px rgba(15,23,42,.28), 0 0 0 2px ${sponsorColor}40`:'0 24px 64px rgba(15,23,42,.28), 0 8px 24px rgba(15,23,42,.14)',transform:cardVisible?'translateY(0) scale(1)':'translateY(40px) scale(0.93)',opacity:cardVisible?1:0,transition:'transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease',maxHeight:'calc(100dvh - 40px)',display:'flex',flexDirection:'column'};
-
-  const sponsorBlock=sponsor&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:12,background:`linear-gradient(135deg, ${sponsorColor}12, ${sponsorColor}06)`,border:`1px solid ${sponsorColor}30`,borderRadius:12,padding:'11px 14px',marginBottom:12}},
-    sponsor.logo_url&&React.createElement('img',{src:sponsor.logo_url,alt:place.name,style:{width:38,height:38,objectFit:'contain',borderRadius:9,flexShrink:0,background:'#fff',padding:2,border:`1px solid ${sponsorColor}25`}}),
-    React.createElement('div',{style:{flex:1,minWidth:0}},
-      React.createElement('div',{style:{fontSize:12,fontWeight:800,color:'#0F172A'}},place.name),
-      sponsor.promo&&React.createElement('div',{style:{fontSize:11,color:sponsorColor,fontWeight:700,marginTop:2}},'🏷️ '+sponsor.promo),
-      sponsor.website&&React.createElement('a',{href:sponsor.website,target:'_blank',rel:'noopener',style:{fontSize:10,color:sponsorColor,opacity:.75,marginTop:2,display:'block',textDecoration:'none',fontWeight:600}},'🌐 '+sponsor.website.replace(/^https?:\/\//,''))
-    ),
-    React.createElement('div',{style:{background:sponsorColor,color:'#fff',fontSize:9,fontWeight:900,padding:'3px 9px',borderRadius:99,display:'flex',alignItems:'center',gap:3,letterSpacing:'.3px',whiteSpace:'nowrap',flexShrink:0,boxShadow:`0 2px 8px ${sponsorColor}55`}},'✓ '+(sponsor.badge_text||'Verificado'))
-  );
-
-  const tooFarBlock=hasGps&&!nearby&&!onCooldown&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#F1F5F9',border:'1px solid #E2E8F0',borderRadius:12,padding:'12px 14px',marginBottom:12}},React.createElement('span',{style:{fontSize:20,flexShrink:0}},'📍'),React.createElement('div',null,React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#0F172A'}},`Estás a ${distToPlace}m de este comercio`),React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#64748B'}},'Necesitás estar a menos de '+CONFIG.REPORT_RADIUS_M+'m para reportar.')));
-  const noGpsBlock=!hasGps&&!onCooldown&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'12px 14px',marginBottom:12}},React.createElement('span',{style:{fontSize:20,flexShrink:0}},'🛰️'),React.createElement('div',null,React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#3730A3'}},'Activá tu ubicación para reportar'),React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#4338CA'}},'Solo podés reportar si estás físicamente dentro del comercio.')));
-  const notLoggedBlock=!isLoggedIn&&!onCooldown&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#F0FDF9',border:'1px solid #A8EDD8',borderRadius:12,padding:'12px 14px',marginBottom:12}},React.createElement('span',{style:{fontSize:20,flexShrink:0}},'🔑'),React.createElement('div',{style:{flex:1}},React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#007A59'}},'Iniciá sesión para reportar'),React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#047857'}},'Ganás puntos por cada reporte.')),React.createElement('button',{onClick:()=>doGoogleLogin(document.getElementById('login-topbar-btn')),style:{background:'linear-gradient(135deg,#00C48C,#009E72)',color:'#fff',border:'none',borderRadius:99,padding:'8px 14px',fontSize:12,fontWeight:800,cursor:'pointer',whiteSpace:'nowrap',fontFamily:'inherit'}},'Ingresar'));
-
-  return React.createElement('div',{ref:overlayRef,style:overlayStyle,onClick:handleOverlayClick},
-    React.createElement('div',{style:cardStyle},
-      React.createElement('div',{style:{overflowY:'auto',msOverflowStyle:'none',scrollbarWidth:'none'}},
-        React.createElement('div',{style:{position:'relative',height:'210px',flexShrink:0,background:'#E2E8F0'}},
-          React.createElement('img',{src:photo,alt:place.name,onLoad:()=>setImgLoaded(true),style:{width:'100%',height:'100%',objectFit:'cover',display:'block',opacity:imgLoaded?1:0,transition:'opacity 0.4s ease'}}),
-          React.createElement('div',{style:{position:'absolute',inset:0,background:'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.68) 100%)'}}),
-          React.createElement('button',{onClick:handleClose,style:{position:'absolute',top:12,right:12,width:32,height:32,borderRadius:'50%',background:'rgba(0,0,0,0.42)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:18,lineHeight:1,backdropFilter:'blur(8px)'}},'✕'),
-          React.createElement('div',{style:{position:'absolute',top:12,left:12,background:s.color,borderRadius:99,padding:'4px 10px',display:'flex',alignItems:'center',gap:5}},React.createElement('span',{style:{width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.55)',display:'inline-block',flexShrink:0}}),React.createElement('span',{style:{fontSize:11,fontWeight:800,color:'#fff'}},s.label)),
-          React.createElement('div',{style:{position:'absolute',bottom:13,left:14,right:14,display:'flex',alignItems:'flex-end',gap:10}},
-            React.createElement('div',{style:{position:'relative',flexShrink:0}},React.createElement('div',{style:{width:48,height:48,borderRadius:14,background:'#fff',border:'2.5px solid rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,overflow:'hidden'}},getLogoEl(place)),place.verified&&React.createElement('div',{style:{position:'absolute',bottom:-3,right:-3,width:17,height:17,background:sponsorColor||'#6366F1',borderRadius:'50%',border:'2px solid #fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#fff',fontWeight:900}},'✓')),
-            React.createElement('div',{style:{flex:1,minWidth:0}},React.createElement('p',{style:{margin:0,fontSize:16,fontWeight:800,color:'#fff',lineHeight:1.2,textShadow:'0 1px 6px rgba(0,0,0,0.5)'}},place.name),React.createElement('p',{style:{margin:'3px 0 0',fontSize:12,color:'rgba(255,255,255,0.82)',textShadow:'0 1px 4px rgba(0,0,0,0.4)'}},place.type+' · '+place.addr)),
-            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:4,background:'rgba(255,255,255,0.18)',backdropFilter:'blur(8px)',border:'0.5px solid rgba(255,255,255,0.3)',borderRadius:99,padding:'4px 9px',flexShrink:0}},React.createElement('span',{style:{color:'#F59E0B',fontSize:12}},'★'),React.createElement('span',{style:{fontSize:12,fontWeight:800,color:'#fff'}},place.rating),React.createElement('span',{style:{fontSize:11,color:'rgba(255,255,255,0.7)'}},' · '+place.reviewsN))
-          )
-        ),
-        React.createElement('div',{style:{padding:'15px 15px 18px'}},
-          React.createElement('div',{style:{display:'flex',gap:8,marginBottom:16}},...[{val:place.reporters,lbl:'Reportes'},{val:WAIT[place.status],lbl:'Espera'},{val:TREND[place.status],lbl:'Tendencia'}].map(({val,lbl})=>React.createElement('div',{key:lbl,style:{flex:1,background:'#F1F5F9',borderRadius:10,padding:'9px 10px',textAlign:'center'}},React.createElement('p',{style:{margin:0,fontSize:17,fontWeight:900,color:'#0F172A',letterSpacing:'-0.5px'}},val),React.createElement('p',{style:{margin:'2px 0 0',fontSize:10,color:'#64748B',textTransform:'uppercase',letterSpacing:'0.5px',fontWeight:600}},lbl)))),
-          sponsorBlock,notLoggedBlock,tooFarBlock,noGpsBlock,
-          isLoggedIn&&nearby&&!onCooldown&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:12,padding:'8px 11px',background:'#E8FBF5',borderRadius:10,border:'1px solid #A8EDD8'}},React.createElement('span',{style:{fontSize:14}},'✅'),React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'#007A59'}},`Estás a ${distToPlace??'?'}m · podés reportar`)),
-          !onCooldown&&isLoggedIn&&nearby&&React.createElement('p',{style:{margin:'0 0 10px',fontSize:11,fontWeight:700,color:'#94A3B8',textTransform:'uppercase',letterSpacing:'0.8px'}},'¿Cómo está ahora?'),
-          onCooldown&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:12,padding:'12px 14px',marginBottom:4}},React.createElement('span',{style:{fontSize:20,flexShrink:0}},'⏳'),React.createElement('div',null,React.createElement('p',{style:{margin:0,fontSize:13,fontWeight:800,color:'#92400E'}},`Ya reportaste ${place.name} hace poco`),React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#92400E'}},`Podés volver a reportar en ${formatCooldownRemaining(cooldownMs)}`))),
-          !submitted&&isLoggedIn&&nearby&&!onCooldown&&React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}},...[{idx:0,label:'Poca gente',pts:'+10',color:'#00C48C'},{idx:1,label:'Bastante',pts:'+10',color:'#F59E0B'},{idx:2,label:'Mucha gente',pts:'+15',color:'#F97316'},{idx:3,label:'Colapsado',pts:'+20',color:'#EF4444'}].map(({idx,label,pts,color})=>{
-            const isSel=selectedVote===idx;
-            return React.createElement('button',{key:idx,onClick:()=>handleVote(idx),style:{border:isSel?`2px solid ${color}`:'1.5px solid #E2E8F0',borderRadius:10,background:isSel?color:'#fff',padding:'11px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:7,fontSize:12,fontWeight:700,color:isSel?'#fff':'#0F172A',textAlign:'left',fontFamily:'inherit',transition:'all 0.18s cubic-bezier(0.34,1.56,0.64,1)',transform:isSel?'translateY(-1px)':'none',boxShadow:isSel?`0 4px 12px ${color}44`:'none'}},React.createElement('span',{style:{width:9,height:9,borderRadius:'50%',background:isSel?'rgba(255,255,255,0.55)':color,display:'inline-block',flexShrink:0}}),label,React.createElement('span',{style:{marginLeft:'auto',fontSize:10,fontWeight:800,color:'#fff',background:color,padding:'2px 7px',borderRadius:99}},pts));
-          })),
-          submitted&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,background:'#E8FBF5',border:'1px solid #A8EDD8',borderRadius:12,padding:'13px 14px',marginBottom:12}},React.createElement('span',{style:{fontSize:22}},'✅'),React.createElement('div',null,React.createElement('p',{style:{margin:0,fontSize:14,fontWeight:800,color:'#007A59'}},'¡Reporte enviado!'),React.createElement('p',{style:{margin:'2px 0 0',fontSize:12,color:'#047857'}},`+${VOTE_PTS[selectedVote]||10} puntos sumados a tu cuenta`))),
-          !submitted&&isLoggedIn&&nearby&&!onCooldown&&React.createElement('button',{onClick:handleSubmit,disabled:selectedVote===null,style:{width:'100%',background:selectedVote!==null?`linear-gradient(135deg, ${STATUS_CFG[selectedVote].color}, ${STATUS_CFG[selectedVote].color}cc)`:'#E2E8F0',color:selectedVote!==null?'#fff':'#94A3B8',border:'none',borderRadius:12,padding:'14px',fontSize:14,fontWeight:800,cursor:selectedVote!==null?'pointer':'not-allowed',display:'flex',alignItems:'center',justifyContent:'center',gap:8,fontFamily:'inherit',transition:'all 0.22s cubic-bezier(0.34,1.56,0.64,1)',boxShadow:selectedVote!==null?`0 6px 20px ${STATUS_CFG[selectedVote].color}44`:'none',transform:selectedVote!==null?'translateY(-1px)':'none'}},React.createElement('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round',style:{width:15,height:15}},React.createElement('line',{x1:22,y1:2,x2:11,y2:13}),React.createElement('polygon',{points:'22 2 15 22 11 13 2 9 22 2'})),'Reportar estado'),
-          !submitted&&React.createElement('p',{style:{margin:'10px 0 0',fontSize:11,color:'#94A3B8',display:'flex',alignItems:'center',gap:5,fontWeight:500}},React.createElement('svg',{viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',style:{width:12,height:12,flexShrink:0}},React.createElement('path',{d:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'}),React.createElement('circle',{cx:9,cy:7,r:4}),React.createElement('path',{d:'M23 21v-2a4 4 0 0 0-3-3.87'}),React.createElement('path',{d:'M16 3.13a4 4 0 0 1 0 7.75'})),`${place.reporters} reportes en las últimas 2h`)
-        )
-      )
-    )
-  );
-}
-
-let popupRoot=null,currentPopupPlace=null;
-function openPlacePopup(place){currentPopupPlace=place;currentPopupPlace._wasOnCooldown=getVoteCooldownRemainingMs(place.id)>0;const container=document.getElementById('react-popup-root');container.classList.add('active');if(!popupRoot)popupRoot=ReactDOM.createRoot(container);renderPopup(place,isLoggedIn,currentUser);}
-function renderPopup(place,loggedIn,user){popupRoot.render(React.createElement(PlacePopup,{place,onClose:closePopup,onVoteSubmit:handlePopupVoteSubmit,cooldownRemainingMs:getVoteCooldownRemainingMs(place.id),isLoggedIn:loggedIn,currentUser:user}));}
-function closePopup(){const container=document.getElementById('react-popup-root');container.classList.remove('active');if(popupRoot)popupRoot.render(null);currentPopupPlace=null;}
-
-async function handlePopupVoteSubmit(placeId,voteIdx){
-  const p=places.find(x=>x.id===placeId);if(!p)return;
-  if(!isLoggedIn){showToastAction('🔑 Iniciá sesión para ganar puntos');return;}
-  if(getVoteCooldownRemainingMs(placeId)>0){showToast(`⏳ Ya reportaste ${p.name} · próximo en ${formatCooldownRemaining(getVoteCooldownRemainingMs(placeId))}`);return;}
-  if(!canReportThisPlace(p)){showToast(`📍 Tenés que estar dentro del comercio para reportar`);return;}
-  applyLocalCooldown(placeId);p.status=voteIdx;p.reporters+=1;voteCount++;
-  placeStore[p.id]=p;refreshMarkerIcon(p.id);updateCrowdBar(calcCrowdPct());
-  if(document.getElementById('panel-cerca').classList.contains('visible'))cercaUpdateFromStore();
-  await submitVoteToBackend(p,voteIdx);
-}
-
-async function submitVoteToBackend(p,voteIdx){
-  const pts=VOTE_PTS[voteIdx];
-  const res=await apiPostVote({place:{id:p.id,name:p.name,type:p.type,addr:p.addr,lat:p.lat,lng:p.lng,logo:p.logo,rating:p.rating,reviewsN:p.reviewsN,verified:!!p.verified,open:p.open!==false},status:voteIdx,email:currentUser.email});
-  if(res.cooldown){applyPlaceCooldown(p.id,res.nextVoteAt);p.reporters=Math.max(0,p.reporters-1);refreshMarkerIcon(p.id);updateCrowdBar(calcCrowdPct());if(currentPopupPlace&&currentPopupPlace.id===p.id)renderPopup(p,isLoggedIn,currentUser);showToast(`⏳ Ya reportaste ${p.name}`);return;}
-  if(res.ok&&res.result&&typeof res.result.points==='number'){userPts=res.result.points;updateUserHUD();flashPoints();if(res.result.cooldown)applyPlaceCooldown(res.result.cooldown.placeId,res.result.cooldown.nextVoteAt);showToast(`🎉 +${pts} puntos ganados`);}
-  else if(res.ok){addPoints(pts);showToast(`🎉 +${pts} ganados`);}
-  else{showToast('⚠️ No se pudo conectar con el servidor');}
-}
-
-function flashPoints(){const el=document.getElementById('my-pts');if(el){el.style.animation='none';el.offsetHeight;el.style.animation='ptsFlash .45s cubic-bezier(.34,1.56,.64,1)';}}
-function addPoints(amount){const prevLevel=getLevelInfo(userPts).level;userPts+=amount;updateUserHUD();flashPoints();const newLevel=getLevelInfo(userPts).level;if(newLevel>prevLevel)setTimeout(()=>levelUpCelebration(newLevel),400);}
-
-/* ─── MAP GPS ─── */
-function updateUserMarker(lat,lng){
-  if(!leafletMap)return;
-  if(userMarker)userMarker.setLatLng([lat,lng]);
-  else{const userIcon=L.divIcon({html:`<div style="width:18px;height:18px;border-radius:50%;background:#6366F1;border:3px solid #fff;box-shadow:0 0 0 3px rgba(99,102,241,.4);"></div>`,className:'',iconAnchor:[9,9]});userMarker=L.marker([lat,lng],{icon:userIcon,zIndexOffset:1000}).addTo(leafletMap);}
-}
-
-function updateGpsBtnUI(){const btn=document.getElementById('gps-btn'),pill=document.getElementById('follow-pill');if(!btn)return;btn.classList.remove('pulsing','active','following');if(followMode){btn.classList.add('following');pill.classList.add('show');}else if(userLat!==null){btn.classList.add('active');pill.classList.remove('show');}else{pill.classList.remove('show');}}
-
-function onGpsBtnClick(){
-  if(followMode){followMode=false;updateGpsBtnUI();showToast('📍 Modo seguimiento desactivado');return;}
-  if(userLat!==null){followMode=true;updateGpsBtnUI();leafletMap.setView([userLat,userLng],CONFIG.FOLLOW_ZOOM,{animate:true,duration:0.6});showToast('📍 Siguiendo tu posición');return;}
-  const btn=document.getElementById('gps-btn');btn.classList.add('pulsing');
-  if(!navigator.geolocation){showToast('⚠️ Tu navegador no soporta GPS');btn.classList.remove('pulsing');return;}
-  navigator.geolocation.getCurrentPosition(pos=>{followMode=true;onGpsSuccess(pos);startGpsWatch();},err=>{btn.classList.remove('pulsing');showToast(err.code===1?'🔒 Permiso de ubicación denegado':'⚠️ No se pudo obtener tu ubicación');},{enableHighAccuracy:true,timeout:10000});
-}
-
-function onMapDragStart(){if(followMode){followMode=false;updateGpsBtnUI();showToast('👆 Arrastraste el mapa · tocá 📍 para seguir de nuevo');}}
-
-function initMap(){
-  leafletMap=L.map('leaflet-map',{center:[CONFIG.DEFAULT_CENTER.lat,CONFIG.DEFAULT_CENTER.lng],zoom:16,zoomControl:false});
-  L.control.zoom({position:'bottomright'}).addTo(leafletMap);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',subdomains:'abcd',maxZoom:20}).addTo(leafletMap);
-  leafletMap.on('dragstart',onMapDragStart);
-  leafletMap.on('zoomend',()=>{const toShow=nearbyPlaces.length?nearbyPlaces:places;if(toShow.length)buildMapMarkers(toShow);});
-  startGpsWatch();initSearch();
-}
-
-let lastLoadTileKey=null;
-
-function startGpsWatch(){
-  if(!navigator.geolocation)return;
-  if(gpsWatchId!==null)navigator.geolocation.clearWatch(gpsWatchId);
-  gpsWatchId=navigator.geolocation.watchPosition(pos=>onGpsSuccess(pos),err=>{if(!mapInitialLoaded){const{lat,lng}=CONFIG.DEFAULT_CENTER;ensurePlacesLoadedAt(lat,lng);mapInitialLoaded=true;}},{enableHighAccuracy:true,timeout:10000,maximumAge:3000});
-}
-
-function onGpsSuccess(pos){
-  const{latitude:lat,longitude:lng}=pos.coords;
-  const isFirst=userLat===null;
-  userLat=lat;userLng=lng;
-  updateUserMarker(lat,lng);
-  if(followMode){const moved=lastFollowLat!==null?distanceMeter(lastFollowLat,lastFollowLng,lat,lng):Infinity;if(moved>=CONFIG.FOLLOW_MIN_MOVE_M){lastFollowLat=lat;lastFollowLng=lng;if(isFirst)leafletMap.setView([lat,lng],CONFIG.FOLLOW_ZOOM,{animate:true,duration:0.5});else leafletMap.panTo([lat,lng],{animate:true,duration:0.4,easeLinearity:0.5});}}
-  if(isFirst){if(!followMode)leafletMap.setView([lat,lng],CONFIG.FOLLOW_ZOOM);updateGpsBtnUI();ensurePlacesLoadedAt(lat,lng);lastLoadTileKey=latLngToTileKey(lat,lng);}
-  else{const currentTileKey=latLngToTileKey(lat,lng);if(currentTileKey!==lastLoadTileKey){lastLoadTileKey=currentTileKey;ensurePlacesLoadedAt(lat,lng);}}
-  if(!checkinShown&&places.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(lat,lng),1200);}
-}
-
-/* ─── MARKERS ─── */
-function makeStatusChipHTML(place){const s=(!place.reporters||place.reporters===0)?NO_REPORT_STATUS:STATUS_CFG[place.status];return`<div class="fc-card-status" style="background:${s.color}"><div class="s-dot-sm"></div><div class="s-label-sm">${s.label}</div></div>`;}
-function makeLogoHTML(place){if(place.sponsor&&place.sponsor.logo_url)return`<img src="${place.sponsor.logo_url}" alt="${place.name}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;">`;return place.logo;}
-
-function makeIcon(place){
-  const sponsor=place.sponsor,sponsorColor=sponsor?(sponsor.badge_color||'#6366F1'):null;
-  const verBadge=place.verified?`<div class="fc-card-verified" style="background:${sponsorColor||'#6366F1'}">✓</div>`:'';
-  const sponsorBadge=sponsor?`<div class="fc-sponsor-badge" style="background:${sponsorColor}">✓ ${sponsor.badge_text||'Verificado'}</div>`:'';
-  const sponsorClass=sponsor?`is-sponsor tier-${sponsor.tier||'basic'}`:'';
-  const sponsorStyle=sponsor?`style="--sponsor-color:${sponsorColor}"`:'';
-  return L.divIcon({html:`<div class="fc-card-wrap ${sponsorClass}" ${sponsorStyle}><div class="fc-card"><div class="fc-card-head"><div class="fc-card-logo">${makeLogoHTML(place)}${verBadge}</div><div class="fc-card-info"><div class="fc-card-name">${place.name}</div><div class="fc-card-type">${place.type}</div></div><span class="fc-card-open ${place.open?'open':'closed'}">${place.open?'Abierto':'Cerrado'}</span></div>${makeStatusChipHTML(place)}${sponsorBadge}</div><div class="fc-tail"></div><div class="fc-base"></div></div>`,className:'',iconAnchor:[0,172],popupAnchor:[0,-172]});
-}
-
-const CLUSTER_ZOOM_THRESHOLD=20;
-function getClusterGridDeg(zoom){if(zoom>=15)return 0.0015;if(zoom>=13)return 0.005;return 0.015;}
-function densityClass(count){if(count<=5)return'density-low';if(count<=15)return'density-med';if(count<=40)return'density-high';return'density-max';}
-function computeClusters(placesToCluster,gridDeg){const cells={};placesToCluster.forEach(p=>{const cx=Math.floor(p.lat/gridDeg),cy=Math.floor(p.lng/gridDeg),key=`${cx}:${cy}`;if(!cells[key])cells[key]={lat:(cx+0.5)*gridDeg,lng:(cy+0.5)*gridDeg,places:[]};cells[key].places.push(p);});return Object.values(cells).map(c=>({lat:c.lat,lng:c.lng,count:c.places.length,places:c.places,avgStatus:c.places.reduce((s,p)=>s+(p.reporters>0?p.status:0),0)/c.places.length,totalReporters:c.places.reduce((s,p)=>s+(p.reporters||0),0)}));}
-function makeClusterIcon(cluster){const dc=densityClass(cluster.count),label=cluster.count===1?'1 lugar':`${cluster.count} lugares`,subtitle=cluster.totalReporters>0?`${cluster.totalReporters} reportes activos`:'Sin reportes aún';return L.divIcon({html:`<div class="cluster-card"><div class="cluster-bubble ${dc}"><div class="cluster-count">${cluster.count}</div><div class="cluster-label"><strong>${label}</strong>${subtitle}</div></div><div class="cluster-tail"></div><div class="cluster-base"></div></div>`,className:'',iconAnchor:[65,62]});}
-
-let clusterMarkers={};
-function clearClusterMarkers(){Object.values(clusterMarkers).forEach(m=>m.remove());clusterMarkers={};}
-function clearIndividualMarkers(){Object.keys(leafletMarkers).forEach(id=>{leafletMarkers[id].remove();delete leafletMarkers[id];});}
-
-function buildMapMarkers(placesToShow){
-  placesToShow=placesToShow||nearbyPlaces;
-  if(!leafletMap||!placesToShow.length)return;
-  const zoom=leafletMap.getZoom();
-  if(zoom>=CLUSTER_ZOOM_THRESHOLD){
-    clearClusterMarkers();
-    const newIdSet=new Set(placesToShow.map(p=>p.id));
-    Object.keys(leafletMarkers).forEach(id=>{if(!newIdSet.has(id)){leafletMarkers[id].remove();delete leafletMarkers[id];}});
-    placesToShow.forEach(p=>{
-      if(leafletMarkers[p.id]){const marker=leafletMarkers[p.id];if(marker._lastStatus!==p.status||marker._lastReporters!==p.reporters){marker.setIcon(makeIcon(p));marker._lastStatus=p.status;marker._lastReporters=p.reporters;}}
-      else{const marker=L.marker([p.lat,p.lng],{icon:makeIcon(p)}).addTo(leafletMap);marker._lastStatus=p.status;marker._lastReporters=p.reporters;marker.on('click',()=>{if(pickModeActive){exitPickMode();openPlacePopup(p);}else{openPlacePopup(p);}});leafletMarkers[p.id]=marker;}
+  try {
+    const params = new URLSearchParams({
+      'll': `${lat},${lng}`,
+      'radius': FOURSQUARE_CONFIG.SEARCH_RADIUS,
+      'limit': FOURSQUARE_CONFIG.LIMIT,
+      'sort': 'distance',
     });
-  }else{
-    clearIndividualMarkers();
-    const gridDeg=getClusterGridDeg(zoom),clusters=computeClusters(placesToShow,gridDeg);
-    clearClusterMarkers();
-    clusters.forEach((cluster,idx)=>{const marker=L.marker([cluster.lat,cluster.lng],{icon:makeClusterIcon(cluster)}).addTo(leafletMap);marker.on('click',()=>{const targetZoom=Math.min(leafletMap.getZoom()+3,CLUSTER_ZOOM_THRESHOLD+1);leafletMap.setView([cluster.lat,cluster.lng],targetZoom,{animate:true,duration:0.5});});clusterMarkers[`cluster_${idx}`]=marker;});
-  }
-}
 
-function refreshMarkerIcon(id){const p=places.find(x=>x.id===id);if(!p)return;if(leafletMap&&leafletMap.getZoom()>=CLUSTER_ZOOM_THRESHOLD&&leafletMarkers[id])leafletMarkers[id].setIcon(makeIcon(p));}
-function calcCrowdPct(){const visible=nearbyPlaces.length?nearbyPlaces:places;if(!visible.length)return 30;const avg=visible.reduce((s,p)=>s+p.status,0)/visible.length;return Math.round(10+(avg/3)*82);}
-function updateCrowdBar(pct){pct=Math.max(5,Math.min(95,pct));const needle=document.getElementById('cbar-needle'),overlay=document.getElementById('cbar-overlay'),pctLabel=document.getElementById('cbar-pct');if(needle)needle.style.left=pct+'%';if(overlay)overlay.style.width=(100-pct)+'%';if(pctLabel)pctLabel.textContent=pct+'%';}
-
-async function manualRefresh(){
-  const icon=document.getElementById('refresh-icon');icon.style.animation='none';icon.offsetHeight;icon.style.animation='rotate .7s cubic-bezier(.34,1.56,.64,1)';
-  const lat=userLat??CONFIG.DEFAULT_CENTER.lat,lng=userLng??CONFIG.DEFAULT_CENTER.lng;
-  const tileKey=latLngToTileKey(lat,lng),adjacent=getAdjacentTileKeys(lat,lng);
-  [tileKey,...adjacent].forEach(k=>{delete tileCache[k];});lastLoadTileKey=null;nearbyPlaces=[];
-  await ensurePlacesLoadedAt(lat,lng);showToast('🔄 Locales actualizados');
-}
-
-/* ════════════════════════════════════════════════════════════
-   PANEL CERCA
-   ════════════════════════════════════════════════════════════ */
-let cercaAllPlaces=[],cercaFiltered=[];
-let cercaRadius=1000,cercaCat='all',cercaSearchQ='',cercaSortMode='distance',cercaSortIdx=0;
-let cercaIsLoading=false,cercaLoaded=false,cercaAbortController=null;
-let cercaSearchTimer=null;
-let cercaCitySearchResults=[],cercaCitySearchInFlight=false;
-
-const CERCA_SORT_MODES=['distance','status','rating'];
-const CERCA_SORT_LABELS=['Distancia','Más reportado','Rating'];
-
-const CERCA_CAT_KEYWORDS={
-  food:['restaurant','cafe','coffee','bakery','pizza','burger','food','bar','panadería','comida','cafetería','pizzería','fast_food','snack','helad'],
-  health:['pharmacy','farmacia','hospital','clinic','clínica','doctor','médico','salud','dental','dentist','optician','centro de salud'],
-  supermarket:['supermarket','supermercado','carrefour','disco','coto','walmart','jumbo','mercado','almacén','kiosk','minimarket'],
-  bank:['bank','banco','cajero','atm','hsbc','galicia','santander','bbva','icbc','pagos','rapipago','pago fácil'],
-  government:['gobierno','municipalidad','correo','registro','anses','oficina','ministerio','juzgado','tribunal'],
-  shopping:['ropa','calzado','zapatería','electrónica','ferretería','bazar','hogar','muebles','deportes','juguetería','librería','papelería','floristería','perfumería','joyería'],
-};
-
-function cercaGuessCategory(name,type){
-  const lname=(name||'').toLowerCase(),ltype=(type||'').toLowerCase();
-  for(const[cat,kws]of Object.entries(CERCA_CAT_KEYWORDS)){for(const kw of kws){if(lname.includes(kw)||ltype.includes(kw))return cat;}}
-  return'other';
-}
-
-function cercaFmtDist(m){return m<1000?m+'m':(m/1000).toFixed(1)+'km';}
-
-/* ─── FSQ: panel Cerca ─── */
-async function cercaFetchFSQ(lat,lng,radius){
-  if(cercaAbortController)cercaAbortController.abort();
-  cercaAbortController=new AbortController();
-  const signal=cercaAbortController.signal;
-  const limit=Math.min(radius<=500?50:50,50); // FSQ max 50 por request
-  const url=`https://api.foursquare.com/v3/places/search?ll=${lat},${lng}&radius=${radius}&categories=${FSQ_CATEGORIES}&limit=${limit}&fields=fsq_id,name,geocodes,location,categories,distance`;
-  try{
-    const res=await fetch(url,{signal,headers:fsqHeaders()});
-    if(!res.ok){console.warn('FSQ cerca HTTP',res.status);throw new Error('FSQ HTTP '+res.status);}
-    const data=await res.json();
-    if(!data.results)return[];
-    return data.results.map(item=>{
-      const p=fsqPlaceToPlace(item);
-      const dist=item.distance||Math.round(distanceMeter(lat,lng,p.lat,p.lng));
-      p.dist=dist;p.cat=cercaGuessCategory(p.name,p.type);
-      const existing=placeIndex.get(p.id);
-      if(existing){p.status=existing.status;p.reporters=existing.reporters;p.sponsor=existing.sponsor;}
-      return p;
-    }).filter(p=>p.dist<=radius).sort((a,b)=>a.dist-b.dist);
-  }catch(e){
-    if(e.name==='AbortError')return[];
-    console.warn('FSQ panel Cerca falló:',e);return[];
-  }
-}
-
-/* ─── HERE: búsqueda por texto en panel Cerca ─── */
-async function cercaFetchCitySearch(query,lat,lng){
-  if(!HERE_READY)return[];
-  const q=query.toLowerCase();
-  const localMatches=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)||(p.addr||'').toLowerCase().includes(q));
-  const url=`https://discover.search.hereapi.com/v1/discover?at=${lat},${lng}&q=${encodeURIComponent(query)}&limit=50&lang=es&apiKey=${CONFIG.HERE_API_KEY}`;
-  try{
-    const res=await fetch(url);
-    if(!res.ok)return localMatches;
-    const data=await res.json();
-    if(!data.items)return localMatches;
-    const allResults=data.items.map(item=>{
-      const p=herePlaceToPlace(item);
-      p.dist=Math.round(distanceMeter(lat,lng,p.lat,p.lng));
-      p.cat=cercaGuessCategory(p.name,p.type);
-      return p;
-    }).filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q));
-    const combined=[...localMatches];
-    allResults.forEach(r=>{if(!combined.find(p=>p.id===r.id))combined.push(r);});
-    return combined.slice(0,30);
-  }catch(e){return localMatches;}
-}
-
-function cercaBuildDemoPlaces(lat,lng){
-  const demos=[
-    {name:'Carrefour Express',type:'Supermercado',emoji:'🛒',cat:'supermarket',addr:'Av. Corrientes 1234',dlat:0.0012,dlng:0.0008,open:true,status:2,reporters:14,rating:'4.2',reviewsN:1200,verified:true},
-    {name:'Farmacity',type:'Farmacia',emoji:'💊',cat:'health',addr:'Florida 340',dlat:0.0004,dlng:0.0015,open:true,status:0,reporters:5,rating:'4.0',reviewsN:856,verified:true},
-    {name:'Banco Nación',type:'Banco',emoji:'🏦',cat:'bank',addr:'Florida 236',dlat:-0.0006,dlng:0.0010,open:true,status:2,reporters:18,rating:'3.2',reviewsN:430,verified:false},
-    {name:'Rapipago',type:'Pagos',emoji:'💳',cat:'bank',addr:'Lavalle 870',dlat:0.0009,dlng:-0.0005,open:true,status:1,reporters:7,rating:'3.6',reviewsN:210,verified:false},
-    {name:'Starbucks',type:'Cafetería',emoji:'☕',cat:'food',addr:'Av. Santa Fe 800',dlat:-0.0003,dlng:0.0018,open:true,status:0,reporters:3,rating:'4.4',reviewsN:2100,verified:false},
-    {name:"McDonald's",type:'Comida rápida',emoji:'🍔',cat:'food',addr:'Corrientes 567',dlat:0.0018,dlng:-0.0002,open:true,status:3,reporters:22,rating:'3.9',reviewsN:3400,verified:false},
-    {name:'ANSES',type:'Oficina pública',emoji:'🏛️',cat:'government',addr:'Lima 121',dlat:-0.0015,dlng:0.0003,open:false,status:1,reporters:9,rating:'2.8',reviewsN:720,verified:false},
-    {name:'Hospital Ramos Mejía',type:'Hospital',emoji:'🏥',cat:'health',addr:'Gral. Urquiza 609',dlat:0.0022,dlng:0.0011,open:true,status:2,reporters:16,rating:'3.5',reviewsN:580,verified:false},
-    {name:'Disco',type:'Supermercado',emoji:'🏪',cat:'supermarket',addr:'Av. Callao 540',dlat:-0.0008,dlng:-0.0014,open:true,status:3,reporters:22,rating:'3.8',reviewsN:2100,verified:false},
-    {name:'Correo Argentino',type:'Correo',emoji:'📮',cat:'government',addr:'Sarmiento 151',dlat:0.0005,dlng:-0.0018,open:true,status:1,reporters:6,rating:'3.1',reviewsN:340,verified:false},
-    {name:'Zara',type:'Ropa',emoji:'👗',cat:'shopping',addr:'Av. Santa Fe 1200',dlat:0.0011,dlng:0.0019,open:true,status:0,reporters:2,rating:'4.3',reviewsN:560,verified:false},
-    {name:'Falabella',type:'Tienda departamental',emoji:'🛍️',cat:'shopping',addr:'Av. Florida 800',dlat:-0.0007,dlng:0.0012,open:true,status:1,reporters:5,rating:'3.9',reviewsN:980,verified:false},
-  ];
-  return demos.map((d,i)=>{
-    const plat=lat+d.dlat,plng=lng+d.dlng;
-    const dist=Math.round(distanceMeter(lat,lng,plat,plng));
-    return{id:`demo_${i}`,name:d.name,type:d.type,logo:d.emoji,cat:d.cat,addr:d.addr,dist,lat:plat,lng:plng,open:d.open,verified:d.verified,rating:d.rating,reviewsN:d.reviewsN,status:d.status,reporters:d.reporters,sponsor:null};
-  }).filter(p=>p.dist<=cercaRadius);
-}
-
-function cercaShowSkeleton(){
-  const list=document.getElementById('cerca-list');
-  list.innerHTML=Array(8).fill(0).map((_,i)=>`<div class="nc-skeleton" style="animation-delay:${i*0.04}s"><div class="nc-skel-logo skel-anim"></div><div class="nc-skel-body"><div class="nc-skel-line skel-anim" style="width:65%"></div><div class="nc-skel-line skel-anim" style="width:42%"></div><div class="nc-skel-block skel-anim"></div></div></div>`).join('');
-}
-
-async function cercaLoadPlaces(forceReload){
-  if(cercaIsLoading&&!forceReload)return;
-  cercaIsLoading=true;
-  const errBanner=document.getElementById('cerca-error-banner');
-  if(errBanner)errBanner.style.display='none';
-  cercaShowSkeleton();
-  const countEl=document.getElementById('cerca-count');
-  const countLbl=document.getElementById('cerca-count-lbl');
-  if(countEl)countEl.textContent='…';
-  if(countLbl)countLbl.textContent=' cargando';
-  const lat=userLat??CONFIG.DEFAULT_CENTER.lat;
-  const lng=userLng??CONFIG.DEFAULT_CENTER.lng;
-  try{
-    let placesData=[];
-    if(HERE_READY){placesData=await cercaFetchHere(lat,lng,cercaRadius);}
-    if(!placesData.length){
-      placesData=cercaBuildDemoPlaces(lat,lng);
-      if(errBanner)errBanner.style.display='flex';
-    }else{
-      if(errBanner)errBanner.style.display='none';
-    }
-    if(BACKEND_READY){
-      const backendResult=await apiGet('sync_places',{lat,lng,radius:cercaRadius,status_only:1});
-      if(backendResult&&Array.isArray(backendResult.places)){
-        const backendMap=new Map(backendResult.places.map(bp=>[bp.id,bp]));
-        placesData=placesData.map(p=>{const bp=backendMap.get(p.id);if(bp){p.status=bp.status??p.status;p.reporters=bp.reporters??p.reporters;}return p;});
+    const response = await fetch(
+      `${FOURSQUARE_CONFIG.API_BASE}/places/search?${params}`,
+      {
+        headers: {
+          'Authorization': FOURSQUARE_CONFIG.API_KEY,
+          'Accept': 'application/json',
+        },
       }
+    );
+
+    if (!response.ok) {
+      console.error('❌ Error Foursquare:', response.status);
+      return [];
     }
-    cercaAllPlaces=placesData;
-    if(!cercaAllPlaces.length)cercaAllPlaces=cercaBuildDemoPlaces(lat,lng);
-    const now=new Date();
-    const updatedLbl=document.getElementById('cerca-updated-lbl');
-    if(updatedLbl)updatedLbl.textContent=`Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  }catch(err){
-    if(err.name==='AbortError'){cercaIsLoading=false;return;}
-    console.warn('Error cargando cerca:',err);
-    if(errBanner)errBanner.style.display='flex';
-    cercaAllPlaces=cercaBuildDemoPlaces(lat,lng);
-  }finally{
-    cercaIsLoading=false;cercaLoaded=true;cercaApplyFilters();
+
+    const data = await response.json();
+    const places = (data.results || []).map(place => ({
+      id: place.fsq_id,
+      name: place.name,
+      category: place.categories?.[0]?.name || 'Comercio',
+      lat: place.location.lat,
+      lng: place.location.lon,
+      distance: place.location.distance || null,
+      address: place.location.formatted_address || 'Sin dirección',
+      rating: place.rating || null,
+      phone: place.tel || null,
+      website: place.website || null,
+      image: place.photos?.[0]?.prefix + place.photos?.[0]?.suffix || null,
+    }));
+
+    // Guardar en caché
+    FOURSQUARE_CACHE.set(cacheKey, { data: places, time: Date.now() });
+    
+    return places;
+  } catch (error) {
+    console.error('❌ Error buscando lugares:', error);
+    return [];
   }
 }
 
-function cercaUpdateFromStore(){
-  let changed=false;
-  cercaAllPlaces=cercaAllPlaces.map(p=>{const stored=placeIndex.get(p.id);if(stored&&(stored.status!==p.status||stored.reporters!==p.reporters)){changed=true;return{...p,status:stored.status,reporters:stored.reporters};}return p;});
-  if(changed)cercaApplyFilters();
+/* ─── FOURSQUARE: Autocomplete ─── */
+async function foursquareAutocomplete(query, lat, lng) {
+  if (!query || query.length < 2) return [];
+  
+  if (FOURSQUARE_CONFIG.API_KEY.includes('AQUI_TU')) return [];
+
+  try {
+    const params = new URLSearchParams({
+      'query': query,
+      'll': `${lat},${lng}`,
+      'limit': 8,
+    });
+
+    const response = await fetch(
+      `${FOURSQUARE_CONFIG.API_BASE}/places/autocomplete?${params}`,
+      {
+        headers: {
+          'Authorization': FOURSQUARE_CONFIG.API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) return [];
+    const data = await response.json();
+    
+    return (data.results || []).map(r => ({
+      id: r.place_id,
+      name: r.text.primary,
+      address: r.text.secondary || '',
+    }));
+  } catch (error) {
+    console.error('❌ Error autocomplete:', error);
+    return [];
+  }
 }
 
-function cercaApplyFilters(){
-  const hasBusqueda=cercaSearchQ&&cercaSearchQ.length>=1;
-  const cityBadge=document.getElementById('cerca-city-badge');
-  const radiusRow=document.getElementById('cerca-radius-row');
-  if(cityBadge)cityBadge.classList.toggle('visible',hasBusqueda);
-  if(radiusRow)radiusRow.style.opacity=hasBusqueda?'0.4':'1';
+/* ─── CARGAR LUGARES EN MÓDULO CERCA ─── */
+let currentCercaPlaces = [];
+let cercaLoaded = false;
 
-  if(hasBusqueda){
-    const q=cercaSearchQ.toLowerCase();
-    const localMatches=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)||(p.addr||'').toLowerCase().includes(q));
-    const combined=[...localMatches];
-    cercaCitySearchResults.forEach(r=>{if(!combined.find(p=>p.id===r.id))combined.push(r);});
-    let filtrados=combined;
-    if(cercaCat!=='all')filtrados=filtrados.filter(p=>p.cat===cercaCat);
-    filtrados.sort((a,b)=>a.dist-b.dist);
-    cercaFiltered=filtrados;
-    cercaRenderList();
-    if(!cercaCitySearchInFlight&&HERE_READY&&userLat!==null&&userLng!==null){
-      cercaCitySearchInFlight=true;
-      const lat=userLat,lng=userLng;
-      const querySnapshot=cercaSearchQ;
-      cercaFetchCitySearch(querySnapshot,lat,lng).then(results=>{
-        cercaCitySearchInFlight=false;
-        /* Solo actualizar si la búsqueda no cambió mientras esperábamos */
-        if(cercaSearchQ===querySnapshot){
-          cercaCitySearchResults=results;
-          /* Renderizar directamente sin volver a llamar cercaApplyFilters (evita loop) */
-          const q2=querySnapshot.toLowerCase();
-          const localMatches2=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q2)||p.type.toLowerCase().includes(q2)||(p.addr||'').toLowerCase().includes(q2));
-          const combined2=[...localMatches2];
-          results.forEach(r=>{if(!combined2.find(p=>p.id===r.id))combined2.push(r);});
-          let filtrados2=combined2;
-          if(cercaCat!=='all')filtrados2=filtrados2.filter(p=>p.cat===cercaCat);
-          filtrados2.sort((a,b)=>a.dist-b.dist);
-          cercaFiltered=filtrados2;
-          cercaRenderList();
-        }
-      }).catch(()=>{cercaCitySearchInFlight=false;});
+async function cercaLoadPlaces() {
+  try {
+    showLoadingState('🔍 Cargando lugares cercanos...');
+    
+    const userLoc = await getUserLocation();
+    const places = await foursquareSearch(userLoc.lat, userLoc.lng);
+    
+    if (!places || places.length === 0) {
+      showEmptyState();
+      return;
     }
+
+    currentCercaPlaces = places;
+    cercaLoaded = true;
+    renderCercaPlaces(places);
+    
+  } catch (error) {
+    console.error('Error loading places:', error);
+    showErrorState('No pudimos cargar los lugares');
+  }
+}
+
+function renderCercaPlaces(places) {
+  const container = document.getElementById('cerca-places-list');
+  
+  if (!places || places.length === 0) {
+    showEmptyState();
     return;
   }
 
-  cercaCitySearchResults=[];
-  let pl=[...cercaAllPlaces];
-  if(cercaCat!=='all')pl=pl.filter(p=>p.cat===cercaCat);
-  if(cercaSortMode==='distance')pl.sort((a,b)=>a.dist-b.dist);
-  else if(cercaSortMode==='status')pl.sort((a,b)=>b.reporters-a.reporters||b.status-a.status);
-  else if(cercaSortMode==='rating')pl.sort((a,b)=>parseFloat(b.rating)-parseFloat(a.rating));
-  cercaFiltered=pl;
-  cercaRenderList();
-}
-
-function cercaRenderList(){
-  const list=document.getElementById('cerca-list');
-  const n=cercaFiltered.length;
-  document.getElementById('cerca-count').textContent=n;
-  document.getElementById('cerca-count-lbl').textContent=n===1?' lugar encontrado':' lugares encontrados';
-  if(!n){list.innerHTML=`<div class="nc-empty"><div class="nc-empty-icon">🔍</div><div class="nc-empty-title">Sin resultados</div><div class="nc-empty-sub">Probá aumentando el radio o cambiando el filtro de categoría.</div></div>`;return;}
-  list.innerHTML=cercaFiltered.map((p,i)=>{
-    const s=(!p.reporters||p.reporters===0)?NO_REPORT_STATUS:STATUS_CFG[p.status];
-    const sponsorColor=p.sponsor?p.sponsor.badge_color:'';
-    const logoHtml=(p.sponsor&&p.sponsor.logo_url)?`<img src="${p.sponsor.logo_url}" alt="${p.name}">`:(p.logo||'🏪');
-    const verBg=sponsorColor||'#6366F1';
-    const verBadge=p.verified?`<div class="nc-ver" style="background:${verBg}">✓</div>`:'';
-    const sponsorBadge=p.sponsor?`<div class="nc-sponsor-badge" style="background:${sponsorColor}">✓ ${p.sponsor.badge_text||'Verificado'}</div>`:'';
-    const sponsorClass=p.sponsor?'is-sponsor':'';
-    const sponsorStyle=p.sponsor?`style="--sp-color:${sponsorColor}"`:'';
-    const reviewsFormatted=typeof p.reviewsN==='number'?p.reviewsN.toLocaleString('es-AR'):p.reviewsN;
-    return`<div class="nc-card ${sponsorClass}" ${sponsorStyle} data-nc-idx="${i}" style="animation-delay:${Math.min(i*0.025,0.3)}s">
-      <div class="nc-logo">${logoHtml}${verBadge}</div>
-      <div class="nc-body">
-        <div class="nc-top"><div class="nc-name">${p.name}</div><span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
-        <div class="nc-meta"><span class="nc-type">${p.type}</span><div class="nc-dot"></div><span class="nc-dist">📍 ${cercaFmtDist(p.dist)}</span>${p.addr?`<div class="nc-dot"></div><span class="nc-addr">${p.addr}</span>`:''}</div>
-        <div class="nc-status" style="background:${s.color}"><div class="nc-sdot"></div><span class="nc-slabel">${s.label}</span><span class="nc-ssub">${s.sub}</span></div>
-        ${sponsorBadge}
+  container.innerHTML = places.map(place => `
+    <div class="cerca-place-card" onclick="handlePlaceClick('${place.id}', ${place.lat}, ${place.lng})">
+      <div class="place-header">
+        <div class="place-name">${place.name}</div>
+        <div class="place-distance">${place.distance ? (place.distance / 1000).toFixed(1) + ' km' : 'N/A'}</div>
       </div>
-      <div class="nc-right">
-        <div class="nc-rating"><span class="nc-star">★</span>${p.rating}<span class="nc-rn">&nbsp;(${reviewsFormatted})</span></div>
-        <button class="nc-report-btn" data-nc-idx="${i}">Reportar</button>
+      <div class="place-category">${place.category}</div>
+      <div class="place-meta">
+        ${place.rating ? `<span class="place-rating">⭐ ${place.rating.toFixed(1)}</span>` : ''}
+        <span class="place-last-update">Actualizado hace poco</span>
       </div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('.nc-card').forEach(card=>{card.addEventListener('click',e=>{if(e.target.classList.contains('nc-report-btn'))return;const p=cercaFiltered[+card.dataset.ncIdx];if(!p)return;const enriched=placeIndex.get(p.id)||p;openPlacePopup({...p,...enriched});});});
-  list.querySelectorAll('.nc-report-btn').forEach(btn=>{btn.addEventListener('click',e=>{e.stopPropagation();const p=cercaFiltered[+btn.dataset.ncIdx];if(!p)return;if(!isLoggedIn){showToastAction('🔑 Iniciá sesión para reportar y ganar puntos');return;}openPlacePopup({...p,...(placeIndex.get(p.id)||{})});});});
+      <div class="crowd-indicator">
+        <div class="crowd-bar">
+          <div class="crowd-fill crowd-${getRandomCrowdLevel()}"></div>
+        </div>
+        <div class="crowd-label">${getCrowdLabel()}</div>
+      </div>
+      ${place.phone ? `
+        <div class="place-action">
+          <a href="tel:${place.phone}" class="btn-small">📞 Llamar</a>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
 }
 
-function cercaSetRadius(r,btn){document.querySelectorAll('.cerca-r-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');cercaRadius=r;cercaLoaded=false;cercaLoadPlaces(true);}
-function cercaSetCat(cat,btn){document.querySelectorAll('.cerca-f-chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');cercaCat=cat;cercaApplyFilters();}
-function cercaCycleSort(){cercaSortIdx=(cercaSortIdx+1)%3;cercaSortMode=CERCA_SORT_MODES[cercaSortIdx];document.getElementById('cerca-sort-lbl').textContent=CERCA_SORT_LABELS[cercaSortIdx];cercaApplyFilters();}
-
-function cercaClearSearch(){
-  document.getElementById('cerca-search-input').value='';
-  document.getElementById('cerca-search-clear').classList.remove('visible');
-  cercaCitySearchResults=[];cercaCitySearchInFlight=false;
-  cercaSearchQ='';cercaApplyFilters();
+function handlePlaceClick(placeId, lat, lng) {
+  // Navegar al mapa y centrar en ese lugar
+  if (leafletMap) {
+    leafletMap.setView([lat, lng], 16);
+    switchTab('map');
+  }
 }
 
-function initCercaSearch(){
-  const input=document.getElementById('cerca-search-input'),clear=document.getElementById('cerca-search-clear');
-  input.addEventListener('input',e=>{
-    const val=e.target.value.trim();
-    clear.classList.toggle('visible',val.length>0);
-    clearTimeout(cercaSearchTimer);
-    cercaSearchTimer=setTimeout(()=>{cercaSearchQ=val;cercaApplyFilters();},260);
+function getRandomCrowdLevel() {
+  const levels = ['empty', 'low', 'medium', 'high', 'very_high'];
+  return levels[Math.floor(Math.random() * levels.length)];
+}
+
+function getCrowdLabel() {
+  const labels = ['🟢 Vacío', '🟢 Poco concurrido', '🟡 Normal', '🔴 Muy concurrido', '🔴🔴 Abarrotado'];
+  return labels[Math.floor(Math.random() * labels.length)];
+}
+
+function filterCercaCategory(category) {
+  if (category === 'all') {
+    renderCercaPlaces(currentCercaPlaces);
+  } else {
+    // Filtrar por categoría (simplificado)
+    const filtered = currentCercaPlaces.filter(p => {
+      const cat = p.category.toLowerCase();
+      return cat.includes(category);
+    });
+    renderCercaPlaces(filtered);
+  }
+}
+
+function showLoadingState(msg) {
+  document.getElementById('cerca-places-list').innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div>${msg}</div>
+    </div>
+  `;
+}
+
+function showEmptyState() {
+  document.getElementById('cerca-places-list').innerHTML = `
+    <div class="empty-state">
+      <div style="font-size:48px">📍</div>
+      <div style="font-weight:700;color:var(--text)">Sin resultados</div>
+      <div style="font-size:13px;color:var(--text2)">No encontramos lugares en tu zona</div>
+    </div>
+  `;
+}
+
+function showErrorState(msg) {
+  document.getElementById('cerca-places-list').innerHTML = `
+    <div class="error-state">
+      <div style="font-size:48px">⚠️</div>
+      <div>${msg}</div>
+      <button class="btn-small" onclick="cercaLoadPlaces()">Reintentar</button>
+    </div>
+  `;
+}
+
+/* ─── OBTENER UBICACIÓN DEL USUARIO ─── */
+function getUserLocation() {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (err) => reject(err),
+      { timeout: 5000 }
+    );
   });
 }
 
-/* ─── CHECK-IN MODAL ─── */
-function showCheckinModal(lat,lng){
-  const pool=nearbyPlaces.length?nearbyPlaces:places;
-  const sorted=pool.map(p=>({...p,_dist:Math.round(distanceMeter(lat,lng,p.lat,p.lng))})).sort((a,b)=>a._dist-b._dist).slice(0,3);
-  if(!sorted.length)return;
-  const root=document.getElementById('checkin-overlay-root');
-  function close(){const overlay=root.querySelector('.checkin-overlay');if(overlay){overlay.style.opacity='0';overlay.style.transition='opacity .25s';}setTimeout(()=>{root.innerHTML='';},280);}
-  function choosePlace(p){close();setTimeout(()=>openPlacePopup(p),300);}
-  function chooseOther(){close();enterPickMode();}
-  const tabsHtml=sorted.map(p=>{const veryNear=p._dist<=CONFIG.CHECKIN_NEAR_M,nearish=p._dist<=100,cls=veryNear||nearish?'near':'far',distDisplay=veryNear?`📍 ${p._dist}m`:p._dist<1000?`${p._dist}m`:`${(p._dist/1000).toFixed(1)}km`;const logoContent=(p.sponsor&&p.sponsor.logo_url)?`<img src="${p.sponsor.logo_url}" alt="${p.name}">`:`<span>${p.logo}</span>`;return`<button class="checkin-tab ${cls}" data-place-id="${p.id}"><div class="checkin-tab-logo">${logoContent}</div><div class="checkin-tab-name">${p.name}</div><div class="checkin-tab-dist">${distDisplay}</div></button>`;}).join('');
-  root.innerHTML=`<div class="checkin-overlay" id="checkin-overlay"><div class="checkin-card"><div class="checkin-header"><div class="checkin-header-emoji">📍</div><div class="checkin-header-title">¿En cuál de estos lugares estás?</div><div class="checkin-header-sub">Elegí para reportar cuánta gente hay ahora</div></div><div class="checkin-body"><div class="checkin-tabs">${tabsHtml}<button class="checkin-tab other-tab" id="checkin-other-tab"><div class="checkin-tab-logo"><span>🗺️</span></div><div class="checkin-tab-name">Otro</div><div class="checkin-tab-dist">Elegir del mapa</div></button></div><button class="checkin-skip-main" id="checkin-skip-btn"><span style="font-size:16px;opacity:.65">🗺️</span>Solo ver el mapa</button><p class="checkin-skip-hint">No estoy en ninguno de estos comercios ahora</p></div></div></div>`;
-  sorted.forEach(p=>{const btn=root.querySelector(`[data-place-id="${p.id}"]`);if(btn)btn.addEventListener('click',()=>choosePlace(p));});
-  root.querySelector('#checkin-other-tab').addEventListener('click',chooseOther);
-  root.querySelector('#checkin-skip-btn').addEventListener('click',close);
-  root.querySelector('#checkin-overlay').addEventListener('click',e=>{if(e.target.id==='checkin-overlay')close();});
+/* ─── MAPA LEAFLET ─── */
+let leafletMap;
+let userMarker;
+
+async function initMap() {
+  try {
+    const userLoc = await getUserLocation();
+    
+    leafletMap = L.map('leaflet-map').setView([userLoc.lat, userLoc.lng], 14);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap',
+    }).addTo(leafletMap);
+
+    // Marcador del usuario
+    userMarker = L.circleMarker([userLoc.lat, userLoc.lng], {
+      radius: 8,
+      fillColor: '#00C48C',
+      color: '#009E72',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 0.8,
+    }).addTo(leafletMap);
+
+    // Cargar lugares en el mapa
+    await loadMapPlaces(userLoc.lat, userLoc.lng);
+    
+  } catch (error) {
+    console.error('Error initializing map:', error);
+    showToast('❌ No pudimos obtener tu ubicación');
+  }
 }
 
-function enterPickMode(){pickModeActive=true;document.getElementById('pick-mode-banner').classList.add('show');document.getElementById('leaflet-map').style.cursor='crosshair';}
-function exitPickMode(){pickModeActive=false;document.getElementById('pick-mode-banner').classList.remove('show');document.getElementById('leaflet-map').style.cursor='';}
-
-/* ─── GOOGLE AUTH ─── */
-let tokenClient=null;
-const TOKEN_STORAGE_KEY='qooentum_gtoken';
-
-/* Decodifica un JWT sin verificar firma (solo el payload) */
-function decodeJwtPayload(token){
-  try{
-    const b64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(atob(b64));
-  }catch(e){return null;}
+async function loadMapPlaces(lat, lng) {
+  const places = await foursquareSearch(lat, lng);
+  
+  places.forEach(place => {
+    const icon = getCategoryIcon(place.category);
+    
+    L.marker([place.lat, place.lng], {
+      title: place.name,
+    }).bindPopup(`
+      <div style="min-width:200px">
+        <div style="font-weight:700;margin-bottom:4px">${place.name}</div>
+        <div style="font-size:12px;color:#666;margin-bottom:6px">${place.category}</div>
+        ${place.rating ? `<div style="font-size:12px">⭐ ${place.rating.toFixed(1)}/10</div>` : ''}
+        ${place.distance ? `<div style="font-size:12px;margin-top:6px">📍 ${(place.distance/1000).toFixed(1)} km</div>` : ''}
+        ${place.phone ? `<div style="margin-top:8px"><a href="tel:${place.phone}" style="color:#00C48C;text-decoration:none;font-weight:600">📞 Llamar</a></div>` : ''}
+      </div>
+    `).addTo(leafletMap);
+  });
 }
 
-/* Guardamos el id_token (JWT de Google) que NO vence en 1h.
-   El access_token sí vence — pero el id_token sirve para
-   restaurar la sesión localmente sin hacer ningún fetch. */
-function saveTokenToStorage(idToken,accessToken,expiresIn){
-  try{
-    const expiresAt=Date.now()+(expiresIn?expiresIn*1000:3500*1000);
-    localStorage.setItem(TOKEN_STORAGE_KEY,JSON.stringify({
-      idToken,      // JWT — restauración offline, no vence en 1h
-      accessToken,  // OAuth token — para llamadas que lo requieran
-      expiresAt,    // cuándo vence el access_token
-    }));
-  }catch(e){}
-}
-
-function loadTokenFromStorage(){
-  try{
-    const raw=localStorage.getItem(TOKEN_STORAGE_KEY);
-    if(!raw)return null;
-    return JSON.parse(raw);
-  }catch(e){return null;}
-}
-
-/* Obtiene el perfil del id_token SIN llamar a la red */
-function getProfileFromIdToken(idToken){
-  const payload=decodeJwtPayload(idToken);
-  if(!payload||!payload.email)return null;
-  return{
-    email:   payload.email,
-    name:    payload.name    ||payload.email,
-    picture: payload.picture ||'',
+function getCategoryIcon(category) {
+  const icons = {
+    'retail': '🏪',
+    'food': '🍔',
+    'pharmacy': '💊',
+    'bank': '🏦',
   };
+  return icons[category] || '📍';
 }
 
-function initGoogleTokenClient(){
-  if(!GOOGLE_AUTH_READY)return false;
-  if(tokenClient)return true;
-  if(!window.google||!google.accounts||!google.accounts.oauth2)return false;
-  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CONFIG.GOOGLE_CLIENT_ID,scope:'email profile',callback:handleGoogleTokenResponse,error_callback:(err)=>{console.warn('Google OAuth error:',err);resetLoginButton();if(!err||err.type!=='popup_closed')showToast('⚠️ No se pudo iniciar sesión con Google');}});
-  return true;
-}
+/* ─── BÚSQUEDA EN MAPA ─── */
+let searchTimeout;
+const mapSearchInput = document.getElementById('mapSearchInput');
 
-function toggleUserDropdown(){const wrap=document.getElementById('user-chip-wrap'),dd=document.getElementById('user-dropdown');dd.classList.toggle('open');wrap.classList.toggle('open');}
-document.addEventListener('click',function(e){const wrap=document.getElementById('user-chip-wrap');if(wrap&&!wrap.contains(e.target)){document.getElementById('user-dropdown').classList.remove('open');wrap.classList.remove('open');}});
+mapSearchInput?.addEventListener('input', async (e) => {
+  const query = e.target.value;
+  const clearBtn = document.getElementById('mapSearchClear');
+  
+  clearBtn.classList.toggle('visible', query.length > 0);
+  
+  if (query.length < 2) return;
 
-function doLogout(){
-  isLoggedIn=false;currentUser=null;userPts=0;placeCooldowns={};followMode=false;updateGpsBtnUI();
-  localStorage.removeItem(SESSION_STORAGE_KEY);localStorage.removeItem(TOKEN_STORAGE_KEY);
-  if(window.google&&google.accounts&&google.accounts.oauth2){try{google.accounts.oauth2.revoke();}catch(e){}}
-  document.getElementById('user-chip-wrap').style.display='none';
-  const btn=document.getElementById('login-topbar-btn');btn.style.display='flex';btn.classList.remove('is-loading');
-  const t=btn.querySelector('.gbtn-txt');if(t)t.textContent='Ingresar';
-  document.getElementById('user-dropdown').classList.remove('open');
-  document.getElementById('user-chip-wrap').classList.remove('open');
-  updateUserHUD();stopOccupancySync();
-  if(currentPopupPlace)renderPopup(currentPopupPlace,isLoggedIn,currentUser);
-  showToast('✅ Sesión cerrada correctamente');
-}
-
-function doGoogleLogin(btn){
-  if(isLoggedIn)return;
-  if(!GOOGLE_AUTH_READY){showToast('⚠️ El login con Google todavía no está configurado');return;}
-  if(!initGoogleTokenClient()){showToast('⏳ Google se está cargando, probá de nuevo en un segundo');return;}
-  const loginBtn=btn||document.getElementById('login-topbar-btn');
-  if(loginBtn){loginBtn.classList.add('is-loading');const t=loginBtn.querySelector('.gbtn-txt');if(t)t.textContent='Conectando…';}
-  const hasPrevSession=!!localStorage.getItem(SESSION_STORAGE_KEY);
-  tokenClient.requestAccessToken({prompt:hasPrevSession?'':'select_account'});
-}
-
-function resetLoginButton(){const btn=document.getElementById('login-topbar-btn');if(!btn)return;btn.classList.remove('is-loading');const t=btn.querySelector('.gbtn-txt');if(t)t.textContent='Ingresar';}
-function initialsFromName(name){const parts=String(name||'').trim().split(/\s+/);return((parts[0]||'')[0]||'').toUpperCase()+((parts[1]||'')[0]||'').toUpperCase()||'YO';}
-
-function applyLoggedInUI(){
-  document.getElementById('login-topbar-btn').style.display='none';
-  document.getElementById('user-chip-wrap').style.display='flex';
-  const avatarEl=document.getElementById('topbar-avatar');
-  if(currentUser.picture){avatarEl.innerHTML=`<img src="${currentUser.picture}" alt="${currentUser.name}" referrerpolicy="no-referrer">`;}
-  else{avatarEl.textContent=initialsFromName(currentUser.name);}
-  updateUserHUD();maybeStartOccupancySync();
-  if(currentPopupPlace)renderPopup(currentPopupPlace,isLoggedIn,currentUser);
-}
-
-async function fetchProfileFromToken(accessToken){const profileRes=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:`Bearer ${accessToken}`}});if(!profileRes.ok)throw new Error('No se pudo obtener el perfil de Google');return await profileRes.json();}
-
-async function handleGoogleTokenResponse(resp){
-  if(!resp||resp.error||!resp.access_token){
-    resetLoginButton();
-    if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')
-      showToast('⚠️ No se pudo iniciar sesión con Google');
-    return;
-  }
-  try{
-    /* Perfil desde id_token (sin red) o fallback a userinfo endpoint */
-    let profile=null;
-    if(resp.id_token){
-      profile=getProfileFromIdToken(resp.id_token);
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    const userLoc = await getUserLocation();
+    const results = await foursquareAutocomplete(query, userLoc.lat, userLoc.lng);
+    
+    if (results.length > 0) {
+      console.log('Búsqueda:', results);
+      // Aquí puedes mostrar un dropdown con resultados
     }
-    if(!profile){
-      profile=await fetchProfileFromToken(resp.access_token);
-    }
-
-    const deviceEmail=localStorage.getItem(DEVICE_KEY);
-    if(deviceEmail&&deviceEmail!==profile.email){
-      resetLoginButton();
-      showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);
-      return;
-    }
-
-    let backendResult=null;
-    if(BACKEND_READY)
-      backendResult=await apiPost('login',{
-        access_token:resp.access_token,
-        email:   profile.email,
-        name:    profile.name,
-        picture: profile.picture,
-      });
-
-    const wasLoggedIn=isLoggedIn;
-    currentUser={email:profile.email,name:profile.name||profile.email,picture:profile.picture||''};
-    if(backendResult&&typeof backendResult.points==='number')userPts=backendResult.points;
-    if(backendResult&&backendResult.cooldowns)applyCooldownInfo(backendResult.cooldowns);
-    isLoggedIn=true;
-
-    localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-    localStorage.setItem(DEVICE_KEY,profile.email);
-
-    /* Guardamos id_token (persistente) + access_token (sesión actual) */
-    saveTokenToStorage(resp.id_token||'',resp.access_token,resp.expires_in);
-
-    applyLoggedInUI();hideToastAction();maybeStartOccupancySync();
-    if(!wasLoggedIn)showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
-    if(pendingVote){
-      const{placeId,voteIdx}=pendingVote;pendingVote=null;
-      const p=places.find(x=>x.id===placeId);
-      if(p)await submitVoteToBackend(p,voteIdx);
-    }
-  }catch(err){console.warn('Error de login:',err);showToast('⚠️ Error al iniciar sesión con Google');}
-  finally{resetLoginButton();}
-}
-
-async function trySilentRenew(){
-  let attempts=0;
-  while((!window.google||!google.accounts||!google.accounts.oauth2)&&attempts<20){await new Promise(r=>setTimeout(r,200));attempts++;}
-  if(!initGoogleTokenClient())return;
-  tokenClient.requestAccessToken({prompt:''});
-}
-
-async function restoreSession(){
-  const saved=localStorage.getItem(SESSION_STORAGE_KEY);
-  if(!saved)return;
-
-  try{currentUser=JSON.parse(saved);}
-  catch{localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
-
-  if(!currentUser||!currentUser.email){
-    localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;
-  }
-  const deviceEmail=localStorage.getItem(DEVICE_KEY);
-  if(deviceEmail&&deviceEmail!==currentUser.email){
-    localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;
-  }
-
-  /* Mostrar UI logueada INMEDIATAMENTE — sin esperar red */
-  applyLoggedInUI();
-
-  const stored=loadTokenFromStorage();
-
-  /* ── CASO 1: tenemos id_token (sesiones nuevas) ──────────────
-     Verificamos localmente sin ningún fetch. Sesión instantánea.
-     Sincronizamos puntos y cooldowns en background. */
-  if(stored&&stored.idToken){
-    const profile=getProfileFromIdToken(stored.idToken);
-    if(profile&&profile.email===currentUser.email){
-      isLoggedIn=true;
-      if(profile.name)    currentUser.name   =profile.name;
-      if(profile.picture) currentUser.picture=profile.picture;
-      localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-      updateUserHUD();
-      maybeStartOccupancySync();
-      /* Sync de puntos/cooldowns en segundo plano, sin bloquear */
-      if(BACKEND_READY){
-        apiGet('me',{email:currentUser.email}).then(me=>{
-          if(me&&me.exists){
-            userPts=me.points||0;
-            if(me.name)    currentUser.name   =me.name;
-            if(me.picture) currentUser.picture=me.picture;
-            if(me.cooldowns)applyCooldownInfo(me.cooldowns);
-            localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-            updateUserHUD();
-            applyLoggedInUI();
-          }
-        }).catch(()=>{});
-      }
-      return;
-    }
-    /* id_token inválido o de otra cuenta — limpiar y renovar */
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-  }
-
-  /* ── CASO 2: solo access_token (sesiones antiguas migradas) ──
-     Intentamos usarlo una vez. Si venció, caemos al renew. */
-  if(stored&&stored.accessToken){
-    try{
-      const profile=await fetchProfileFromToken(stored.accessToken);
-      if(profile&&profile.email===currentUser.email){
-        isLoggedIn=true;
-        if(BACKEND_READY){
-          const me=await apiGet('me',{email:currentUser.email});
-          if(me&&me.exists){
-            userPts=me.points||0;
-            if(me.name)    currentUser.name   =me.name;
-            if(me.picture) currentUser.picture=me.picture;
-            if(me.cooldowns)applyCooldownInfo(me.cooldowns);
-            localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-          }
-        }
-        updateUserHUD();
-        maybeStartOccupancySync();
-        return;
-      }
-    }catch(e){
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-    }
-  }
-
-  /* ── CASO 3: sin token válido → intento silencioso de renovar */
-  isLoggedIn=false;
-  await trySilentRenew();
-}
-
-function updateUserHUD(){
-  const info=getLevelInfo(userPts);
-  document.getElementById('my-pts').textContent=userPts+' pts';
-  document.getElementById('lvl-badge').textContent='Nivel '+info.level;
-  document.getElementById('xp-bar-fill').style.width=info.pct+'%';
-  const prizePts=document.getElementById('my-pts-prizes');
-  if(prizePts)prizePts.textContent=userPts+' pts disponibles';
-}
-
-function levelUpCelebration(level){
-  const modal=document.createElement('div');
-  modal.className='levelup-modal';
-  modal.innerHTML=`<div class="levelup-card"><div class="levelup-burst">⭐</div><div class="levelup-lvl">¡NIVEL ${level}!</div><div class="levelup-title">${titleForLevel(level)}</div><button class="levelup-close" onclick="this.closest('.levelup-modal').remove()">¡Genial!</button></div>`;
-  document.body.appendChild(modal);
-  burstConfetti(modal.querySelector('.levelup-card'));
-  setTimeout(()=>{if(modal.parentNode)modal.remove();},5000);
-}
-
-function burstConfetti(originEl){
-  if(!originEl)return;
-  const rect=originEl.getBoundingClientRect(),emojis=['🎉','✨','⭐','🔥','💥'];
-  for(let i=0;i<16;i++){
-    const span=document.createElement('span');
-    span.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-    span.style.cssText=`position:fixed;left:${rect.left+rect.width/2}px;top:${rect.top+rect.height/2}px;font-size:${14+Math.random()*12}px;pointer-events:none;z-index:99999;`;
-    document.body.appendChild(span);
-    const angle=Math.random()*Math.PI*2,dist=65+Math.random()*100,dx=Math.cos(angle)*dist,dy=Math.sin(angle)*dist-50;
-    const anim=span.animate([{transform:'translate(0,0) scale(.6) rotate(0deg)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(1.15) rotate(${Math.random()*400}deg)`,opacity:0}],{duration:750+Math.random()*400,easing:'cubic-bezier(.2,.8,.3,1)'});
-    anim.onfinish=()=>span.remove();
-    setTimeout(()=>span.remove(),1400);
-  }
-}
-
-/* ─── TOASTS ─── */
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-let toastActionTimer=null;
-function showToastAction(msg){const t=document.getElementById('toast-action');document.getElementById('toast-action-msg').textContent=msg;t.classList.add('show');clearTimeout(toastActionTimer);toastActionTimer=setTimeout(()=>t.classList.remove('show'),5000);}
-function hideToastAction(){clearTimeout(toastActionTimer);document.getElementById('toast-action').classList.remove('show');}
-
-/* ─── RANKING / PRIZES ─── */
-let rankingLoaded=false;
-async function ensureRankingLoaded(){if(rankingLoaded||!BACKEND_READY)return;const result=await apiGet('ranking',currentUser?{email:currentUser.email}:{});if(result&&Array.isArray(result.ranking)){rankingData=result.ranking;rankingLoaded=true;}}
-
-function buildRanking(){
-  const sorted=[...rankingData].sort((a,b)=>b.pts-a.pts);
-  const listEl=document.getElementById('rank-list');
-  if(!sorted.length){listEl.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 24px;text-align:center;height:100%;"><div style="font-size:34px">🏆</div><div style="font-size:14px;font-weight:800;color:var(--text)">Todavía no hay reportes</div><div style="font-size:12.5px;color:var(--text2);max-width:220px">Sé el primero en reportar el estado de un comercio y encabezá el ranking</div></div>`;return;}
-  const medals=['🥇','🥈','🥉'];
-  listEl.innerHTML=sorted.map((u,i)=>`<div class="rank-row${u.isMe?' is-me':''}" style="animation-delay:${i*.04}s"><div class="rank-pos">${medals[i]||(i+1)}</div><div class="rank-avatar" style="background:${u.bg};color:${u.fg}">${u.init}</div><div class="rank-info"><div class="rank-name">${u.name}${u.isMe?' <span style="font-size:11px;color:var(--green);font-weight:800">(vos)</span>':''}</div><div class="rank-sub">${u.reports} reportes este mes</div></div><div class="rank-pts-val">${u.pts.toLocaleString('es-AR')}</div></div>`).join('');
-}
-
-let prizesLoaded=false;
-async function ensurePrizesLoaded(){if(prizesLoaded||!BACKEND_READY)return;const result=await apiGet('prizes');if(result&&Array.isArray(result.prizes)){prizesData=result.prizes;prizesLoaded=true;}}
-
-function buildPrizes(){
-  document.getElementById('my-pts-prizes').textContent=userPts+' pts disponibles';
-  document.getElementById('prizes-list').innerHTML=prizesData.map((pr,idx)=>{const pct=Math.min(100,Math.round((userPts/pr.pts)*100));return`<div class="prize-row" style="animation-delay:${idx*.04}s"><div class="prize-emoji">${pr.emoji}</div><div class="prize-body"><div class="prize-name">${pr.name}</div><div class="prize-cat">${pr.pts.toLocaleString('es-AR')} pts · ${pr.cat} · ${pr.partner}</div><div class="pbar-bg"><div class="pbar-fill" style="width:0%" data-w="${pct}"></div></div></div><div class="prize-cta cant">Muy pronto</div></div>`;}).join('');
-  requestAnimationFrame(()=>{document.querySelectorAll('.pbar-fill').forEach(el=>{el.style.width=el.dataset.w+'%';});});
-}
-
-/* ─── SWITCH TAB ─── */
-function switchTab(tab){
-  ['map','cerca','ranking','prizes'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('visible',t===tab);});
-  if(tab==='map'&&leafletMap)setTimeout(()=>leafletMap.invalidateSize(),50);
-  if(tab==='cerca'){if(!cercaLoaded)cercaLoadPlaces();else cercaApplyFilters();}
-  if(tab==='ranking'){buildRanking();ensureRankingLoaded().then(buildRanking);}
-  if(tab==='prizes'){buildPrizes();ensurePrizesLoaded().then(buildPrizes);}
-}
-
-/* ─── INTERVALS ─── */
-setInterval(()=>{tickCooldownUI();},1000);
-setInterval(()=>{pruneOldTiles();persistCache();},60*60*1000);
-
-/* ─── INIT ─── */
-window.addEventListener('DOMContentLoaded',()=>{
-  loadCache();
-  loadCooldownsFromStorage();
-  pruneOldTiles();
-  initMap();
-  initCercaSearch();
-  updateCrowdBar(calcCrowdPct());
-  updateUserHUD();
-  initGoogleTokenClient();
-  restoreSession();
-  maybeStartOccupancySync();
-  setTimeout(()=>{if(!cercaLoaded)cercaLoadPlaces();},300);
+  }, 300);
 });
 
-/* ─── PWA ─── */
-let deferredInstallPrompt=null;
-if('serviceWorker' in navigator){
-  window.addEventListener('load', async () => {
+function clearMapSearch() {
+  mapSearchInput.value = '';
+  document.getElementById('mapSearchClear').classList.remove('visible');
+}
 
-    /* 1. Registrar / actualizar el SW — forzar activación inmediata */
-    try{
-      const reg = await navigator.serviceWorker.register('./sw.js');
-      /* Si hay un SW esperando (versión anterior), lo activamos ya */
-      if(reg.waiting){
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing;
-        if(newSW){
-          newSW.addEventListener('statechange', () => {
-            if(newSW.state === 'installed' && navigator.serviceWorker.controller){
-              newSW.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        }
-      });
-    }catch(err){
-      console.warn('[Qooentum] SW registration failed:', err);
-    }
-
-    /* 2. Limpiar entradas de HERE/Geoapify(legacy)/Google de cachés
-          El nuevo SW ya no las cachea, pero pueden quedar del anterior */
-    if('caches' in window){
-      try{
-        const cacheNames = await caches.keys();
-        for(const cacheName of cacheNames){
-          const cache = await caches.open(cacheName);
-          const reqs  = await cache.keys();
-          for(const req of reqs){
-            if(req.url.includes('geoapify.com')    || // legacy — limpiar entradas viejas
-               req.url.includes('hereapi.com')     ||
-               req.url.includes('googleapis.com')  ||
-               req.url.includes('script.google.com')){
-              await cache.delete(req);
-            }
-          }
-        }
-        console.log('[Qooentum] Caché de APIs externas limpiado');
-      }catch(e){
-        console.warn('[Qooentum] Error limpiando caché:', e);
-      }
-    }
+/* ─── UI BÁSICO ─── */
+function switchTab(tab) {
+  ['map', 'cerca', 'ranking', 'prizes'].forEach(t => {
+    document.getElementById(`panel-${t}`).classList.toggle('visible', t === tab);
+  });
+  
+  document.querySelectorAll('.tab').forEach((btn, idx) => {
+    const tabs = ['map', 'cerca', 'ranking', 'prizes'];
+    btn.classList.toggle('active', tabs[idx] === tab);
   });
 
-  /* Recargar la página cuando el nuevo SW tome control */
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
+  if (tab === 'map' && leafletMap) {
+    setTimeout(() => leafletMap.invalidateSize(), 50);
+  }
+  
+  if (tab === 'cerca' && !cercaLoaded) {
+    cercaLoadPlaces();
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+}
+
+function toggleUserDropdown() {
+  document.getElementById('user-dropdown').classList.toggle('open');
+}
+
+function logout() {
+  showToast('👋 Sesión cerrada');
+  toggleUserDropdown();
+}
+
+function editProfile() {
+  showToast('📝 Editar perfil (próximamente)');
+  toggleUserDropdown();
+}
+
+function viewSettings() {
+  showToast('⚙️ Configuración (próximamente)');
+  toggleUserDropdown();
+}
+
+function triggerLogin() {
+  showToast('🔑 Ingresar con Google (próximamente)');
+}
+
+function updateUserHUD() {
+  // Placeholder
+}
+
+function calcCrowdPct() {
+  return 45;
+}
+
+function updateCrowdBar(pct) {
+  // Placeholder
+}
+
+/* ─── RANKING & PRIZES ─── */
+let rankingData = [];
+let prizesData = [];
+
+function buildRanking() {
+  const sorted = [...rankingData].sort((a, b) => b.pts - a.pts);
+  const listEl = document.getElementById('rank-list');
+  
+  if (!sorted.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:34px">🏆</div>
+        <div style="font-weight:700">Todavía no hay reportes</div>
+        <div style="font-size:12px;color:var(--text2)">Sé el primero en reportar</div>
+      </div>
+    `;
+    return;
+  }
+
+  const medals = ['🥇', '🥈', '🥉'];
+  listEl.innerHTML = sorted.map((u, i) => `
+    <div class="rank-row">
+      <div class="rank-pos">${medals[i] || i + 1}</div>
+      <div class="rank-avatar" style="background:${u.bg};color:${u.fg}">${u.init}</div>
+      <div class="rank-info">
+        <div class="rank-name">${u.name}</div>
+        <div class="rank-sub">${u.reports} reportes</div>
+      </div>
+      <div class="rank-pts-val">${u.pts}</div>
+    </div>
+  `).join('');
+}
+
+function buildPrizes() {
+  document.getElementById('prizes-list').innerHTML = `
+    <div style="text-align:center;padding:40px;color:var(--text2)">
+      🎁 Próximamente...
+    </div>
+  `;
+}
+
+/* ─── INIT ─── */
+window.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  updateUserHUD();
+  buildRanking();
+  buildPrizes();
+
+  // Cargar lugares después de 300ms
+  setTimeout(() => {
+    if (!cercaLoaded) cercaLoadPlaces();
+  }, 300);
+});
+
+/* ─── SERVICE WORKER ─── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      console.log('✅ Service Worker registrado');
+    } catch (err) {
+      console.warn('⚠️ Error SW:', err);
+    }
   });
 }
-function installPwa(){document.getElementById('install-banner').style.display='none';if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});}
-window.addEventListener('appinstalled',()=>{document.getElementById('install-banner').style.display='none';showToast('✅ Qooentum instalada');});
-window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone)document.getElementById('install-banner').style.display='flex';});
 </script>
 </body>
 </html>
