@@ -48,8 +48,8 @@
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
 }
-html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:var(--font-base);line-height:1.5;-webkit-font-smoothing:antialiased;}
-.app{display:flex;flex-direction:column;height:100dvh;max-width:1200px;margin:0 auto;overflow:hidden;}
+html,body{height:100%;width:100%;overflow:hidden;background:#fff;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:var(--font-base);line-height:1.5;-webkit-font-smoothing:antialiased;}
+.app{display:flex;flex-direction:column;height:100dvh;width:100%;overflow:hidden;}
 .topbar{display:flex;align-items:center;gap:14px;padding: max(var(--sat), 10px) 18px 10px;height: calc(60px + var(--sat));background:rgba(255,255,255,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(226,232,240,.7);flex-shrink:0;position:relative;z-index:1500;flex-wrap:nowrap;}
 .brand{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-decoration:none;cursor:pointer;flex-shrink:0;}
 .brand-mark{width:150px;height:43px;border-radius:11px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
@@ -578,7 +578,7 @@ const CONFIG = {
   PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
   LOAD_TRIGGER_M: 40,
   VOTE_COOLDOWN_MS: 8 * 60 * 60 * 1000,
-  FOLLOW_ZOOM: 17,
+  FOLLOW_ZOOM: 16,
   POIS_JSON_URL: null, // 👈 Pegá acá la URL de tu pois.json
 };
 
@@ -876,7 +876,7 @@ function clearSearch(){document.getElementById('map-search-input').value='';docu
    MAPLIBRE GL — MARKERS + MAP INIT + GPS
    ════════════════════════════════════════════════════════════ */
 
-const CLUSTER_ZOOM_THRESHOLD = 14;
+const CLUSTER_ZOOM_THRESHOLD = 15;
 let mlMap = null, mlReady = false, mlReadyCallbacks = [];
 let mlMarkers = {}; // id -> {marker, el}
 let mlClusterMarkers = [];
@@ -1072,7 +1072,7 @@ function initMap(){
     container:'maplibre-map',
     style:'https://tiles.openfreemap.org/styles/liberty',
     center:[CONFIG.DEFAULT_CENTER.lng,CONFIG.DEFAULT_CENTER.lat],
-    zoom:15,
+    zoom:13,
     attributionControl:false,
   });
 
