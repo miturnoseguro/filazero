@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1167,7 +1168,7 @@ async function cercaFetchGeoapify(lat,lng,radius){
       const existing=placeIndex.get(p.id);
       if(existing){p.status=existing.status;p.reporters=existing.reporters;p.sponsor=existing.sponsor;}
       return p;
-    }).filter(p=>p.dist<=radius).sort((a,b)=>a.dist-b.dist);
+    }).filter(p=>p.dist<=Math.max(radius*1.5,300)).sort((a,b)=>a.dist-b.dist);
   }catch(e){
     if(e.name==='AbortError')return[];
     console.warn('Geoapify panel Cerca falló:',e);return[];
