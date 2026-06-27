@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -789,6 +790,72 @@ const GP_CAT_MAP={
   'Hardware Store':{emoji:'🔧',tipo:'Ferretería'},
   'Car Wash':{emoji:'🚗',tipo:'Lavadero'},
 };
+
+/* Mapea los types snake_case de Google Places API (New) a emoji + tipo en español */
+const GP_TYPE_MAP={
+  'supermarket':{emoji:'🛒',tipo:'Supermercado'},
+  'grocery_store':{emoji:'🛒',tipo:'Supermercado'},
+  'convenience_store':{emoji:'🏪',tipo:'Almacén'},
+  'pharmacy':{emoji:'💊',tipo:'Farmacia'},
+  'drugstore':{emoji:'💊',tipo:'Farmacia'},
+  'bank':{emoji:'🏦',tipo:'Banco'},
+  'atm':{emoji:'🏧',tipo:'Cajero'},
+  'post_office':{emoji:'📮',tipo:'Correo'},
+  'fast_food_restaurant':{emoji:'🍔',tipo:'Comida rápida'},
+  'restaurant':{emoji:'🍽️',tipo:'Restaurante'},
+  'cafe':{emoji:'☕',tipo:'Cafetería'},
+  'coffee_shop':{emoji:'☕',tipo:'Cafetería'},
+  'bakery':{emoji:'🥖',tipo:'Panadería'},
+  'butcher_shop':{emoji:'🥩',tipo:'Carnicería'},
+  'hospital':{emoji:'🏥',tipo:'Hospital'},
+  'medical_clinic':{emoji:'🏥',tipo:'Clínica'},
+  'clinic':{emoji:'🏥',tipo:'Clínica'},
+  'doctor':{emoji:'👨‍⚕️',tipo:'Consultorio'},
+  'health':{emoji:'🏥',tipo:'Salud'},
+  'dentist':{emoji:'🦷',tipo:'Odontólogo'},
+  'local_government_office':{emoji:'🏛️',tipo:'Oficina pública'},
+  'city_hall':{emoji:'🏛️',tipo:'Municipalidad'},
+  'gas_station':{emoji:'⛽',tipo:'Estación de servicio'},
+  'clothing_store':{emoji:'👗',tipo:'Ropa'},
+  'shoe_store':{emoji:'👟',tipo:'Calzado'},
+  'electronics_store':{emoji:'📱',tipo:'Electrónica'},
+  'beauty_salon':{emoji:'💄',tipo:'Estética'},
+  'hair_care':{emoji:'💇',tipo:'Peluquería'},
+  'gym':{emoji:'🏋️',tipo:'Gimnasio'},
+  'pet_store':{emoji:'🐶',tipo:'Tienda de mascotas'},
+  'veterinary_care':{emoji:'🐾',tipo:'Veterinaria'},
+  'market':{emoji:'🛍️',tipo:'Mercado'},
+  'florist':{emoji:'💐',tipo:'Florería'},
+  'book_store':{emoji:'📚',tipo:'Librería'},
+  'jewelry_store':{emoji:'💍',tipo:'Joyería'},
+  'furniture_store':{emoji:'🛋️',tipo:'Muebles'},
+  'hardware_store':{emoji:'🔧',tipo:'Ferretería'},
+  'car_wash':{emoji:'🚗',tipo:'Lavadero'},
+  'laundry':{emoji:'👕',tipo:'Lavandería'},
+  'sporting_goods_store':{emoji:'⚽',tipo:'Artículos deportivos'},
+  'toy_store':{emoji:'🧸',tipo:'Juguetería'},
+  'gift_shop':{emoji:'🎁',tipo:'Regalería'},
+  'liquor_store':{emoji:'🍷',tipo:'Licorería'},
+  'parking':{emoji:'🅿️',tipo:'Estacionamiento'},
+  'transit_station':{emoji:'🚉',tipo:'Transporte'},
+  'subway_station':{emoji:'🚇',tipo:'Subte'},
+  'train_station':{emoji:'🚂',tipo:'Tren'},
+  'bus_station':{emoji:'🚌',tipo:'Terminal de buses'},
+};
+
+function gplacesTypeLookup(types){
+  if(!types||!types.length)return{emoji:'🏪',tipo:'Comercio'};
+  for(const t of types){
+    const key=(t||'').toLowerCase().replace(/\s+/g,'_');
+    if(GP_TYPE_MAP[key])return GP_TYPE_MAP[key];
+  }
+  // Fallback: buscar también en GP_CAT_MAP por nombre capitalizado
+  for(const t of types){
+    const cap=t.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    if(GP_CAT_MAP[cap])return GP_CAT_MAP[cap];
+  }
+  return{emoji:'🏪',tipo:'Comercio'};
+}
 
 function gplacesCatLookup(categories){
   const types = (categories||[]).map(c=>c.name||"");
