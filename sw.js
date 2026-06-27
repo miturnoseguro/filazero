@@ -1,20 +1,17 @@
-/* Qooentum — Service Worker v5 (fix Foursquare CORS) */
-const CACHE_NAME = 'qooentum-v5';
+/* Qooentum — Service Worker v6 (precache tolerante + Foursquare bypass) */
+const CACHE_NAME = 'qooentum-v6';
 const PRECACHE_URLS = [
   './',
   './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
 ];
 
-/* ─── Dominios que NUNCA se cachean ─────────────────────────
-   - Foursquare: respuestas dinámicas, no cachear
-   - googleapis: tokens OAuth, perfiles de usuario
-   - accounts.google: autenticación
-   - script.google: backend Apps Script
+/* ─── Dominios que NUNCA interceptamos ──────────────────────
+   Para estos dominios NO llamamos event.respondWith() en absoluto.
+   El browser los maneja directamente con CORS nativo completo,
+   lo que permite que los headers Authorization de Foursquare
+   y los tokens OAuth de Google pasen sin interferencia.
    ─────────────────────────────────────────────────────────── */
-const NEVER_CACHE_DOMAINS = [
+const NEVER_INTERCEPT_DOMAINS = [
   'api.foursquare.com',
   'location.foursquare.com',
   'googleapis.com',
@@ -22,20 +19,27 @@ const NEVER_CACHE_DOMAINS = [
   'script.google.com',
 ];
 
-function shouldNeverCache(url) {
-  return NEVER_CACHE_DOMAINS.some((d) => url.hostname.includes(d));
+function shouldNeverIntercept(url) {
+  return NEVER_INTERCEPT_DOMAINS.some((d) => url.hostname.includes(d));
 }
 
-/* ─── INSTALL ──────────────────────────────────────────────── */
+/* ─── INSTALL — precacheo tolerante a errores ──────────────── */
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Cachear cada URL individualmente para que un fallo no rompa todo
+      await Promise.allSettled(
+        PRECACHE_URLS.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn(`SW: no se pudo pre-cachear ${url}:`, err);
+          })
+        )
+      );
+    }).then(() => self.skipWaiting())
   );
 });
 
-/* ─── ACTIVATE ─────────────────────────────────────────────── */
+/* ─── ACTIVATE — limpiar cachés viejas ─────────────────────── */
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
@@ -44,21 +48,11 @@ self.addEventListener('activate', (event) => {
           keys
             .filter((k) => k !== CACHE_NAME)
             .map((k) => {
-              console.log(`🗑️  Eliminando caché vieja: ${k}`);
+              console.log(`SW: eliminando caché vieja: ${k}`);
               return caches.delete(k);
             })
         )
       )
-      /* Limpiar entradas de Foursquare/APIs que no deben cachearse */
-      .then(() => caches.open(CACHE_NAME))
-      .then(async (cache) => {
-        const reqs = await cache.keys();
-        const toDelete = reqs.filter((r) => shouldNeverCache(new URL(r.url)));
-        await Promise.all(toDelete.map((r) => cache.delete(r)));
-        if (toDelete.length > 0) {
-          console.log(`🧹 Limpiadas ${toDelete.length} entradas de APIs externas`);
-        }
-      })
       .then(() => self.clients.claim())
   );
 });
@@ -67,19 +61,15 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Solo interceptamos GET (OPTIONS/POST/etc van directo a la red sin interferencia)
+  // Solo interceptamos GET
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
   /* 1. Dominios críticos → NO interceptar en absoluto.
-        Si llamamos event.respondWith() con fetch(req) para requests cross-origin
-        que tienen headers Authorization, Chrome los bloquea con "provisional headers".
-        La solución correcta es no interceptar — el browser lo maneja directamente. */
-  if (shouldNeverCache(url)) {
-    // No llamamos event.respondWith() → el browser maneja el request nativamente
-    return;
-  }
+        Hacemos return sin llamar event.respondWith().
+        El browser maneja el request nativamente con CORS completo. */
+  if (shouldNeverIntercept(url)) return;
 
   /* 2. Navegación / HTML de mismo origen → network-first */
   if (
@@ -90,8 +80,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+          }
           return res;
         })
         .catch(() =>
@@ -107,22 +99,22 @@ self.addEventListener('fetch', (event) => {
       caches.match(req).then((cached) => {
         if (cached) return cached;
         return fetch(req).then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+          }
           return res;
-        });
+        }).catch(() => new Response('Offline', { status: 503 }));
       })
     );
     return;
   }
 
-  /* 4. Cross-origin (fonts, Leaflet tiles, CDN)
-        → stale-while-revalidate, SOLO cachear respuestas ok */
+  /* 4. Cross-origin (fonts, Leaflet tiles, CDN) → stale-while-revalidate */
   event.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req)
         .then((res) => {
-          /* Solo cachear si la respuesta es exitosa */
           if (res && res.ok) {
             const clone = res.clone();
             caches.open(CACHE_NAME).then((c) => c.put(req, clone));
@@ -135,11 +127,11 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-/* ─── SKIP WAITING (permite actualización inmediata) ─── */
+/* ─── SKIP WAITING (actualización inmediata desde la app) ─── */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-console.log('✅ Service Worker v5 — Foursquare requests pasan directo al browser');
+console.log('✅ SW v6 activo — Foursquare bypass + precache tolerante');
