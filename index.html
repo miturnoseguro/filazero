@@ -349,7 +349,7 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
 .nc-empty-title{font-size:14px;font-weight:800;color:var(--text2);}
 .nc-empty-sub{font-size:12.5px;color:var(--text3);max-width:230px;line-height:1.5;}
 .nc-error-banner{margin:12px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;font-size:12px;color:#92400E;font-weight:600;display:flex;gap:9px;align-items:flex-start;flex-shrink:0;}
-.prizes-back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--text2);padding:6px 10px 6px 4px;border-radius:99px;transition:all .18s;margin-left:auto;}
+.prizes-back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--text2);padding:6px 10px 6px 4px;border-radius:99px;transition:all .18px;margin-left:auto;}
 .prizes-back-btn:hover{color:var(--text);background:var(--surface2);}
 @media(max-width:680px){
   .topbar{flex-wrap:nowrap;height:auto;padding:max(var(--sat), 10px) 12px 10px;align-items:center;gap:8px;}
@@ -596,7 +596,8 @@ const CONFIG = {
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
 const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
-const GEOAPIFY_READY = CONFIG.GEOAPIFY_API_KEY && !CONFIG.GEOAPIFY_API_KEY.startsWith('TU_CLAVE');
+/* FIX: Added length check to prevent treating placeholder keys as valid */
+const GEOAPIFY_READY = CONFIG.GEOAPIFY_API_KEY && !CONFIG.GEOAPIFY_API_KEY.startsWith('TU_CLAVE') && CONFIG.GEOAPIFY_API_KEY.length > 20;
 const SESSION_STORAGE_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
 const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
@@ -749,6 +750,7 @@ function geoapifyPlaceToPlace(feature){
   return{id:`geo_${props.place_id||feature.id}`,name,type:info.tipo,logo:info.emoji,lat:feature.geometry.coordinates[1],lng:feature.geometry.coordinates[0],addr,status:0,reporters:0,rating:(3.5+Math.random()*1.4).toFixed(1),reviewsN:Math.floor(Math.random()*200+10),open:true,verified:false,fromGeoapify:true};
 }
 
+/* FIX: Added cache:'no-store' to bypass Service Worker cache for Geoapify tile requests */
 async function loadGeoapifyForTiles(tileKeys){
   if(!GEOAPIFY_READY||!tileKeys.length)return[];
   let minLat=Infinity,minLng=Infinity,maxLat=-Infinity,maxLng=-Infinity;
@@ -757,21 +759,29 @@ async function loadGeoapifyForTiles(tileKeys){
   const bbox=`${minLng-pad},${minLat-pad},${maxLng+pad},${maxLat+pad}`;
   const categories='commercial,catering,healthcare,leisure,government,post_office,fuel,professional,transport';
   const url=`https://api.geoapify.com/v2/places?categories=${categories}&filter=rect:${bbox}&limit=300&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
-  try{const res=await fetch(url);if(!res.ok)throw new Error('Geoapify HTTP '+res.status);const data=await res.json();if(!data.features||!data.features.length)return[];return data.features.map(geoapifyPlaceToPlace);}
+  try{
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok){
+      let errBody='';try{errBody=await res.text();}catch(e){}
+      console.warn('Geoapify tiles HTTP',res.status,errBody.slice(0,300));
+      throw new Error('Geoapify HTTP '+res.status);
+    }
+    const data=await res.json();
+    if(!data.features||!data.features.length)return[];
+    return data.features.map(geoapifyPlaceToPlace);
+  }
   catch(e){console.warn('Geoapify falló:',e);return[];}
 }
 
-/* ─── GEOAPIFY SEARCH — solo usa Places API (geocode/search no disponible en plan free) ─── */
+/* FIX: Added cache:'no-store' to bypass SW cache and improved error logging */
 async function geoapifySearch(query,lat,lng){
   if(!GEOAPIFY_READY)return[];
   const q=query.toLowerCase();
-  // Primero buscar en cache local
   const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,10);
   if(localMatches.length>=3)return localMatches;
-  // Ampliar con Places API filtrando por nombre
   const url=`https://api.geoapify.com/v2/places?categories=commercial,catering,healthcare,leisure,government,post_office,fuel&filter=circle:${lng},${lat},5000&limit=50&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
   try{
-    const res=await fetch(url);
+    const res=await fetch(url,{cache:'no-store'});
     if(!res.ok)return localMatches;
     const data=await res.json();
     if(!data.features)return localMatches;
@@ -1130,6 +1140,7 @@ function cercaGuessCategory(name,type){
 
 function cercaFmtDist(m){return m<1000?m+'m':(m/1000).toFixed(1)+'km';}
 
+/* FIX: Added cache:'no-store' to bypass Service Worker cache for Geoapify cerca requests */
 async function cercaFetchGeoapify(lat,lng,radius){
   if(cercaAbortController)cercaAbortController.abort();
   cercaAbortController=new AbortController();
@@ -1140,8 +1151,12 @@ async function cercaFetchGeoapify(lat,lng,radius){
   const limit=radius<=500?120:300;
   const url=`https://api.geoapify.com/v2/places?categories=${categories}&filter=rect:${bbox}&limit=${limit}&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
   try{
-    const res=await fetch(url,{signal});
-    if(!res.ok)throw new Error('Geoapify HTTP '+res.status);
+    const res=await fetch(url,{signal,cache:'no-store'});
+    if(!res.ok){
+      let errBody='';try{errBody=await res.text();}catch(e){}
+      console.warn('Geoapify cerca HTTP',res.status,errBody.slice(0,300));
+      throw new Error('Geoapify HTTP '+res.status);
+    }
     const data=await res.json();
     if(!data.features)return[];
     return data.features.map(feature=>{
@@ -1158,16 +1173,14 @@ async function cercaFetchGeoapify(lat,lng,radius){
   }
 }
 
-/* ─── CERCA CITY SEARCH — usa Places API (geocode/search no disponible en plan free) ─── */
+/* FIX: Added cache:'no-store' to bypass SW cache for city search */
 async function cercaFetchCitySearch(query,lat,lng){
   if(!GEOAPIFY_READY)return[];
   const q=query.toLowerCase();
-  // Primero buscar en los ya cargados
   const localMatches=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)||(p.addr||'').toLowerCase().includes(q));
-  // Ampliar via Places API filtrando por nombre
   const url=`https://api.geoapify.com/v2/places?categories=commercial,catering,healthcare,leisure,government,post_office,fuel&filter=circle:${lng},${lat},5000&limit=100&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
   try{
-    const res=await fetch(url);
+    const res=await fetch(url,{cache:'no-store'});
     if(!res.ok)return localMatches;
     const data=await res.json();
     if(!data.features)return localMatches;
@@ -1568,10 +1581,38 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 /* ─── PWA ─── */
 let deferredInstallPrompt=null;
-if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW registration failed:',err));});}
-window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone)document.getElementById('install-banner').style.display='flex';});
+/* FIX: On SW registration, first purge any bad (non-ok) Geoapify responses
+   that may have been cached by a previous SW version. This fixes the issue
+   where the SW serves stale 400 errors for all subsequent Geoapify requests. */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',async()=>{
+    if('caches' in window){
+      try{
+        const cacheNames=await caches.keys();
+        for(const cacheName of cacheNames){
+          const cache=await caches.open(cacheName);
+          const reqs=await cache.keys();
+          for(const req of reqs){
+            if(req.url.includes('geoapify.com')){
+              const resp=await cache.match(req);
+              if(resp&&!resp.ok){
+                await cache.delete(req);
+                console.log('[Qooentum] SW: Cleared bad Geoapify cached response',req.url.slice(0,80));
+              }
+            }
+          }
+        }
+        console.log('[Qooentum] SW: Geoapify cache cleanup complete');
+      }catch(e){
+        console.warn('[Qooentum] SW: Cache cleanup error',e);
+      }
+    }
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW registration failed:',err));
+  });
+}
 function installPwa(){document.getElementById('install-banner').style.display='none';if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});}
 window.addEventListener('appinstalled',()=>{document.getElementById('install-banner').style.display='none';showToast('✅ Qooentum instalada');});
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone)document.getElementById('install-banner').style.display='flex';});
 </script>
 </body>
 </html>
