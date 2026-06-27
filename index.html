@@ -1385,8 +1385,47 @@ function exitPickMode(){pickModeActive=false;document.getElementById('pick-mode-
 /* ─── GOOGLE AUTH ─── */
 let tokenClient=null;
 const TOKEN_STORAGE_KEY='qooentum_gtoken';
-function saveTokenToStorage(token,expiresIn){try{const expiresAt=Date.now()+(expiresIn?expiresIn*1000:3500*1000);localStorage.setItem(TOKEN_STORAGE_KEY,JSON.stringify({token,expiresAt}));}catch(e){}}
-function loadTokenFromStorage(){try{const raw=localStorage.getItem(TOKEN_STORAGE_KEY);if(!raw)return null;const data=JSON.parse(raw);if(!data||!data.token)return null;if(data.expiresAt&&Date.now()>data.expiresAt+5*60*1000){localStorage.removeItem(TOKEN_STORAGE_KEY);return null;}return data.token;}catch(e){return null;}}
+
+/* Decodifica un JWT sin verificar firma (solo el payload) */
+function decodeJwtPayload(token){
+  try{
+    const b64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(b64));
+  }catch(e){return null;}
+}
+
+/* Guardamos el id_token (JWT de Google) que NO vence en 1h.
+   El access_token sí vence — pero el id_token sirve para
+   restaurar la sesión localmente sin hacer ningún fetch. */
+function saveTokenToStorage(idToken,accessToken,expiresIn){
+  try{
+    const expiresAt=Date.now()+(expiresIn?expiresIn*1000:3500*1000);
+    localStorage.setItem(TOKEN_STORAGE_KEY,JSON.stringify({
+      idToken,      // JWT — restauración offline, no vence en 1h
+      accessToken,  // OAuth token — para llamadas que lo requieran
+      expiresAt,    // cuándo vence el access_token
+    }));
+  }catch(e){}
+}
+
+function loadTokenFromStorage(){
+  try{
+    const raw=localStorage.getItem(TOKEN_STORAGE_KEY);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch(e){return null;}
+}
+
+/* Obtiene el perfil del id_token SIN llamar a la red */
+function getProfileFromIdToken(idToken){
+  const payload=decodeJwtPayload(idToken);
+  if(!payload||!payload.email)return null;
+  return{
+    email:   payload.email,
+    name:    payload.name    ||payload.email,
+    picture: payload.picture ||'',
+  };
+}
 
 function initGoogleTokenClient(){
   if(!GOOGLE_AUTH_READY)return false;
@@ -1439,24 +1478,57 @@ function applyLoggedInUI(){
 async function fetchProfileFromToken(accessToken){const profileRes=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:`Bearer ${accessToken}`}});if(!profileRes.ok)throw new Error('No se pudo obtener el perfil de Google');return await profileRes.json();}
 
 async function handleGoogleTokenResponse(resp){
-  if(!resp||resp.error||!resp.access_token){resetLoginButton();if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')showToast('⚠️ No se pudo iniciar sesión con Google');return;}
+  if(!resp||resp.error||!resp.access_token){
+    resetLoginButton();
+    if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')
+      showToast('⚠️ No se pudo iniciar sesión con Google');
+    return;
+  }
   try{
-    const profile=await fetchProfileFromToken(resp.access_token);
+    /* Perfil desde id_token (sin red) o fallback a userinfo endpoint */
+    let profile=null;
+    if(resp.id_token){
+      profile=getProfileFromIdToken(resp.id_token);
+    }
+    if(!profile){
+      profile=await fetchProfileFromToken(resp.access_token);
+    }
+
     const deviceEmail=localStorage.getItem(DEVICE_KEY);
-    if(deviceEmail&&deviceEmail!==profile.email){resetLoginButton();showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);return;}
+    if(deviceEmail&&deviceEmail!==profile.email){
+      resetLoginButton();
+      showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);
+      return;
+    }
+
     let backendResult=null;
-    if(BACKEND_READY)backendResult=await apiPost('login',{access_token:resp.access_token,email:profile.email,name:profile.name,picture:profile.picture});
+    if(BACKEND_READY)
+      backendResult=await apiPost('login',{
+        access_token:resp.access_token,
+        email:   profile.email,
+        name:    profile.name,
+        picture: profile.picture,
+      });
+
     const wasLoggedIn=isLoggedIn;
     currentUser={email:profile.email,name:profile.name||profile.email,picture:profile.picture||''};
     if(backendResult&&typeof backendResult.points==='number')userPts=backendResult.points;
     if(backendResult&&backendResult.cooldowns)applyCooldownInfo(backendResult.cooldowns);
     isLoggedIn=true;
+
     localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
     localStorage.setItem(DEVICE_KEY,profile.email);
-    saveTokenToStorage(resp.access_token,resp.expires_in);
+
+    /* Guardamos id_token (persistente) + access_token (sesión actual) */
+    saveTokenToStorage(resp.id_token||'',resp.access_token,resp.expires_in);
+
     applyLoggedInUI();hideToastAction();maybeStartOccupancySync();
     if(!wasLoggedIn)showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
-    if(pendingVote){const{placeId,voteIdx}=pendingVote;pendingVote=null;const p=places.find(x=>x.id===placeId);if(p)await submitVoteToBackend(p,voteIdx);}
+    if(pendingVote){
+      const{placeId,voteIdx}=pendingVote;pendingVote=null;
+      const p=places.find(x=>x.id===placeId);
+      if(p)await submitVoteToBackend(p,voteIdx);
+    }
   }catch(err){console.warn('Error de login:',err);showToast('⚠️ Error al iniciar sesión con Google');}
   finally{resetLoginButton();}
 }
@@ -1471,22 +1543,82 @@ async function trySilentRenew(){
 async function restoreSession(){
   const saved=localStorage.getItem(SESSION_STORAGE_KEY);
   if(!saved)return;
-  try{currentUser=JSON.parse(saved);}catch{localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
-  if(!currentUser||!currentUser.email){localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
+
+  try{currentUser=JSON.parse(saved);}
+  catch{localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
+
+  if(!currentUser||!currentUser.email){
+    localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;
+  }
   const deviceEmail=localStorage.getItem(DEVICE_KEY);
-  if(deviceEmail&&deviceEmail!==currentUser.email){localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
+  if(deviceEmail&&deviceEmail!==currentUser.email){
+    localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;
+  }
+
+  /* Mostrar UI logueada INMEDIATAMENTE — sin esperar red */
   applyLoggedInUI();
-  const savedToken=loadTokenFromStorage();
-  if(savedToken){
+
+  const stored=loadTokenFromStorage();
+
+  /* ── CASO 1: tenemos id_token (sesiones nuevas) ──────────────
+     Verificamos localmente sin ningún fetch. Sesión instantánea.
+     Sincronizamos puntos y cooldowns en background. */
+  if(stored&&stored.idToken){
+    const profile=getProfileFromIdToken(stored.idToken);
+    if(profile&&profile.email===currentUser.email){
+      isLoggedIn=true;
+      if(profile.name)    currentUser.name   =profile.name;
+      if(profile.picture) currentUser.picture=profile.picture;
+      localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
+      updateUserHUD();
+      maybeStartOccupancySync();
+      /* Sync de puntos/cooldowns en segundo plano, sin bloquear */
+      if(BACKEND_READY){
+        apiGet('me',{email:currentUser.email}).then(me=>{
+          if(me&&me.exists){
+            userPts=me.points||0;
+            if(me.name)    currentUser.name   =me.name;
+            if(me.picture) currentUser.picture=me.picture;
+            if(me.cooldowns)applyCooldownInfo(me.cooldowns);
+            localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
+            updateUserHUD();
+            applyLoggedInUI();
+          }
+        }).catch(()=>{});
+      }
+      return;
+    }
+    /* id_token inválido o de otra cuenta — limpiar y renovar */
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+
+  /* ── CASO 2: solo access_token (sesiones antiguas migradas) ──
+     Intentamos usarlo una vez. Si venció, caemos al renew. */
+  if(stored&&stored.accessToken){
     try{
-      const profile=await fetchProfileFromToken(savedToken);
+      const profile=await fetchProfileFromToken(stored.accessToken);
       if(profile&&profile.email===currentUser.email){
         isLoggedIn=true;
-        if(BACKEND_READY){const me=await apiGet('me',{email:currentUser.email});if(me&&me.exists){userPts=me.points||0;if(me.name)currentUser.name=me.name;if(me.picture)currentUser.picture=me.picture;if(me.cooldowns)applyCooldownInfo(me.cooldowns);localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));}}
-        updateUserHUD();maybeStartOccupancySync();return;
+        if(BACKEND_READY){
+          const me=await apiGet('me',{email:currentUser.email});
+          if(me&&me.exists){
+            userPts=me.points||0;
+            if(me.name)    currentUser.name   =me.name;
+            if(me.picture) currentUser.picture=me.picture;
+            if(me.cooldowns)applyCooldownInfo(me.cooldowns);
+            localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
+          }
+        }
+        updateUserHUD();
+        maybeStartOccupancySync();
+        return;
       }
-    }catch(e){localStorage.removeItem(TOKEN_STORAGE_KEY);}
+    }catch(e){
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
   }
+
+  /* ── CASO 3: sin token válido → intento silencioso de renovar */
   isLoggedIn=false;
   await trySilentRenew();
 }
@@ -1581,33 +1713,56 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 /* ─── PWA ─── */
 let deferredInstallPrompt=null;
-/* FIX: On SW registration, first purge any bad (non-ok) Geoapify responses
-   that may have been cached by a previous SW version. This fixes the issue
-   where the SW serves stale 400 errors for all subsequent Geoapify requests. */
 if('serviceWorker' in navigator){
-  window.addEventListener('load',async()=>{
+  window.addEventListener('load', async () => {
+
+    /* 1. Registrar / actualizar el SW — forzar activación inmediata */
+    try{
+      const reg = await navigator.serviceWorker.register('./sw.js');
+      /* Si hay un SW esperando (versión anterior), lo activamos ya */
+      if(reg.waiting){
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if(newSW){
+          newSW.addEventListener('statechange', () => {
+            if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+              newSW.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        }
+      });
+    }catch(err){
+      console.warn('[Qooentum] SW registration failed:', err);
+    }
+
+    /* 2. Limpiar entradas de Geoapify/Google de cachés legacy
+          El nuevo SW ya no las cachea, pero pueden quedar del anterior */
     if('caches' in window){
       try{
-        const cacheNames=await caches.keys();
+        const cacheNames = await caches.keys();
         for(const cacheName of cacheNames){
-          const cache=await caches.open(cacheName);
-          const reqs=await cache.keys();
+          const cache = await caches.open(cacheName);
+          const reqs  = await cache.keys();
           for(const req of reqs){
-            if(req.url.includes('geoapify.com')){
-              const resp=await cache.match(req);
-              if(resp&&!resp.ok){
-                await cache.delete(req);
-                console.log('[Qooentum] SW: Cleared bad Geoapify cached response',req.url.slice(0,80));
-              }
+            if(req.url.includes('geoapify.com')    ||
+               req.url.includes('googleapis.com')  ||
+               req.url.includes('script.google.com')){
+              await cache.delete(req);
             }
           }
         }
-        console.log('[Qooentum] SW: Geoapify cache cleanup complete');
+        console.log('[Qooentum] Caché de APIs externas limpiado');
       }catch(e){
-        console.warn('[Qooentum] SW: Cache cleanup error',e);
+        console.warn('[Qooentum] Error limpiando caché:', e);
       }
     }
-    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW registration failed:',err));
+  });
+
+  /* Recargar la página cuando el nuevo SW tome control */
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
   });
 }
 function installPwa(){document.getElementById('install-banner').style.display='none';if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});}
