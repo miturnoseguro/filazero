@@ -1,5 +1,5 @@
 /* Qooentum — Service Worker v2 */
-const CACHE_NAME = 'qooentum-v2';
+const CACHE_NAME = 'qooentum-v3';
 const PRECACHE_URLS = [
   './',
   './index.html',
