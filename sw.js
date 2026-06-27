@@ -1,5 +1,5 @@
-/* Qooentum — Service Worker v3 (con Foursquare) */
-const CACHE_NAME = 'qooentum-v3';
+/* Qooentum — Service Worker v4 (Foursquare fix + session persistence) */
+const CACHE_NAME = 'qooentum-v4';
 const PRECACHE_URLS = [
   './',
   './index.html',
@@ -67,17 +67,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Solo interceptamos GET
+  // Solo interceptamos GET (OPTIONS/POST/etc van directo a la red sin interferencia)
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  /* 1. Dominios críticos → siempre red, sin caché */
+  /* 1. Dominios críticos → siempre red, sin caché, sin modificar el request
+        Se pasa el request tal cual para que los headers Authorization se preserven */
   if (shouldNeverCache(url)) {
     event.respondWith(
-      fetch(req)
+      fetch(req.clone())
         .catch(() => {
-          // Offline: retornar error
           return new Response(
             JSON.stringify({ error: 'Sin conexión a internet' }),
             { status: 503, headers: { 'Content-Type': 'application/json' } }
@@ -148,4 +148,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('✅ Service Worker v3 registrado (Foursquare ready)');
+console.log('✅ Service Worker v4 registrado (Foursquare + sesión persistente)');
