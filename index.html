@@ -552,6 +552,18 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
 <script>
 /* ════════════════════════════════════════════════════════════
    CONFIG
+   ════════════════════════════════════════════════════════════
+   NOTA CORS: Todos los llamados al backend van por GET con
+   ?action=X&payload={...} para evitar el preflight OPTIONS
+   que bloquea Apps Script. El backend (doGet) debe manejar
+   las acciones login, vote y redeem cuando llegan por GET.
+   Actualizá el switch de doGet en Apps Script así:
+
+     case 'login':  result = doLogin(JSON.parse(e.parameter.payload||'{}')); break;
+     case 'vote':   result = doVote(JSON.parse(e.parameter.payload||'{}')); break;
+     case 'redeem': result = doRedeem(JSON.parse(e.parameter.payload||'{}')); break;
+
+   (Podés dejar el doPost igual, pero ya no se usa desde el frontend.)
    ════════════════════════════════════════════════════════════ */
 const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbySr-veSK4eoAtOR1vHYB--o-ngrQqG0JC7dEeIXDKw5wZJRSdhUe5iEN4wibhsPTEX2w/exec',
@@ -651,9 +663,31 @@ function getVoteCooldownRemainingMs(pid){const next=placeCooldowns[pid];if(!next
 function formatCooldownRemaining(ms){const totalMin=Math.ceil(ms/60000),h=Math.floor(totalMin/60),m=totalMin%60;if(h<=0)return`${m} min`;if(m<=0)return`${h} h`;return`${h} h ${m} min`;}
 
 /* ── BACKEND ── */
+// Apps Script no admite preflight CORS (OPTIONS), así que todos los llamados
+// van por GET con el payload serializado en el query string. doGet() en el
+// backend ya maneja login, vote y redeem cuando recibe el param "payload".
 async function apiGet(action,params={}){if(!BACKEND_READY)return null;const qs=new URLSearchParams({action,...params}).toString();try{const res=await fetch(`${CONFIG.APPS_SCRIPT_URL}?${qs}`);const data=await res.json();if(!data.ok)throw new Error(data.error||'Error');return data.result;}catch(err){console.warn('apiGet:',action,err);return null;}}
-async function apiPost(action,payload={}){if(!BACKEND_READY)return null;try{const res=await fetch(CONFIG.APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action,...payload})});const data=await res.json();if(!data.ok)throw new Error(data.error||'Error');return data.result;}catch(err){console.warn('apiPost:',action,err);showToast('⚠️ No se pudo conectar con el servidor');return null;}}
-async function apiPostVote(payload){if(!BACKEND_READY)return{ok:false,network:false,result:null};try{const res=await fetch(CONFIG.APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'vote',...payload})});const data=await res.json();if(!data.ok){const msg=String(data.error||'');if(msg.startsWith('COOLDOWN:'))return{ok:false,network:false,cooldown:true,nextVoteAt:msg.slice(9)};throw new Error(msg||'Error');}return{ok:true,network:true,result:data.result};}catch(err){console.warn('vote:',err);return{ok:false,network:false,result:null};}}
+async function apiPost(action,payload={}){
+  // Enviamos como GET con payload JSON codificado para evitar el preflight CORS
+  if(!BACKEND_READY)return null;
+  try{
+    const qs=new URLSearchParams({action,payload:JSON.stringify(payload)}).toString();
+    const res=await fetch(`${CONFIG.APPS_SCRIPT_URL}?${qs}`);
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.error||'Error');
+    return data.result;
+  }catch(err){console.warn('apiPost:',action,err);showToast('⚠️ No se pudo conectar con el servidor');return null;}
+}
+async function apiPostVote(payload){
+  if(!BACKEND_READY)return{ok:false,network:false,result:null};
+  try{
+    const qs=new URLSearchParams({action:'vote',payload:JSON.stringify(payload)}).toString();
+    const res=await fetch(`${CONFIG.APPS_SCRIPT_URL}?${qs}`);
+    const data=await res.json();
+    if(!data.ok){const msg=String(data.error||'');if(msg.startsWith('COOLDOWN:'))return{ok:false,network:false,cooldown:true,nextVoteAt:msg.slice(9)};throw new Error(msg||'Error');}
+    return{ok:true,network:true,result:data.result};
+  }catch(err){console.warn('vote:',err);return{ok:false,network:false,result:null};}
+}
 
 /* ── SYNC ── */
 async function syncOccupancyStatus(){
@@ -1429,7 +1463,7 @@ function initGoogleTokenClient(){
   if(!GOOGLE_AUTH_READY)return false;
   if(tokenClient)return true;
   if(!window.google||!google.accounts||!google.accounts.oauth2)return false;
-  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CONFIG.GOOGLE_CLIENT_ID,scope:'email profile',callback:handleGoogleTokenResponse,error_callback:(err)=>{if(isLoggedIn)return;resetLoginButton();const errType=err?.type||'';if(errType!=='popup_closed'&&errType!=='access_denied')showToast('⚠️ No se pudo iniciar sesión con Google');}});
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CONFIG.GOOGLE_CLIENT_ID,scope:'email profile',ux_mode:'popup',callback:handleGoogleTokenResponse,error_callback:(err)=>{if(isLoggedIn)return;resetLoginButton();const errType=err?.type||'';if(errType!=='popup_closed'&&errType!=='access_denied')showToast('⚠️ No se pudo iniciar sesión con Google');}});
   return true;
 }
 
