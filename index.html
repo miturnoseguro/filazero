@@ -382,6 +382,16 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
       </div>
       <span class="brand-powered">powered by <strong>Bigdaat.com</strong></span>
     </a>
+
+    <div id="gp-query-counter" style="display:flex;flex-direction:column;margin-left:auto;min-width:140px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:default;" title="Queries gratuitas a Google Places este mes">
+      <span style="font-size:9px;font-weight:700;color:#94A3B8;letter-spacing:.3px;">QUERIES GRATUITAS</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+        <div style="flex:1;height:4px;background:#E2E8F0;border-radius:99px;overflow:hidden;">
+          <div style="width:100%;height:100%;background:#00C48C;border-radius:99px;"></div>
+        </div>
+        <span style="font-size:10px;font-weight:800;color:#00C48C;white-space:nowrap;">6.250 / 6.250</span>
+      </div>
+    </div>
     <div class="topbar-auth">
       <div class="user-chip-wrap" id="user-chip-wrap" style="display:none;">
         <div class="user-chip" id="user-chip" onclick="toggleUserDropdown()">
@@ -592,16 +602,54 @@ const CONFIG = {
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
 const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
 
-/* ─── FOURSQUARE CONFIG ─── */
-const FOURSQUARE_CONFIG = {
-  API_KEY: 'sk_live_CQ2OXXLOV2WO0S1JYRNWJUXZKNPY04H5DUASJ4SDV0SNJJDG', // ← Reemplazá con tu key de developer.foursquare.com
-  API_BASE: 'https://api.foursquare.com/v3',
+/* ─── GOOGLE PLACES CONFIG ─── */
+const GPLACES_CONFIG = {
+  API_KEY: 'PEGAR_AQUI_TU_KEY_DE_GOOGLE_PLACES', // ← Reemplazá con tu key de console.cloud.google.com
+  API_BASE: 'https://places.googleapis.com/v1',
   SEARCH_RADIUS: 800,
-  LIMIT: 50,
+  LIMIT: 20,
+  // Crédito gratuito: $200 USD/mes = ~6.250 requests/mes con Nearby Search ($0.032 c/u)
+  MONTHLY_FREE_LIMIT: 6250,
 };
-const FOURSQUARE_READY = !FOURSQUARE_CONFIG.API_KEY.includes('AQUI_TU');
-const FOURSQUARE_CACHE = new Map();
-const FSQ_CACHE_TTL = 30 * 60 * 1000;
+const GPLACES_READY = !GPLACES_CONFIG.API_KEY.includes('PEGAR_AQUI');
+const GPLACES_CACHE = new Map();
+const GPLACES_CACHE_TTL = 30 * 60 * 1000;
+
+/* ─── QUERY COUNTER ─── */
+const QUERY_COUNTER_KEY = 'qooentum_gp_queries';
+function getQueryCounter() {
+  try {
+    const raw = localStorage.getItem(QUERY_COUNTER_KEY);
+    if (!raw) return { count: 0, month: getCurrentMonth() };
+    const data = JSON.parse(raw);
+    if (data.month !== getCurrentMonth()) return { count: 0, month: getCurrentMonth() };
+    return data;
+  } catch(e) { return { count: 0, month: getCurrentMonth() }; }
+}
+function getCurrentMonth() {
+  const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}`;
+}
+function incrementQueryCounter(n = 1) {
+  const data = getQueryCounter();
+  data.count += n;
+  try { localStorage.setItem(QUERY_COUNTER_KEY, JSON.stringify(data)); } catch(e) {}
+  updateQueryCounterUI();
+}
+function updateQueryCounterUI() {
+  const el = document.getElementById('gp-query-counter');
+  if (!el) return;
+  const { count } = getQueryCounter();
+  const remaining = Math.max(0, GPLACES_CONFIG.MONTHLY_FREE_LIMIT - count);
+  const pct = Math.round((remaining / GPLACES_CONFIG.MONTHLY_FREE_LIMIT) * 100);
+  const color = pct > 50 ? '#00C48C' : pct > 20 ? '#F59E0B' : '#EF4444';
+  el.innerHTML = `<span style="font-size:9px;font-weight:700;color:#94A3B8;letter-spacing:.3px;">QUERIES GRATUITAS</span>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+      <div style="flex:1;height:4px;background:#E2E8F0;border-radius:99px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:99px;transition:width .4s"></div>
+      </div>
+      <span style="font-size:10px;font-weight:800;color:${color};white-space:nowrap;">${remaining.toLocaleString('es-AR')} / ${GPLACES_CONFIG.MONTHLY_FREE_LIMIT.toLocaleString('es-AR')}</span>
+    </div>`;
+}
 const SESSION_STORAGE_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
 const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
@@ -695,8 +743,8 @@ function startOccupancySync(){syncOccupancyStatus();if(occupancySyncInterval)cle
 function stopOccupancySync(){if(occupancySyncInterval){clearInterval(occupancySyncInterval);occupancySyncInterval=null;}}
 function maybeStartOccupancySync(){if(isLoggedIn&&!occupancySyncInterval)startOccupancySync();else if(!isLoggedIn&&occupancySyncInterval)stopOccupancySync();}
 
-/* ─── FOURSQUARE API ─── */
-const FSQ_CAT_EMOJI={
+/* ─── GOOGLE PLACES API ─── */
+const GP_CAT_MAP={
   'Supermarket':{emoji:'🛒',tipo:'Supermercado'},
   'Grocery Store':{emoji:'🛒',tipo:'Supermercado'},
   'Convenience Store':{emoji:'🏪',tipo:'Almacén'},
@@ -742,96 +790,74 @@ const FSQ_CAT_EMOJI={
   'Car Wash':{emoji:'🚗',tipo:'Lavadero'},
 };
 
-function fsqCatLookup(categories){
-  if(!categories||!categories.length)return{emoji:'🏪',tipo:'Comercio'};
-  for(const c of categories){
-    if(FSQ_CAT_EMOJI[c.name])return FSQ_CAT_EMOJI[c.name];
-  }
-  // Buscar por substring en el nombre de categoría
-  const name=(categories[0]?.name||'').toLowerCase();
-  if(name.includes('super')||name.includes('grocery'))return{emoji:'🛒',tipo:'Supermercado'};
-  if(name.includes('pharmacy')||name.includes('drug'))return{emoji:'💊',tipo:'Farmacia'};
-  if(name.includes('bank')||name.includes('financial'))return{emoji:'🏦',tipo:'Banco'};
-  if(name.includes('restaurant')||name.includes('food'))return{emoji:'🍽️',tipo:'Restaurante'};
-  if(name.includes('café')||name.includes('coffee'))return{emoji:'☕',tipo:'Cafetería'};
-  if(name.includes('hospital')||name.includes('health'))return{emoji:'🏥',tipo:'Hospital'};
-  if(name.includes('gym')||name.includes('fitness'))return{emoji:'🏋️',tipo:'Gimnasio'};
-  if(name.includes('school')||name.includes('education'))return{emoji:'🏫',tipo:'Educación'};
-  return{emoji:'🏪',tipo:categories[0]?.name||'Comercio'};
+function gplacesCatLookup(categories){
+  const types = (categories||[]).map(c=>c.name||"");
+  return gplacesTypeLookup(types);
 }
 
-function fsqToPlace(fsq,refLat,refLng){
-  const icon=fsqCatLookup(fsq.categories);
-  const addr=fsq.location?.formatted_address||fsq.location?.address||'Sin dirección';
-  const plat=fsq.geocodes?.main?.latitude??refLat;
-  const plng=fsq.geocodes?.main?.longitude??refLng;
-  // distance viene en metros desde la API cuando se hace search con ll=
-  const dist=typeof fsq.distance==='number'?fsq.distance:Math.round(distanceMeter(refLat,refLng,plat,plng));
-  return{
-    id:`fsq_${fsq.fsq_id}`,
-    name:fsq.name,
-    type:icon.tipo,
-    logo:icon.emoji,
-    lat:plat, lng:plng, addr,
-    status:0, reporters:0,
-    rating:fsq.rating!=null?Number(fsq.rating).toFixed(1):(3.5+Math.random()*1.4).toFixed(1),
-    reviewsN:fsq.stats?.total_ratings||Math.floor(Math.random()*200+10),
-    open:fsq.closed_bucket!=='VeryLikelyClosed'&&fsq.closed_bucket!=='LikelyClosed',
-    verified:false, fromFoursquare:true,
+function gplacesToPlace(gp, refLat, refLng) {
+  const types = gp.types || [];
+  const icon = gplacesTypeLookup(types);
+  const addr = gp.formattedAddress || gp.shortFormattedAddress || 'Sin dirección';
+  const plat = gp.location?.latitude ?? refLat;
+  const plng = gp.location?.longitude ?? refLng;
+  const dist = Math.round(distanceMeter(refLat, refLng, plat, plng));
+  const rating = gp.rating != null ? Number(gp.rating).toFixed(1) : (3.5 + Math.random() * 1.4).toFixed(1);
+  const reviewsN = gp.userRatingCount || Math.floor(Math.random() * 200 + 10);
+  const open = gp.regularOpeningHours?.openNow !== false;
+  const displayName = gp.displayName?.text || gp.name?.replace('places/','') || 'Sin nombre';
+  const placeId = gp.id || (gp.name ? gp.name.replace('places/','') : Math.random().toString(36).slice(2));
+  return {
+    id: `gp_${placeId}`,
+    name: displayName,
+    type: icon.tipo,
+    logo: icon.emoji,
+    lat: plat, lng: plng, addr,
+    status: 0, reporters: 0,
+    rating, reviewsN, open,
+    verified: false, fromGooglePlaces: true,
     dist
   };
 }
 
-async function fsqSearch(lat,lng,radius){
-  const cacheKey=`${Math.floor(lat*1000)}_${Math.floor(lng*1000)}_${radius}`;
-  const cached=FOURSQUARE_CACHE.get(cacheKey);
-  if(cached&&Date.now()-cached.ts<FSQ_CACHE_TTL)return cached.data;
-  try{
-    const params=new URLSearchParams({'ll':`${lat},${lng}`,'radius':radius,'limit':50,'sort':'distance'});
-    const res=await fetch(`${FOURSQUARE_CONFIG.API_BASE}/places/search?${params}`,
-      {headers:{'Authorization':FOURSQUARE_CONFIG.API_KEY,'Accept':'application/json'}});
-    if(!res.ok){
-      const errText=await res.text().catch(()=>'');
-      console.error(`Foursquare error ${res.status}:`,errText);
-      throw new Error('Foursquare HTTP '+res.status);
-    }
-    const data=await res.json();
-    const results=(data.results||[]).map(p=>fsqToPlace(p,lat,lng));
-    FOURSQUARE_CACHE.set(cacheKey,{data:results,ts:Date.now()});
+async function gplacesSearch(lat, lng, radius) {
+  if (!GPLACES_READY) return [];
+  const cacheKey = `${Math.floor(lat*1000)}_${Math.floor(lng*1000)}_${radius}`;
+  const cached = GPLACES_CACHE.get(cacheKey);
+  if (cached && Date.now() - cached.ts < GPLACES_CACHE_TTL) return cached.data;
+  try {
+    const body = {
+      includedTypes: [
+        'supermarket','pharmacy','bank','atm','restaurant','fast_food_restaurant',
+        'cafe','bakery','hospital','doctor','dentist','gas_station','clothing_store',
+        'electronics_store','gym','convenience_store','hardware_store','laundry',
+        'pet_store','florist','book_store','jewelry_store','beauty_salon','hair_care',
+        'post_office','government_office','car_wash','shoe_store','furniture_store','market'
+      ],
+      maxResultCount: GPLACES_CONFIG.LIMIT,
+      locationRestriction: {
+        circle: { center: { latitude: lat, longitude: lng }, radius: radius }
+      },
+    };
+    const res = await fetch(`${GPLACES_CONFIG.API_BASE}/places:searchNearby`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GPLACES_CONFIG.API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.location,places.types,places.formattedAddress,places.rating,places.userRatingCount,places.regularOpeningHours,places.shortFormattedAddress',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error('Google Places HTTP ' + res.status + ' ' + await res.text());
+    const data = await res.json();
+    incrementQueryCounter(1);
+    const results = (data.places || []).map(p => gplacesToPlace(p, lat, lng));
+    GPLACES_CACHE.set(cacheKey, { data: results, ts: Date.now() });
     return results;
-  }catch(e){console.warn('fsqSearch falló:',e);return[];}
+  } catch(e) { console.warn('gplacesSearch falló:', e); return []; }
 }
 
-let fsqAutocompleteController = null;
-async function fsqAutocomplete(query,lat,lng){
-  if(!query||query.length<2)return[];
-  // Cancelar request anterior si aún está en curso
-  if(fsqAutocompleteController)fsqAutocompleteController.abort();
-  fsqAutocompleteController=new AbortController();
-  try{
-    const params=new URLSearchParams({'query':query,'ll':`${lat},${lng}`,'limit':8});
-    const res=await fetch(`${FOURSQUARE_CONFIG.API_BASE}/places/autocomplete?${params}`,
-      {headers:{'Authorization':FOURSQUARE_CONFIG.API_KEY,'Accept':'application/json'},signal:fsqAutocompleteController.signal});
-    if(!res.ok)return[];
-    const data=await res.json();
-    return(data.results||[])
-      .filter(r=>r.type==='place'&&r.place)
-      .map(r=>{
-        const icon=fsqCatLookup(r.place?.categories);
-        const plat=r.place?.geocodes?.main?.latitude||lat;
-        const plng=r.place?.geocodes?.main?.longitude||lng;
-        return{
-          id:`fsq_${r.place.fsq_id}`,
-          name:r.text?.primary||r.place.name||'',
-          addr:r.text?.secondary||'',
-          lat:plat, lng:plng,
-          type:icon.tipo, logo:icon.emoji,
-          status:0, reporters:0, open:true, fromFoursquare:true,
-          dist:Math.round(distanceMeter(lat,lng,plat,plng))
-        };
-      });
-  }catch(e){if(e.name==='AbortError')return[];console.warn('fsqAutocomplete falló:',e);return[];}
-}
+
 
 /* ─── CARGA DE LUGARES PARA TILES (mapa principal) ─── */
 async function loadPlacesForTiles(tileKeys){
@@ -849,7 +875,7 @@ async function searchPlacesByQuery(query){
   const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,5);
   if(localMatches.length>=3)return localMatches;
   if(userLat!==null&&userLng!==null){
-    const results=await fsqAutocomplete(query,userLat,userLng);
+    const results=await gplacesAutocomplete(query,userLat,userLng);
     if(results.length)return results;
   }
   return localMatches;
@@ -907,7 +933,7 @@ async function searchPlacesByQuery(query){
   const q=query.toLowerCase();
   const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,5);
   if(localMatches.length>=3)return localMatches;
-  if(userLat!==null&&userLng!==null){const results=await fsqAutocomplete(query,userLat,userLng);if(results.length)return results;}
+  if(userLat!==null&&userLng!==null){const results=await gplacesAutocomplete(query,userLat,userLng);if(results.length)return results;}
   return localMatches;
 }
 
@@ -927,7 +953,7 @@ function onSearchInput(e){
   searchClear().classList.toggle('visible',val.length>0);
   if(val.length<2){searchDropdown().classList.remove('open');return;}
   clearTimeout(searchTimer);
-  searchTimer=setTimeout(()=>runSearch(val),500);
+  searchTimer=setTimeout(()=>runSearch(val),380);
 }
 
 async function runSearch(query){
@@ -1207,7 +1233,7 @@ async function cercaFetchPlaces(lat,lng,radius){
   if(cercaAbortController)cercaAbortController.abort();
   cercaAbortController=new AbortController();
   try{
-    const results=await fsqSearch(lat,lng,radius);
+    const results=await gplacesSearch(lat,lng,radius);
     return results.map(p=>{
       p.dist=Math.round(distanceMeter(lat,lng,p.lat,p.lng));
       p.cat=cercaGuessCategory(p.name,p.type);
@@ -1226,7 +1252,7 @@ async function cercaFetchCitySearch(query,lat,lng){
   const localMatches=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)||(p.addr||'').toLowerCase().includes(q));
   if(localMatches.length>=3)return localMatches;
   try{
-    const results=await fsqAutocomplete(query,lat,lng);
+    const results=await gplacesAutocomplete(query,lat,lng);
     const combined=[...localMatches];
     results.forEach(r=>{
       r.dist=Math.round(distanceMeter(lat,lng,r.lat,r.lng));
@@ -1399,7 +1425,7 @@ function initCercaSearch(){
     const val=e.target.value.trim();
     clear.classList.toggle('visible',val.length>0);
     clearTimeout(cercaSearchTimer);
-    cercaSearchTimer=setTimeout(()=>{cercaSearchQ=val;cercaApplyFilters();},500);
+    cercaSearchTimer=setTimeout(()=>{cercaSearchQ=val;cercaApplyFilters();},260);
   });
 }
 
@@ -1506,20 +1532,11 @@ async function handleGoogleTokenResponse(resp){
 }
 
 async function trySilentRenew(){
-  // Solo intenta renovar si tenemos sesión activa Y el token expiró
-  if(!GOOGLE_AUTH_READY||!isLoggedIn)return;
-  const savedToken=loadTokenFromStorage();
-  if(savedToken)return; // Token aún válido, no hace falta renovar
+  if(!GOOGLE_AUTH_READY)return;
   let attempts=0;
   while((!window.google||!google.accounts||!google.accounts.oauth2)&&attempts<20){await new Promise(r=>setTimeout(r,200));attempts++;}
   if(!initGoogleTokenClient())return;
-  try{
-    // prompt:'' intenta renovar silenciosamente; si falla, la sesión sigue activa igual
-    tokenClient.requestAccessToken({prompt:''});
-  }catch(e){
-    // Silencioso: la sesión de usuario sigue activa aunque el token OAuth haya expirado
-    console.log('Silent renew no disponible, sesión de usuario activa igual');
-  }
+  try{tokenClient.requestAccessToken({prompt:''});}catch(e){console.warn('Silent renew falló:',e);}
 }
 
 async function restoreSession(){
@@ -1527,12 +1544,10 @@ async function restoreSession(){
   if(!saved)return;
   try{currentUser=JSON.parse(saved);}catch{localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
   if(!currentUser||!currentUser.email){localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
-  // NOTA: No verificamos DEVICE_KEY aquí para no perder la sesión por inconsistencias
-  // (el DEVICE_KEY se sigue escribiendo al hacer login para evitar cambios de cuenta)
+  const deviceEmail=localStorage.getItem(DEVICE_KEY);
+  if(deviceEmail&&deviceEmail!==currentUser.email){localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
   // Restaurar sesión inmediatamente sin necesitar token de acceso
   isLoggedIn=true;
-  // Asegurar que DEVICE_KEY esté sincronizado con el usuario restaurado
-  localStorage.setItem(DEVICE_KEY,currentUser.email);
   applyLoggedInUI();
   // Intentar obtener datos actualizados del backend si está disponible
   if(BACKEND_READY){
@@ -1548,8 +1563,20 @@ async function restoreSession(){
     }).catch(()=>{});
   }
   maybeStartOccupancySync();
-  // Intentar renovar token OAuth en segundo plano (no afecta la sesión si falla)
-  setTimeout(()=>trySilentRenew(),3000);
+  // Intentar renovar token en segundo plano (sin bloquear la sesión)
+  const savedToken=loadTokenFromStorage();
+  if(savedToken){
+    fetchProfileFromToken(savedToken).then(profile=>{
+      if(profile&&profile.email===currentUser.email){
+        // Token aún válido, ok
+      }else{localStorage.removeItem(TOKEN_STORAGE_KEY);}
+    }).catch(()=>{
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      // Sesión sigue activa igual, solo el token expiró
+    });
+  }
+  // Intentar renovar token en segundo plano sin afectar la sesión
+  setTimeout(()=>trySilentRenew(),2000);
 }
 
 function updateUserHUD(){
@@ -1629,6 +1656,7 @@ setInterval(()=>{pruneOldTiles();persistCache();},60*60*1000);
 window.addEventListener('DOMContentLoaded',()=>{
   loadCache();
   loadCooldownsFromStorage();
+  updateQueryCounterUI();
   pruneOldTiles();
   initMap();
   initCercaSearch();
