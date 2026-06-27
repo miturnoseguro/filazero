@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -350,7 +349,7 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
 .nc-empty-title{font-size:14px;font-weight:800;color:var(--text2);}
 .nc-empty-sub{font-size:12.5px;color:var(--text3);max-width:230px;line-height:1.5;}
 .nc-error-banner{margin:12px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;font-size:12px;color:#92400E;font-weight:600;display:flex;gap:9px;align-items:flex-start;flex-shrink:0;}
-.prizes-back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--text2);padding:6px 10px 6px 4px;border-radius:99px;transition:all .18px;margin-left:auto;}
+.prizes-back-btn{display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--text2);padding:6px 10px 6px 4px;border-radius:99px;transition:all .18s;margin-left:auto;}
 .prizes-back-btn:hover{color:var(--text);background:var(--surface2);}
 @media(max-width:680px){
   .topbar{flex-wrap:nowrap;height:auto;padding:max(var(--sat), 10px) 12px 10px;align-items:center;gap:8px;}
@@ -493,7 +492,7 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
       <button class="cerca-f-chip" data-cat="health" onclick="cercaSetCat('health',this)">💊 Salud</button>
       <button class="cerca-f-chip" data-cat="supermarket" onclick="cercaSetCat('supermarket',this)">🛒 Súper</button>
       <button class="cerca-f-chip" data-cat="bank" onclick="cercaSetCat('bank',this)">🏦 Banco</button>
-      <button class="cerca-f-chip" data-cat="office.government" onclick="cercaSetCat('office.government',this)">🏛️ Gobierno</button>
+      <button class="cerca-f-chip" data-cat="government" onclick="cercaSetCat('government',this)">🏛️ Gobierno</button>
       <button class="cerca-f-chip" data-cat="shopping" onclick="cercaSetCat('shopping',this)">🛍️ Tiendas</button>
     </div>
     <div class="cerca-stats-bar">
@@ -504,7 +503,10 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
         <span id="cerca-sort-lbl">Distancia</span>
       </button>
     </div>
-
+    <div id="cerca-error-banner" class="nc-error-banner" style="display:none;">
+      <span style="font-size:16px;flex-shrink:0">⚠️</span>
+      <span>No se pudo conectar con Geoapify. Mostrando datos de demo. Verificá tu API key y conexión.</span>
+    </div>
     <div class="cerca-list" id="cerca-list"></div>
     <nav class="bottom-nav" id="bottom-nav-cerca">
       <button class="nav-btn" onclick="switchTab('map')">
@@ -576,7 +578,7 @@ html,body{height:100%;overflow:hidden;background:#fff;color:var(--text);font-fam
 const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbySr-veSK4eoAtOR1vHYB--o-ngrQqG0JC7dEeIXDKw5wZJRSdhUe5iEN4wibhsPTEX2w/exec',
   GOOGLE_CLIENT_ID: '283820904318-leis6rl3mfhtve2amj59q8sq221dg3qf.apps.googleusercontent.com',
-  FSQ_API_KEY: 'TU_CLAVE_FSQ_ACA',     // → https://foursquare.com/developers (gratis, 10k req/mes, sin tarjeta)
+  GEOAPIFY_API_KEY: '631ee415c3eb4b87b4d5a0c59503af58',
   DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
   NEARBY_RADIUS_M: 30,
   REPORT_RADIUS_M: 10,
@@ -594,7 +596,18 @@ const CONFIG = {
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
 const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
-const FSQ_READY = CONFIG.FSQ_API_KEY && !CONFIG.FSQ_API_KEY.startsWith('TU_CLAVE') && CONFIG.FSQ_API_KEY.length > 20;
+const GEOAPIFY_READY = CONFIG.GEOAPIFY_API_KEY && !CONFIG.GEOAPIFY_API_KEY.startsWith('TU_CLAVE');
+
+/* ─── FOURSQUARE CONFIG ─── */
+const FOURSQUARE_CONFIG = {
+  API_KEY: 'sk_live_AOHLYGYM5Q4S4QTK2MRERYLST53HGD5MSLZ4M31M3SMVT0BP', // ← Reemplazá con tu key de developer.foursquare.com
+  API_BASE: 'https://api.foursquare.com/v3',
+  SEARCH_RADIUS: 800,
+  LIMIT: 50,
+};
+const FOURSQUARE_READY = !FOURSQUARE_CONFIG.API_KEY.includes('AQUI_TU');
+const FOURSQUARE_CACHE = new Map();
+const FSQ_CACHE_TTL = 30 * 60 * 1000;
 const SESSION_STORAGE_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
 const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
@@ -613,157 +626,54 @@ const VOTE_PTS = [10,10,15,20];
 const LEVEL_TITLES = ['Novato','Explorador','Cazador de Filas','Maestro del Mapa','Leyenda Urbana'];
 const XP_PER_LEVEL = 150;
 
-/* ─── FOURSQUARE PLACES API ──────────────────────────────────
-   Docs: https://docs.foursquare.com/fsq-developers-places/
-   Auth: header "Authorization: fsq3 <API_KEY>"
-   Header requerido: "X-Places-Api-Version: 2023-10-01"
-   Endpoint: https://api.foursquare.com/v3/places/search
-   ──────────────────────────────────────────────────────────── */
-
-/* Category IDs de Foursquare para nuestro caso de uso.
-   Ref: https://docs.foursquare.com/data-products/docs/categories */
-const FSQ_CATEGORIES = [
-  /* Supermercados / alimentación */
-  '17069', // Grocery Store / Supermarket
-  '17071', // Convenience Store
-  '17049', // Bakery
-  '17076', // Butcher
-  '17072', // Farmers Market
-  /* Gastronomía */
-  '13065', // Restaurant
-  '13032', // Café / Coffee Shop
-  '13003', // Bar
-  '13145', // Fast Food Restaurant
-  '13046', // Pizza Place
-  /* Salud */
-  '15014', // Hospital
-  '15011', // Doctor's Office
-  '15012', // Clinic
-  '15013', // Dentist
-  '17064', // Pharmacy
-  /* Gobierno / institucional */
-  '12072', // Government Building
-  '12090', // Town Hall
-  '12079', // Post Office
-  '12092', // Police Station
-  '12070', // Courthouse
-  /* Bancos / finanzas */
-  '17074', // Bank
-  '17007', // ATM
-  /* Comercios retail */
-  '17075', // Clothing Store
-  '17099', // Electronics Store
-  '17107', // Hardware Store
-  '17030', // Bookstore
-  '17008', // Beauty Salon / Barbershop
-  '17077', // Pet Store
-  '17035', // Toy Store
-  '17043', // Sporting Goods Shop
-  '17047', // Jewelry Store
-  '17068', // Gift Shop
-  '17010', // Optical Shop
-  /* Servicios */
-  '17114', // Gas Station / Fuel Station
-  '17009', // Laundry Service
-  '15034', // Veterinarian
-  /* Ocio */
-  '18021', // Gym / Fitness Center
-  '10024', // Movie Theater
-].join(',');
-
-/* Headers comunes para todas las llamadas a FSQ */
-function fsqHeaders(){
-  return {
-    'Accept': 'application/json',
-    'Authorization': `fsq3 ${CONFIG.FSQ_API_KEY}`,
-    'X-Places-Api-Version': '2023-10-01',
-  };
-}
-
-/* Mapeo de category IDs FSQ a emoji + tipo en español */
-const FSQ_CAT_MAP = {
-  '17069':{emoji:'🛒',tipo:'Supermercado'},
-  '17071':{emoji:'🏪',tipo:'Almacén'},
-  '17049':{emoji:'🥖',tipo:'Panadería'},
-  '17076':{emoji:'🥩',tipo:'Carnicería'},
-  '17072':{emoji:'🥦',tipo:'Mercado'},
-  '13065':{emoji:'🍽️',tipo:'Restaurante'},
-  '13032':{emoji:'☕',tipo:'Cafetería'},
-  '13003':{emoji:'🍺',tipo:'Bar'},
-  '13145':{emoji:'🍔',tipo:'Comida rápida'},
-  '13046':{emoji:'🍕',tipo:'Pizzería'},
-  '15014':{emoji:'🏥',tipo:'Hospital'},
-  '15011':{emoji:'👨‍⚕️',tipo:'Consultorio'},
-  '15012':{emoji:'🏥',tipo:'Clínica'},
-  '15013':{emoji:'🦷',tipo:'Odontólogo'},
-  '17064':{emoji:'💊',tipo:'Farmacia'},
-  '12072':{emoji:'🏛️',tipo:'Oficina pública'},
-  '12090':{emoji:'🏛️',tipo:'Municipalidad'},
-  '12079':{emoji:'📮',tipo:'Correo'},
-  '12092':{emoji:'👮',tipo:'Comisaría'},
-  '12070':{emoji:'⚖️',tipo:'Juzgado'},
-  '17074':{emoji:'🏦',tipo:'Banco'},
-  '17007':{emoji:'🏧',tipo:'Cajero'},
-  '17075':{emoji:'👗',tipo:'Ropa'},
-  '17099':{emoji:'📱',tipo:'Electrónica'},
-  '17107':{emoji:'🔧',tipo:'Ferretería'},
-  '17030':{emoji:'📚',tipo:'Librería'},
-  '17008':{emoji:'💇',tipo:'Peluquería'},
-  '17077':{emoji:'🐶',tipo:'Tienda de mascotas'},
-  '17035':{emoji:'🧸',tipo:'Juguetería'},
-  '17043':{emoji:'⚽',tipo:'Artículos deportivos'},
-  '17047':{emoji:'💍',tipo:'Joyería'},
-  '17068':{emoji:'🎁',tipo:'Regalería'},
-  '17010':{emoji:'👓',tipo:'Óptica'},
-  '17114':{emoji:'⛽',tipo:'Estación de servicio'},
-  '17009':{emoji:'👕',tipo:'Lavandería'},
-  '15034':{emoji:'🐾',tipo:'Veterinaria'},
-  '18021':{emoji:'🏋️',tipo:'Gimnasio'},
-  '10024':{emoji:'🎬',tipo:'Cine'},
+const GEOAPIFY_CAT_MAP = {
+  'commercial.supermarket':{emoji:'🛒',tipo:'Supermercado'},
+  'commercial.convenience':{emoji:'🏪',tipo:'Almacén'},
+  'commercial.pharmacy':{emoji:'💊',tipo:'Farmacia'},
+  'commercial.bank':{emoji:'🏦',tipo:'Banco'},
+  'commercial.atm':{emoji:'🏧',tipo:'Cajero'},
+  'post_office':{emoji:'📮',tipo:'Correo'},
+  'catering.fast_food':{emoji:'🍔',tipo:'Comida rápida'},
+  'catering.restaurant':{emoji:'🍽️',tipo:'Restaurante'},
+  'catering.cafe':{emoji:'☕',tipo:'Cafetería'},
+  'catering.bakery':{emoji:'🥖',tipo:'Panadería'},
+  'catering.butcher':{emoji:'🥩',tipo:'Carnicería'},
+  'healthcare.hospital':{emoji:'🏥',tipo:'Hospital'},
+  'healthcare.clinic':{emoji:'🏥',tipo:'Clínica'},
+  'healthcare.doctors':{emoji:'👨‍⚕️',tipo:'Consultorio'},
+  'healthcare.dentist':{emoji:'🦷',tipo:'Odontólogo'},
+  'government':{emoji:'🏛️',tipo:'Oficina pública'},
+  'government.townhall':{emoji:'🏛️',tipo:'Municipalidad'},
+  'fuel':{emoji:'⛽',tipo:'Estación de servicio'},
+  'commercial.laundry':{emoji:'👕',tipo:'Lavandería'},
+  'commercial.hardware':{emoji:'🔧',tipo:'Ferretería'},
+  'commercial.clothes':{emoji:'👗',tipo:'Ropa'},
+  'commercial.shoes':{emoji:'👟',tipo:'Calzado'},
+  'commercial.electronics':{emoji:'📱',tipo:'Electrónica'},
+  'commercial.optician':{emoji:'👓',tipo:'Óptica'},
+  'commercial.beauty':{emoji:'💄',tipo:'Estética'},
+  'commercial.hairdresser':{emoji:'💇',tipo:'Peluquería'},
+  'leisure.gym':{emoji:'🏋️',tipo:'Gimnasio'},
+  'commercial.veterinary':{emoji:'🐾',tipo:'Veterinaria'},
+  'commercial.marketplace':{emoji:'🛍️',tipo:'Mercado'},
+  'commercial.kiosk':{emoji:'📰',tipo:'Kiosco'},
+  'commercial.greengrocer':{emoji:'🥦',tipo:'Verdulería'},
+  'commercial.florist':{emoji:'💐',tipo:'Florería'},
+  'commercial.toys':{emoji:'🧸',tipo:'Juguetería'},
+  'commercial.sports':{emoji:'⚽',tipo:'Artículos deportivos'},
+  'commercial.stationery':{emoji:'📚',tipo:'Librería'},
+  'commercial.mobile_phone':{emoji:'📱',tipo:'Telefonía'},
+  'commercial.gift':{emoji:'🎁',tipo:'Regalería'},
+  'commercial.jewelry':{emoji:'💍',tipo:'Joyería'},
+  'commercial.furniture':{emoji:'🛋️',tipo:'Muebles'},
+  'commercial.bookshop':{emoji:'📖',tipo:'Librería'},
+  'commercial.computer':{emoji:'💻',tipo:'Informática'},
+  'commercial.pet_shop':{emoji:'🐶',tipo:'Tienda de mascotas'},
+  'commercial.printing':{emoji:'🖨️',tipo:'Impresión'},
+  'commercial.car_wash':{emoji:'🚗',tipo:'Lavadero'},
+  'professional.lawyer':{emoji:'⚖️',tipo:'Abogado'},
+  'professional.accountant':{emoji:'🧾',tipo:'Contador'},
 };
-
-function fsqCatInfo(categories){
-  if(!categories||!categories.length)return{emoji:'🏪',tipo:'Comercio'};
-  for(const cat of categories){
-    const id=String(cat.id);
-    if(FSQ_CAT_MAP[id])return FSQ_CAT_MAP[id];
-  }
-  /* Fallback por nombre */
-  const name=(categories[0].name||'').toLowerCase();
-  if(name.includes('supermarket')||name.includes('grocery'))return{emoji:'🛒',tipo:'Supermercado'};
-  if(name.includes('hospital'))return{emoji:'🏥',tipo:'Hospital'};
-  if(name.includes('pharmacy')||name.includes('farmacia'))return{emoji:'💊',tipo:'Farmacia'};
-  if(name.includes('bank')||name.includes('banco'))return{emoji:'🏦',tipo:'Banco'};
-  if(name.includes('restaurant'))return{emoji:'🍽️',tipo:'Restaurante'};
-  if(name.includes('coffee')||name.includes('café'))return{emoji:'☕',tipo:'Cafetería'};
-  if(name.includes('fast food'))return{emoji:'🍔',tipo:'Comida rápida'};
-  if(name.includes('government'))return{emoji:'🏛️',tipo:'Oficina pública'};
-  if(name.includes('gym')||name.includes('fitness'))return{emoji:'🏋️',tipo:'Gimnasio'};
-  return{emoji:'🏪',tipo:'Comercio'};
-}
-
-/* FSQ result → formato interno Qooentum */
-function fsqPlaceToPlace(item){
-  const info=fsqCatInfo(item.categories);
-  const loc=item.geocodes?.main||item.geocodes?.roof||{latitude:0,longitude:0};
-  const addr=item.location
-    ?[item.location.address,item.location.locality].filter(Boolean).join(', ')||'Sin dirección'
-    :'Sin dirección';
-  return{
-    id:`fsq_${item.fsq_id}`,
-    name:item.name||'Sin nombre',
-    type:info.tipo,
-    logo:info.emoji,
-    lat:loc.latitude,
-    lng:loc.longitude,
-    addr,
-    status:0,reporters:0,
-    rating:(3.5+Math.random()*1.4).toFixed(1),
-    reviewsN:Math.floor(Math.random()*200+10),
-    open:true,verified:false,
-    fromFSQ:true,
-  };
-}
 
 const SEED_PRIZES = [
   {id:'p1',emoji:'☕',name:'Café gratis',            pts:200, cat:'Gastronomía',    partner:'Starbucks'},
@@ -840,63 +750,122 @@ function startOccupancySync(){syncOccupancyStatus();if(occupancySyncInterval)cle
 function stopOccupancySync(){if(occupancySyncInterval){clearInterval(occupancySyncInterval);occupancySyncInterval=null;}}
 function maybeStartOccupancySync(){if(isLoggedIn&&!occupancySyncInterval)startOccupancySync();else if(!isLoggedIn&&occupancySyncInterval)stopOccupancySync();}
 
-/* ─── HERE → formato interno de Qooentum ─── */
-function herePlaceToPlace(item){
-  /* HERE devuelve: id, title, address, position{lat,lng}, categories[{id,name}] */
-  const catId=(item.categories&&item.categories[0])?item.categories[0].id:'';
-  const catTitle=(item.categories&&item.categories[0])?item.categories[0].name:'';
-  const info=HERE_CAT_MAP[catId]||hereCatFromTitle(catTitle)||{emoji:'🏪',tipo:'Comercio'};
-  const addr=item.address
-    ?[item.address.street,item.address.houseNumber].filter(Boolean).join(' ')||item.address.label||'Sin dirección'
-    :'Sin dirección';
+/* ─── FOURSQUARE API ─── */
+function foursquarePlaceToPlace(fsq,lat,lng){
+  const cat=fsq.categories?.[0]?.name||'Comercio';
+  const icon=FOURSQUARE_CAT_EMOJI[cat]||{emoji:'🏪',tipo:cat};
+  const addr=fsq.location?.formatted_address||fsq.location?.address||'Sin dirección';
   return{
-    id:`here_${item.id}`,
-    name:item.title||'Sin nombre',
-    type:info.tipo,
-    logo:info.emoji,
-    lat:item.position.lat,
-    lng:item.position.lng,
+    id:`fsq_${fsq.fsq_id}`,
+    name:fsq.name,
+    type:icon.tipo||cat,
+    logo:icon.emoji,
+    lat:fsq.geocodes?.main?.latitude||lat,
+    lng:fsq.geocodes?.main?.longitude||lng,
     addr,
     status:0,reporters:0,
-    rating:(3.5+Math.random()*1.4).toFixed(1),
-    reviewsN:Math.floor(Math.random()*200+10),
-    open:true,verified:false,
-    fromHere:true,
+    rating:fsq.rating?fsq.rating.toFixed(1):(3.5+Math.random()*1.4).toFixed(1),
+    reviewsN:fsq.stats?.total_ratings||Math.floor(Math.random()*200+10),
+    open:fsq.closed_bucket!=='VeryLikelyClosed'&&fsq.closed_bucket!=='LikelyClosed',
+    verified:false,
+    fromFoursquare:true,
+    dist:fsq.distance||0
   };
 }
 
-/* ─── FSQ: carga POIs por bounding-box de tiles ─── */
-async function loadFSQForTiles(tileKeys){
-  if(!FSQ_READY||!tileKeys.length)return[];
-  let minLat=Infinity,minLng=Infinity,maxLat=-Infinity,maxLng=-Infinity;
-  tileKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);if(s<minLat)minLat=s;if(w<minLng)minLng=w;if(n>maxLat)maxLat=n;if(e>maxLng)maxLng=e;});
-  const centerLat=((minLat+maxLat)/2).toFixed(6);
-  const centerLng=((minLng+maxLng)/2).toFixed(6);
-  /* Radio en metros del bbox aproximado */
-  const radiusM=Math.round(Math.max((maxLat-minLat),(maxLng-minLng))*111320*0.8);
-  const url=`https://api.foursquare.com/v3/places/search?ll=${centerLat},${centerLng}&radius=${Math.min(radiusM,5000)}&categories=${FSQ_CATEGORIES}&limit=50&fields=fsq_id,name,geocodes,location,categories`;
+const FOURSQUARE_CAT_EMOJI={
+  'Supermarket':{emoji:'🛒',tipo:'Supermercado'},'Grocery Store':{emoji:'🛒',tipo:'Supermercado'},
+  'Convenience Store':{emoji:'🏪',tipo:'Almacén'},'Pharmacy':{emoji:'💊',tipo:'Farmacia'},
+  'Bank':{emoji:'🏦',tipo:'Banco'},'ATM':{emoji:'🏧',tipo:'Cajero'},
+  'Post Office':{emoji:'📮',tipo:'Correo'},'Fast Food Restaurant':{emoji:'🍔',tipo:'Comida rápida'},
+  'Restaurant':{emoji:'🍽️',tipo:'Restaurante'},'Café':{emoji:'☕',tipo:'Cafetería'},
+  'Coffee Shop':{emoji:'☕',tipo:'Cafetería'},'Bakery':{emoji:'🥖',tipo:'Panadería'},
+  'Hospital':{emoji:'🏥',tipo:'Hospital'},'Clinic':{emoji:'🏥',tipo:'Clínica'},
+  'Doctor\'s Office':{emoji:'👨‍⚕️',tipo:'Consultorio'},'Dentist':{emoji:'🦷',tipo:'Odontólogo'},
+  'Government Building':{emoji:'🏛️',tipo:'Oficina pública'},'Gas Station':{emoji:'⛽',tipo:'Estación de servicio'},
+  'Clothing Store':{emoji:'👗',tipo:'Ropa'},'Shoe Store':{emoji:'👟',tipo:'Calzado'},
+  'Electronics Store':{emoji:'📱',tipo:'Electrónica'},'Gym':{emoji:'🏋️',tipo:'Gimnasio'},
+  'Veterinarian':{emoji:'🐾',tipo:'Veterinaria'},'Kiosk':{emoji:'📰',tipo:'Kiosco'},
+};
+
+async function foursquareSearchPlaces(lat,lng,radius){
+  if(!FOURSQUARE_READY)return[];
+  const cacheKey=`${Math.floor(lat*1000)}_${Math.floor(lng*1000)}_${radius}`;
+  const cached=FOURSQUARE_CACHE.get(cacheKey);
+  if(cached&&Date.now()-cached.ts<FSQ_CACHE_TTL)return cached.data;
   try{
-    const res=await fetch(url,{headers:fsqHeaders()});
-    if(!res.ok){console.warn('FSQ tiles HTTP',res.status);throw new Error('FSQ HTTP '+res.status);}
+    const params=new URLSearchParams({'ll':`${lat},${lng}`,'radius':radius,'limit':50,'sort':'distance'});
+    const res=await fetch(`${FOURSQUARE_CONFIG.API_BASE}/places/search?${params}`,{headers:{'Authorization':FOURSQUARE_CONFIG.API_KEY,'Accept':'application/json'}});
+    if(!res.ok)throw new Error('Foursquare HTTP '+res.status);
     const data=await res.json();
-    if(!data.results||!data.results.length)return[];
-    return data.results.map(fsqPlaceToPlace);
-  }catch(e){console.warn('FSQ tiles falló:',e);return[];}
+    const places=(data.results||[]).map(p=>foursquarePlaceToPlace(p,lat,lng)).filter(p=>p.dist<=radius);
+    FOURSQUARE_CACHE.set(cacheKey,{data:places,ts:Date.now()});
+    return places;
+  }catch(e){console.warn('Foursquare falló:',e);return[];}
 }
 
-/* ─── FSQ: búsqueda por texto libre (barra del mapa) ─── */
-async function fsqSearch(query,lat,lng){
-  if(!FSQ_READY)return[];
+async function foursquareAutocomplete(query,lat,lng){
+  if(!FOURSQUARE_READY||!query||query.length<2)return[];
+  try{
+    const params=new URLSearchParams({'query':query,'ll':`${lat},${lng}`,'limit':8});
+    const res=await fetch(`${FOURSQUARE_CONFIG.API_BASE}/places/autocomplete?${params}`,{headers:{'Authorization':FOURSQUARE_CONFIG.API_KEY}});
+    if(!res.ok)return[];
+    const data=await res.json();
+    return(data.results||[]).filter(r=>r.type==='place').map(r=>({id:`fsq_${r.place?.fsq_id||r.text?.primary}`,name:r.text?.primary||'',addr:r.text?.secondary||'',lat:r.place?.geocodes?.main?.latitude||lat,lng:r.place?.geocodes?.main?.longitude||lng,type:r.place?.categories?.[0]?.name||'Comercio',logo:'📍',status:0,reporters:0,open:true,fromFoursquare:true}));
+  }catch(e){console.warn('Foursquare autocomplete falló:',e);return[];}
+}
+
+/* ─── GEOAPIFY ─── */
+function geoapifyPlaceToPlace(feature){
+  const props=feature.properties;
+  const cat=props.categories?.[0]||'commercial.general';
+  const info=GEOAPIFY_CAT_MAP[cat]||{emoji:'🏪',tipo:'Comercio'};
+  const name=props.name||'Sin nombre';
+  const addr=[props.street,props.housenumber].filter(Boolean).join(' ')||props.address_line2||'Sin dirección';
+  return{id:`geo_${props.place_id||feature.id}`,name,type:info.tipo,logo:info.emoji,lat:feature.geometry.coordinates[1],lng:feature.geometry.coordinates[0],addr,status:0,reporters:0,rating:(3.5+Math.random()*1.4).toFixed(1),reviewsN:Math.floor(Math.random()*200+10),open:true,verified:false,fromGeoapify:true};
+}
+
+async function loadGeoapifyForTiles(tileKeys){
+  let minLat=Infinity,minLng=Infinity,maxLat=-Infinity,maxLng=-Infinity;
+  tileKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);if(s<minLat)minLat=s;if(w<minLng)minLng=w;if(n>maxLat)maxLat=n;if(e>maxLng)maxLng=e;});
+  const centerLat=(minLat+maxLat)/2,centerLng=(minLng+maxLng)/2;
+  const radius=Math.round(Math.max(maxLat-minLat,maxLng-minLng)*111320*1.2);
+  // Intentar primero con Foursquare
+  if(FOURSQUARE_READY){
+    try{
+      const fsqPlaces=await foursquareSearchPlaces(centerLat,centerLng,Math.min(radius,1500));
+      if(fsqPlaces.length>0)return fsqPlaces;
+    }catch(e){console.warn('Foursquare tiles falló, fallback a Geoapify:',e);}
+  }
+  // Fallback a Geoapify
+  if(!GEOAPIFY_READY||!tileKeys.length)return[];
+  const pad=0.002;
+  const bbox=`${minLng-pad},${minLat-pad},${maxLng+pad},${maxLat+pad}`;
+  const categories='commercial,catering,healthcare,leisure,government,post_office,fuel,professional,transport';
+  const url=`https://api.geoapify.com/v2/places?categories=${categories}&filter=rect:${bbox}&limit=300&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
+  try{const res=await fetch(url);if(!res.ok)throw new Error('Geoapify HTTP '+res.status);const data=await res.json();if(!data.features||!data.features.length)return[];return data.features.map(geoapifyPlaceToPlace);}
+  catch(e){console.warn('Geoapify falló:',e);return[];}
+}
+
+/* ─── GEOAPIFY SEARCH — usa Foursquare como primario, Geoapify como fallback ─── */
+async function geoapifySearch(query,lat,lng){
+  // Intentar primero con Foursquare autocomplete
+  if(FOURSQUARE_READY){
+    const fsqResults=await foursquareAutocomplete(query,lat,lng);
+    if(fsqResults.length>=2)return fsqResults;
+  }
+  // Fallback a búsqueda local + Geoapify
+  if(!GEOAPIFY_READY)return[];
   const q=query.toLowerCase();
   const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,10);
   if(localMatches.length>=3)return localMatches;
-  const url=`https://api.foursquare.com/v3/places/search?query=${encodeURIComponent(query)}&ll=${lat},${lng}&radius=5000&limit=30&fields=fsq_id,name,geocodes,location,categories`;
+  const url=`https://api.geoapify.com/v2/places?categories=commercial,catering,healthcare,leisure,government,post_office,fuel&filter=circle:${lng},${lat},5000&limit=50&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
   try{
-    const res=await fetch(url,{headers:fsqHeaders()});
+    const res=await fetch(url);
     if(!res.ok)return localMatches;
     const data=await res.json();
-    if(!data.results)return localMatches;
-    const results=data.results.map(fsqPlaceToPlace).filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q));
+    if(!data.features)return localMatches;
+    const results=data.features.map(geoapifyPlaceToPlace).filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q));
     return results.length?results:localMatches;
   }catch(e){return localMatches;}
 }
@@ -915,7 +884,7 @@ async function ensurePlacesLoadedAt(lat,lng){
     return;
   }
   if(!mapInitialLoaded)mapInitialLoaded=true;
-  const[geoPlaces,backendResult]=await Promise.all([loadHereForTiles(missingKeys),BACKEND_READY?apiGet('sync_places',{lat,lng,radius:Math.round(CONFIG.TILE_DEG*111320*1.5)}):Promise.resolve(null)]);
+  const[geoPlaces,backendResult]=await Promise.all([loadGeoapifyForTiles(missingKeys),BACKEND_READY?apiGet('sync_places',{lat,lng,radius:Math.round(CONFIG.TILE_DEG*111320*1.5)}):Promise.resolve(null)]);
   const backendPlaces=(backendResult&&Array.isArray(backendResult.places))?backendResult.places:[];
   const backendById=new Map(backendPlaces.map(p=>[p.id,p]));
   const merged=geoPlaces.map(p=>{const bp=backendById.get(p.id);return bp?{...p,...bp}:p;});
@@ -955,7 +924,7 @@ async function searchPlacesByQuery(query){
   const q=query.toLowerCase();
   const localMatches=places.filter(p=>p.name.toLowerCase().includes(q)||p.addr.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)).slice(0,5);
   if(localMatches.length>=3)return localMatches;
-  if(HERE_READY&&userLat!==null&&userLng!==null){const results=await hereSearch(query,userLat,userLng);if(results.length)return results;}
+  if(GEOAPIFY_READY&&userLat!==null&&userLng!==null){const results=await geoapifySearch(query,userLat,userLng);if(results.length)return results;}
   return localMatches;
 }
 
@@ -1251,21 +1220,40 @@ function cercaGuessCategory(name,type){
 
 function cercaFmtDist(m){return m<1000?m+'m':(m/1000).toFixed(1)+'km';}
 
-/* ─── FSQ: panel Cerca ─── */
-async function cercaFetchFSQ(lat,lng,radius){
+async function cercaFetchGeoapify(lat,lng,radius){
+  // Intentar primero con Foursquare (nueva API)
+  if(FOURSQUARE_READY){
+    try{
+      const fsqPlaces=await foursquareSearchPlaces(lat,lng,radius);
+      if(fsqPlaces.length>0){
+        return fsqPlaces.map(p=>{
+          const dist=Math.round(distanceMeter(lat,lng,p.lat,p.lng));
+          p.dist=dist;p.cat=cercaGuessCategory(p.name,p.type);
+          const existing=placeIndex.get(p.id);
+          if(existing){p.status=existing.status;p.reporters=existing.reporters;p.sponsor=existing.sponsor;}
+          return p;
+        }).filter(p=>p.dist<=radius).sort((a,b)=>a.dist-b.dist);
+      }
+    }catch(e){console.warn('Foursquare cerca falló, fallback a Geoapify:',e);}
+  }
+  // Fallback a Geoapify si Foursquare no está disponible
+  if(!GEOAPIFY_READY)return[];
   if(cercaAbortController)cercaAbortController.abort();
   cercaAbortController=new AbortController();
   const signal=cercaAbortController.signal;
-  const limit=Math.min(radius<=500?50:50,50); // FSQ max 50 por request
-  const url=`https://api.foursquare.com/v3/places/search?ll=${lat},${lng}&radius=${radius}&categories=${FSQ_CATEGORIES}&limit=${limit}&fields=fsq_id,name,geocodes,location,categories,distance`;
+  const pad=0.0006+(radius/111320)*1.3;
+  const bbox=`${lng-pad},${lat-pad},${lng+pad},${lat+pad}`;
+  const categories='commercial,catering,healthcare,leisure,government,post_office,fuel,professional,transport';
+  const limit=radius<=500?120:300;
+  const url=`https://api.geoapify.com/v2/places?categories=${categories}&filter=rect:${bbox}&limit=${limit}&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
   try{
-    const res=await fetch(url,{signal,headers:fsqHeaders()});
-    if(!res.ok){console.warn('FSQ cerca HTTP',res.status);throw new Error('FSQ HTTP '+res.status);}
+    const res=await fetch(url,{signal});
+    if(!res.ok)throw new Error('Geoapify HTTP '+res.status);
     const data=await res.json();
-    if(!data.results)return[];
-    return data.results.map(item=>{
-      const p=fsqPlaceToPlace(item);
-      const dist=item.distance||Math.round(distanceMeter(lat,lng,p.lat,p.lng));
+    if(!data.features)return[];
+    return data.features.map(feature=>{
+      const p=geoapifyPlaceToPlace(feature);
+      const dist=Math.round(distanceMeter(lat,lng,p.lat,p.lng));
       p.dist=dist;p.cat=cercaGuessCategory(p.name,p.type);
       const existing=placeIndex.get(p.id);
       if(existing){p.status=existing.status;p.reporters=existing.reporters;p.sponsor=existing.sponsor;}
@@ -1273,23 +1261,25 @@ async function cercaFetchFSQ(lat,lng,radius){
     }).filter(p=>p.dist<=radius).sort((a,b)=>a.dist-b.dist);
   }catch(e){
     if(e.name==='AbortError')return[];
-    console.warn('FSQ panel Cerca falló:',e);return[];
+    console.warn('Geoapify panel Cerca falló:',e);return[];
   }
 }
 
-/* ─── HERE: búsqueda por texto en panel Cerca ─── */
+/* ─── CERCA CITY SEARCH — usa Places API (geocode/search no disponible en plan free) ─── */
 async function cercaFetchCitySearch(query,lat,lng){
-  if(!HERE_READY)return[];
+  if(!GEOAPIFY_READY)return[];
   const q=query.toLowerCase();
+  // Primero buscar en los ya cargados
   const localMatches=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q)||p.type.toLowerCase().includes(q)||(p.addr||'').toLowerCase().includes(q));
-  const url=`https://discover.search.hereapi.com/v1/discover?at=${lat},${lng}&q=${encodeURIComponent(query)}&limit=50&lang=es&apiKey=${CONFIG.HERE_API_KEY}`;
+  // Ampliar via Places API filtrando por nombre
+  const url=`https://api.geoapify.com/v2/places?categories=commercial,catering,healthcare,leisure,government,post_office,fuel&filter=circle:${lng},${lat},5000&limit=100&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
   try{
     const res=await fetch(url);
     if(!res.ok)return localMatches;
     const data=await res.json();
-    if(!data.items)return localMatches;
-    const allResults=data.items.map(item=>{
-      const p=herePlaceToPlace(item);
+    if(!data.features)return localMatches;
+    const allResults=data.features.map(f=>{
+      const p=geoapifyPlaceToPlace(f);
       p.dist=Math.round(distanceMeter(lat,lng,p.lat,p.lng));
       p.cat=cercaGuessCategory(p.name,p.type);
       return p;
@@ -1341,7 +1331,7 @@ async function cercaLoadPlaces(forceReload){
   const lng=userLng??CONFIG.DEFAULT_CENTER.lng;
   try{
     let placesData=[];
-    if(HERE_READY){placesData=await cercaFetchHere(lat,lng,cercaRadius);}
+    if(GEOAPIFY_READY){placesData=await cercaFetchGeoapify(lat,lng,cercaRadius);}
     if(!placesData.length){
       placesData=cercaBuildDemoPlaces(lat,lng);
       if(errBanner)errBanner.style.display='flex';
@@ -1393,27 +1383,10 @@ function cercaApplyFilters(){
     filtrados.sort((a,b)=>a.dist-b.dist);
     cercaFiltered=filtrados;
     cercaRenderList();
-    if(!cercaCitySearchInFlight&&HERE_READY&&userLat!==null&&userLng!==null){
+    if(!cercaCitySearchInFlight&&GEOAPIFY_READY&&userLat!==null&&userLng!==null){
       cercaCitySearchInFlight=true;
       const lat=userLat,lng=userLng;
-      const querySnapshot=cercaSearchQ;
-      cercaFetchCitySearch(querySnapshot,lat,lng).then(results=>{
-        cercaCitySearchInFlight=false;
-        /* Solo actualizar si la búsqueda no cambió mientras esperábamos */
-        if(cercaSearchQ===querySnapshot){
-          cercaCitySearchResults=results;
-          /* Renderizar directamente sin volver a llamar cercaApplyFilters (evita loop) */
-          const q2=querySnapshot.toLowerCase();
-          const localMatches2=cercaAllPlaces.filter(p=>p.name.toLowerCase().includes(q2)||p.type.toLowerCase().includes(q2)||(p.addr||'').toLowerCase().includes(q2));
-          const combined2=[...localMatches2];
-          results.forEach(r=>{if(!combined2.find(p=>p.id===r.id))combined2.push(r);});
-          let filtrados2=combined2;
-          if(cercaCat!=='all')filtrados2=filtrados2.filter(p=>p.cat===cercaCat);
-          filtrados2.sort((a,b)=>a.dist-b.dist);
-          cercaFiltered=filtrados2;
-          cercaRenderList();
-        }
-      }).catch(()=>{cercaCitySearchInFlight=false;});
+      cercaFetchCitySearch(cercaSearchQ,lat,lng).then(results=>{cercaCitySearchInFlight=false;if(cercaSearchQ){cercaCitySearchResults=results;cercaApplyFilters();}}).catch(()=>{cercaCitySearchInFlight=false;});
     }
     return;
   }
@@ -1506,47 +1479,11 @@ function exitPickMode(){pickModeActive=false;document.getElementById('pick-mode-
 /* ─── GOOGLE AUTH ─── */
 let tokenClient=null;
 const TOKEN_STORAGE_KEY='qooentum_gtoken';
-
-/* Decodifica un JWT sin verificar firma (solo el payload) */
-function decodeJwtPayload(token){
-  try{
-    const b64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(atob(b64));
-  }catch(e){return null;}
-}
-
-/* Guardamos el id_token (JWT de Google) que NO vence en 1h.
-   El access_token sí vence — pero el id_token sirve para
-   restaurar la sesión localmente sin hacer ningún fetch. */
-function saveTokenToStorage(idToken,accessToken,expiresIn){
-  try{
-    const expiresAt=Date.now()+(expiresIn?expiresIn*1000:3500*1000);
-    localStorage.setItem(TOKEN_STORAGE_KEY,JSON.stringify({
-      idToken,      // JWT — restauración offline, no vence en 1h
-      accessToken,  // OAuth token — para llamadas que lo requieran
-      expiresAt,    // cuándo vence el access_token
-    }));
-  }catch(e){}
-}
-
-function loadTokenFromStorage(){
-  try{
-    const raw=localStorage.getItem(TOKEN_STORAGE_KEY);
-    if(!raw)return null;
-    return JSON.parse(raw);
-  }catch(e){return null;}
-}
-
-/* Obtiene el perfil del id_token SIN llamar a la red */
-function getProfileFromIdToken(idToken){
-  const payload=decodeJwtPayload(idToken);
-  if(!payload||!payload.email)return null;
-  return{
-    email:   payload.email,
-    name:    payload.name    ||payload.email,
-    picture: payload.picture ||'',
-  };
-}
+// La sesión del usuario se guarda en SESSION_STORAGE_KEY y es independiente del token OAuth
+// El token OAuth (1h) se usa solo para llamadas al backend; la sesión es infinita hasta logout manual
+function saveTokenToStorage(token,expiresIn){try{const expiresAt=Date.now()+(expiresIn?expiresIn*1000:3500*1000);localStorage.setItem(TOKEN_STORAGE_KEY,JSON.stringify({token,expiresAt}));}catch(e){}}
+function loadTokenFromStorage(){try{const raw=localStorage.getItem(TOKEN_STORAGE_KEY);if(!raw)return null;const data=JSON.parse(raw);if(!data||!data.token)return null;// Token OAuth válido por su duración real
+if(data.expiresAt&&Date.now()>data.expiresAt){localStorage.removeItem(TOKEN_STORAGE_KEY);return null;}return data.token;}catch(e){return null;}}
 
 function initGoogleTokenClient(){
   if(!GOOGLE_AUTH_READY)return false;
@@ -1599,149 +1536,74 @@ function applyLoggedInUI(){
 async function fetchProfileFromToken(accessToken){const profileRes=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:`Bearer ${accessToken}`}});if(!profileRes.ok)throw new Error('No se pudo obtener el perfil de Google');return await profileRes.json();}
 
 async function handleGoogleTokenResponse(resp){
-  if(!resp||resp.error||!resp.access_token){
-    resetLoginButton();
-    if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')
-      showToast('⚠️ No se pudo iniciar sesión con Google');
-    return;
-  }
+  if(!resp||resp.error||!resp.access_token){resetLoginButton();if(resp&&resp.error!=='user_logged_out'&&resp.error!=='access_denied'&&resp.error!=='immediate_failed')showToast('⚠️ No se pudo iniciar sesión con Google');return;}
   try{
-    /* Perfil desde id_token (sin red) o fallback a userinfo endpoint */
-    let profile=null;
-    if(resp.id_token){
-      profile=getProfileFromIdToken(resp.id_token);
-    }
-    if(!profile){
-      profile=await fetchProfileFromToken(resp.access_token);
-    }
-
+    const profile=await fetchProfileFromToken(resp.access_token);
     const deviceEmail=localStorage.getItem(DEVICE_KEY);
-    if(deviceEmail&&deviceEmail!==profile.email){
-      resetLoginButton();
-      showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);
-      return;
-    }
-
+    if(deviceEmail&&deviceEmail!==profile.email){resetLoginButton();showToast(`⛔ Este dispositivo ya tiene una cuenta: ${deviceEmail.split('@')[0]}`);return;}
     let backendResult=null;
-    if(BACKEND_READY)
-      backendResult=await apiPost('login',{
-        access_token:resp.access_token,
-        email:   profile.email,
-        name:    profile.name,
-        picture: profile.picture,
-      });
-
+    if(BACKEND_READY)backendResult=await apiPost('login',{access_token:resp.access_token,email:profile.email,name:profile.name,picture:profile.picture});
     const wasLoggedIn=isLoggedIn;
     currentUser={email:profile.email,name:profile.name||profile.email,picture:profile.picture||''};
     if(backendResult&&typeof backendResult.points==='number')userPts=backendResult.points;
     if(backendResult&&backendResult.cooldowns)applyCooldownInfo(backendResult.cooldowns);
     isLoggedIn=true;
-
     localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
     localStorage.setItem(DEVICE_KEY,profile.email);
-
-    /* Guardamos id_token (persistente) + access_token (sesión actual) */
-    saveTokenToStorage(resp.id_token||'',resp.access_token,resp.expires_in);
-
+    saveTokenToStorage(resp.access_token,resp.expires_in);
     applyLoggedInUI();hideToastAction();maybeStartOccupancySync();
     if(!wasLoggedIn)showToast(`👋 ¡Hola, ${currentUser.name.split(' ')[0]}!`);
-    if(pendingVote){
-      const{placeId,voteIdx}=pendingVote;pendingVote=null;
-      const p=places.find(x=>x.id===placeId);
-      if(p)await submitVoteToBackend(p,voteIdx);
-    }
+    if(pendingVote){const{placeId,voteIdx}=pendingVote;pendingVote=null;const p=places.find(x=>x.id===placeId);if(p)await submitVoteToBackend(p,voteIdx);}
   }catch(err){console.warn('Error de login:',err);showToast('⚠️ Error al iniciar sesión con Google');}
   finally{resetLoginButton();}
 }
 
 async function trySilentRenew(){
+  if(!GOOGLE_AUTH_READY)return;
   let attempts=0;
   while((!window.google||!google.accounts||!google.accounts.oauth2)&&attempts<20){await new Promise(r=>setTimeout(r,200));attempts++;}
   if(!initGoogleTokenClient())return;
-  tokenClient.requestAccessToken({prompt:''});
+  try{tokenClient.requestAccessToken({prompt:''});}catch(e){console.warn('Silent renew falló:',e);}
 }
 
 async function restoreSession(){
   const saved=localStorage.getItem(SESSION_STORAGE_KEY);
   if(!saved)return;
-
-  try{currentUser=JSON.parse(saved);}
-  catch{localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
-
-  if(!currentUser||!currentUser.email){
-    localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;
-  }
+  try{currentUser=JSON.parse(saved);}catch{localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
+  if(!currentUser||!currentUser.email){localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
   const deviceEmail=localStorage.getItem(DEVICE_KEY);
-  if(deviceEmail&&deviceEmail!==currentUser.email){
-    localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;
-  }
-
-  /* Mostrar UI logueada INMEDIATAMENTE — sin esperar red */
+  if(deviceEmail&&deviceEmail!==currentUser.email){localStorage.removeItem(SESSION_STORAGE_KEY);currentUser=null;return;}
+  // Restaurar sesión inmediatamente sin necesitar token de acceso
+  isLoggedIn=true;
   applyLoggedInUI();
-
-  const stored=loadTokenFromStorage();
-
-  /* ── CASO 1: tenemos id_token (sesiones nuevas) ──────────────
-     Verificamos localmente sin ningún fetch. Sesión instantánea.
-     Sincronizamos puntos y cooldowns en background. */
-  if(stored&&stored.idToken){
-    const profile=getProfileFromIdToken(stored.idToken);
-    if(profile&&profile.email===currentUser.email){
-      isLoggedIn=true;
-      if(profile.name)    currentUser.name   =profile.name;
-      if(profile.picture) currentUser.picture=profile.picture;
-      localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-      updateUserHUD();
-      maybeStartOccupancySync();
-      /* Sync de puntos/cooldowns en segundo plano, sin bloquear */
-      if(BACKEND_READY){
-        apiGet('me',{email:currentUser.email}).then(me=>{
-          if(me&&me.exists){
-            userPts=me.points||0;
-            if(me.name)    currentUser.name   =me.name;
-            if(me.picture) currentUser.picture=me.picture;
-            if(me.cooldowns)applyCooldownInfo(me.cooldowns);
-            localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-            updateUserHUD();
-            applyLoggedInUI();
-          }
-        }).catch(()=>{});
-      }
-      return;
-    }
-    /* id_token inválido o de otra cuenta — limpiar y renovar */
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-  }
-
-  /* ── CASO 2: solo access_token (sesiones antiguas migradas) ──
-     Intentamos usarlo una vez. Si venció, caemos al renew. */
-  if(stored&&stored.accessToken){
-    try{
-      const profile=await fetchProfileFromToken(stored.accessToken);
-      if(profile&&profile.email===currentUser.email){
-        isLoggedIn=true;
-        if(BACKEND_READY){
-          const me=await apiGet('me',{email:currentUser.email});
-          if(me&&me.exists){
-            userPts=me.points||0;
-            if(me.name)    currentUser.name   =me.name;
-            if(me.picture) currentUser.picture=me.picture;
-            if(me.cooldowns)applyCooldownInfo(me.cooldowns);
-            localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
-          }
-        }
+  // Intentar obtener datos actualizados del backend si está disponible
+  if(BACKEND_READY){
+    apiGet('me',{email:currentUser.email}).then(me=>{
+      if(me&&me.exists){
+        userPts=me.points||0;
+        if(me.name)currentUser.name=me.name;
+        if(me.picture)currentUser.picture=me.picture;
+        if(me.cooldowns)applyCooldownInfo(me.cooldowns);
+        localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(currentUser));
         updateUserHUD();
-        maybeStartOccupancySync();
-        return;
       }
-    }catch(e){
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-    }
+    }).catch(()=>{});
   }
-
-  /* ── CASO 3: sin token válido → intento silencioso de renovar */
-  isLoggedIn=false;
-  await trySilentRenew();
+  maybeStartOccupancySync();
+  // Intentar renovar token en segundo plano (sin bloquear la sesión)
+  const savedToken=loadTokenFromStorage();
+  if(savedToken){
+    fetchProfileFromToken(savedToken).then(profile=>{
+      if(profile&&profile.email===currentUser.email){
+        // Token aún válido, ok
+      }else{localStorage.removeItem(TOKEN_STORAGE_KEY);}
+    }).catch(()=>{
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      // Sesión sigue activa igual, solo el token expiró
+    });
+  }
+  // Intentar renovar token en segundo plano sin afectar la sesión
+  setTimeout(()=>trySilentRenew(),2000);
 }
 
 function updateUserHUD(){
@@ -1834,171 +1696,10 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 /* ─── PWA ─── */
 let deferredInstallPrompt=null;
-if('serviceWorker' in navigator){
-  window.addEventListener('load', async () => {
-
-    /* 1. Registrar / actualizar el SW — forzar activación inmediata */
-    try{
-      const reg = await navigator.serviceWorker.register('./sw.js');
-      /* Si hay un SW esperando (versión anterior), lo activamos ya */
-      if(reg.waiting){
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing;
-        if(newSW){
-          newSW.addEventListener('statechange', () => {
-            if(newSW.state === 'installed' && navigator.serviceWorker.controller){
-              newSW.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        }
-      });
-    }catch(err){
-      console.warn('[Qooentum] SW registration failed:', err);
-    }
-
-    /* 2. Limpiar entradas de HERE/Geoapify(legacy)/Google de cachés
-          El nuevo SW ya no las cachea, pero pueden quedar del anterior */
-    if('caches' in window){
-      try{
-        const cacheNames = await caches.keys();
-        for(const cacheName of cacheNames){
-          const cache = await caches.open(cacheName);
-          const reqs  = await cache.keys();
-          for(const req of reqs){
-            if(req.url.includes('geoapify.com')    || // legacy — limpiar entradas viejas
-               req.url.includes('hereapi.com')     ||
-               req.url.includes('googleapis.com')  ||
-               req.url.includes('script.google.com')){
-              await cache.delete(req);
-            }
-          }
-        }
-        console.log('[Qooentum] Caché de APIs externas limpiado');
-      }catch(e){
-        console.warn('[Qooentum] Error limpiando caché:', e);
-      }
-    }
-  });
-
-  /* Recargar la página cuando el nuevo SW tome control */
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
-  });
-}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW registration failed:',err));});}
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone)document.getElementById('install-banner').style.display='flex';});
 function installPwa(){document.getElementById('install-banner').style.display='none';if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;});}
 window.addEventListener('appinstalled',()=>{document.getElementById('install-banner').style.display='none';showToast('✅ Qooentum instalada');});
-window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredInstallPrompt=e;const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone)document.getElementById('install-banner').style.display='flex';});
-
-/* ═════════════════════════════════════════════════════════════════
-   FOURSQUARE API INTEGRATION
-   ═════════════════════════════════════════════════════════════════ */
-
-const FOURSQUARE_CONFIG = {
-  // 🔑 AGREGA TU API KEY DE FOURSQUARE AQUÍ
-  // Ve a https://developer.foursquare.com/ y obtén: sk_live_xxxx
-  API_KEY: 'sk_live_AOHLYGYM5Q4S4QTK2MRERYLST53HGD5MSLZ4M31M3SMVT0BP',
-  API_BASE: 'https://api.foursquare.com/v3',
-  SEARCH_RADIUS: 800,
-  LIMIT: 50,
-};
-
-const FOURSQUARE_CACHE = new Map();
-const CACHE_EXPIRY = 30 * 60 * 1000;
-
-// Buscar lugares con Foursquare
-async function foursquareSearch(lat, lng) {
-  const cacheKey = `${Math.round(lat*1000)}_${Math.round(lng*1000)}`;
-  
-  if (FOURSQUARE_CACHE.has(cacheKey)) {
-    const cached = FOURSQUARE_CACHE.get(cacheKey);
-    if (Date.now() - cached.time < CACHE_EXPIRY) {
-      return cached.data;
-    }
-  }
-
-  if (FOURSQUARE_CONFIG.API_KEY.includes('AQUI_TU')) {
-    console.warn('⚠️ Configura tu API Key de Foursquare');
-    return [];
-  }
-
-  try {
-    const params = new URLSearchParams({
-      'll': `${lat},${lng}`,
-      'radius': FOURSQUARE_CONFIG.SEARCH_RADIUS,
-      'limit': FOURSQUARE_CONFIG.LIMIT,
-      'sort': 'distance',
-    });
-
-    const response = await fetch(
-      `${FOURSQUARE_CONFIG.API_BASE}/places/search?${params}`,
-      {
-        headers: {
-          'Authorization': FOURSQUARE_CONFIG.API_KEY,
-          'Accept': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) return [];
-
-    const data = await response.json();
-    const places = (data.results || []).map(place => ({
-      id: place.fsq_id,
-      name: place.name,
-      category: place.categories?.[0]?.name || 'Comercio',
-      lat: place.location.lat,
-      lng: place.location.lon,
-      distance: place.location.distance || null,
-      address: place.location.formatted_address || 'Sin dirección',
-      rating: place.rating || null,
-      phone: place.tel || null,
-      website: place.website || null,
-      image: place.photos?.[0]?.prefix + place.photos?.[0]?.suffix || null,
-    }));
-
-    FOURSQUARE_CACHE.set(cacheKey, { data: places, time: Date.now() });
-    return places;
-  } catch (error) {
-    console.error('Error Foursquare:', error);
-    return [];
-  }
-}
-
-// Autocomplete
-async function foursquareAutocomplete(query, lat, lng) {
-  if (!query || query.length < 2) return [];
-  if (FOURSQUARE_CONFIG.API_KEY.includes('AQUI_TU')) return [];
-
-  try {
-    const params = new URLSearchParams({
-      'query': query,
-      'll': `${lat},${lng}`,
-      'limit': 8,
-    });
-
-    const response = await fetch(
-      `${FOURSQUARE_CONFIG.API_BASE}/places/autocomplete?${params}`,
-      {
-        headers: {
-          'Authorization': FOURSQUARE_CONFIG.API_KEY,
-        },
-      }
-    );
-
-    if (!response.ok) return [];
-    const data = await response.json();
-    return (data.results || []).map(r => ({
-      id: r.place_id,
-      name: r.text.primary,
-      address: r.text.secondary || '',
-    }));
-  } catch (error) {
-    return [];
-  }
-}
-
 </script>
 </body>
 </html>
