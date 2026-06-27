@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -247,6 +246,9 @@ html,body{height:100%;width:100%;overflow:hidden;background:#fff;color:var(--tex
 .nc-rn{font-size:10px;color:var(--text3);font-weight:500;}
 .nc-report-btn{background:var(--green-lt);border:1.5px solid var(--green);border-radius:99px;padding:6px 12px;font-size:11px;font-weight:800;color:var(--green-dk);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .18s;}
 .nc-report-btn:hover{background:var(--green);color:#fff;}
+.nc-card.selected{border-color:var(--green);background:var(--green-lt);box-shadow:0 4px 16px rgba(0,196,140,.15);}
+.nc-group{margin-bottom:18px;}
+.nc-group-title{font-size:11px;font-weight:900;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:8px 4px;margin-bottom:8px;}
 .nc-skeleton{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px;display:flex;gap:11px;}
 .nc-skel-logo{width:46px;height:46px;border-radius:12px;flex-shrink:0;}
 .nc-skel-body{flex:1;display:flex;flex-direction:column;gap:7px;}
@@ -1022,7 +1024,8 @@ function buildMapMarkers(placesToShow){
 
     // Cancelar batch anterior
     const myToken = ++_markerBatchToken;
-    const BATCH = isMobile ? 5 : 15;
+    const BATCH = isMobile ? 8 : 20;
+    const half = Math.ceil(toRender.length / 2);
 
     function addBatch(i){
       if(_markerBatchToken !== myToken) return; // cancelado
@@ -1040,6 +1043,7 @@ function buildMapMarkers(placesToShow){
         }
         const el=makePlaceMarkerEl(p);
         el.addEventListener('click',()=>{
+          selectPlaceInUI(p.id);
           if(pickModeActive){exitPickMode();openPlacePopup(p);}
           else{openPlacePopup(p);}
         });
@@ -1049,7 +1053,9 @@ function buildMapMarkers(placesToShow){
         mlMarkers[p.id]={marker,el,_lastStatus:p.status,_lastReporters:p.reporters};
       });
       if(i + BATCH < toRender.length){
-        requestAnimationFrame(()=>addBatch(i + BATCH));
+        // Aumentar delay después de la mitad para no saturar
+        const delay = i >= half ? 500 : 100;
+        setTimeout(()=>addBatch(i + BATCH), delay);
       }
     }
     requestAnimationFrame(()=>addBatch(0));
@@ -1073,6 +1079,15 @@ function buildMapMarkers(placesToShow){
       mlClusterMarkers.push(marker);
     });
   }
+}
+
+/* ── LINKING MAP AND LIST ── */
+function selectPlaceInUI(placeId){
+  // Limpiar selección anterior
+  document.querySelectorAll('.nc-card.selected').forEach(c=>c.classList.remove('selected'));
+  // Marcar card en lista
+  const card=document.querySelector(`.nc-card[data-place-id="${placeId}"]`);
+  if(card)card.classList.add('selected');
 }
 
 function refreshMarkerIcon(id){
@@ -1451,32 +1466,56 @@ function cercaRenderList(){
   document.getElementById('cerca-count').textContent=n;
   document.getElementById('cerca-count-lbl').textContent=n===1?' lugar encontrado':' lugares encontrados';
   if(!n){list.innerHTML=`<div class="nc-empty"><div class="nc-empty-icon">🔍</div><div class="nc-empty-title">Sin resultados</div><div class="nc-empty-sub">Probá aumentando el radio o cambiando el filtro.</div></div>`;return;}
-  list.innerHTML=cercaFiltered.map((p,i)=>{
-    const s=(!p.reporters||p.reporters===0)?NO_REPORT_STATUS:STATUS_CFG[p.status];
-    const logoHtml=(p.sponsor&&p.sponsor.logo_url)?`<img src="${p.sponsor.logo_url}" alt="${p.name}">`:(p.logo||'🏪');
-    const reviewsFormatted=typeof p.reviewsN==='number'?p.reviewsN.toLocaleString('es-AR'):p.reviewsN;
-    return`<div class="nc-card" data-nc-idx="${i}" style="animation-delay:${Math.min(i*0.025,0.3)}s">
-      <div class="nc-logo">${logoHtml}</div>
-      <div class="nc-body">
-        <div class="nc-top"><div class="nc-name">${p.name}</div><span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
-        <div class="nc-meta"><span class="nc-type">${p.type}</span><div class="nc-dot"></div><span class="nc-dist">📍 ${cercaFmtDist(p.dist)}</span>${p.addr?`<div class="nc-dot"></div><span class="nc-addr">${p.addr}</span>`:''}</div>
-        <div class="nc-status" style="background:${s.color}"><div class="nc-sdot"></div><span class="nc-slabel">${s.label}</span><span class="nc-ssub">${s.sub}</span></div>
-      </div>
-      <div class="nc-right">
-        <div class="nc-rating"><span class="nc-star">★</span>${p.rating}<span class="nc-rn">&nbsp;(${reviewsFormatted})</span></div>
-        <button class="nc-report-btn" data-nc-idx="${i}">Reportar</button>
-      </div>
-    </div>`;
-  }).join('');
+  
+  // Agrupar por categoría/tipo
+  const grouped={};
+  cercaFiltered.forEach((p,i)=>{
+    const cat=p.cat||p.type||'Otros';
+    if(!grouped[cat])grouped[cat]=[];
+    grouped[cat].push({p,i});
+  });
+  
+  let html='';
+  let globalIdx=0;
+  Object.keys(grouped).forEach(cat=>{
+    html+=`<div class="nc-group"><div class="nc-group-title">${cat}</div>`;
+    grouped[cat].forEach(({p,i})=>{
+      const s=(!p.reporters||p.reporters===0)?NO_REPORT_STATUS:STATUS_CFG[p.status];
+      const logoHtml=(p.sponsor&&p.sponsor.logo_url)?`<img src="${p.sponsor.logo_url}" alt="${p.name}">`:(p.logo||'🏪');
+      const reviewsFormatted=typeof p.reviewsN==='number'?p.reviewsN.toLocaleString('es-AR'):p.reviewsN;
+      html+=`<div class="nc-card" data-nc-idx="${i}" data-place-id="${p.id}" style="animation-delay:${Math.min(globalIdx*0.025,0.3)}s">
+        <div class="nc-logo">${logoHtml}</div>
+        <div class="nc-body">
+          <div class="nc-top"><div class="nc-name">${p.name}</div><span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
+          <div class="nc-meta"><span class="nc-type">${p.type}</span><div class="nc-dot"></div><span class="nc-dist">📍 ${cercaFmtDist(p.dist)}</span>${p.addr?`<div class="nc-dot"></div><span class="nc-addr">${p.addr}</span>`:''}</div>
+          <div class="nc-status" style="background:${s.color}"><div class="nc-sdot"></div><span class="nc-slabel">${s.label}</span><span class="nc-ssub">${s.sub}</span></div>
+        </div>
+        <div class="nc-right">
+          <div class="nc-rating"><span class="nc-star">★</span>${p.rating}<span class="nc-rn">&nbsp;(${reviewsFormatted})</span></div>
+          <button class="nc-report-btn" data-nc-idx="${i}">Reportar</button>
+        </div>
+      </div>`;
+      globalIdx++;
+    });
+    html+=`</div>`;
+  });
+  
+  list.innerHTML=html;
+  
   list.querySelectorAll('.nc-card').forEach(card=>{
     card.addEventListener('click',e=>{
       if(e.target.classList.contains('nc-report-btn'))return;
       const p=cercaFiltered[+card.dataset.ncIdx];
       if(!p)return;
+      selectPlaceInUI(p.id);
       const enriched=placeIndex.get(p.id)||p;
       openPlacePopup({...p,...enriched});
       switchTab('map');
       if(mlMap)mlMap.panTo([p.lng,p.lat]);
+    });
+    card.addEventListener('mouseenter',()=>{
+      const placeId=card.dataset.placeId;
+      if(placeId)selectPlaceInUI(placeId);
     });
   });
   list.querySelectorAll('.nc-report-btn').forEach(btn=>{
@@ -1485,6 +1524,7 @@ function cercaRenderList(){
       const p=cercaFiltered[+btn.dataset.ncIdx];
       if(!p)return;
       if(!isLoggedIn){showToastAction('🔑 Iniciá sesión para reportar y ganar puntos');return;}
+      selectPlaceInUI(p.id);
       openPlacePopup({...p,...(placeIndex.get(p.id)||{})});
     });
   });
