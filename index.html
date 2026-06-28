@@ -1266,9 +1266,6 @@ function initMap(){
 
   mlMap.on('moveend',()=>{
     if(!mlMap)return;
-    // Si el mapa se movió por GPS (followMode activo y tenemos coords GPS),
-    // no re-disparar desde el centro del mapa — ya lo hizo onGpsSuccess
-    if(followMode&&userLat!==null)return;
     const center=mlMap.getCenter();
     const lat=center.lat,lng=center.lng;
     const tileKey=latLngToTileKey(lat,lng);
@@ -1317,15 +1314,22 @@ function onGpsSuccess(pos){
   const isFirst=userLat===null;
   userLat=lat;userLng=lng;
   if(mlReady)updateUserMarker(lat,lng);
-  if(followMode&&mlMap){
+  if(mlReady&&followMode&&mlMap){
     if(isFirst){mlMap.flyTo({center:[lng,lat],zoom:CONFIG.FOLLOW_ZOOM,duration:600});}
-    else{
-      // FIX: easeTo en lugar de panTo para seguimiento suave sin saltos
-      mlMap.easeTo({center:[lng,lat],duration:800,easing:t=>t*(2-t)});
-    }
+    else{mlMap.easeTo({center:[lng,lat],duration:800,easing:t=>t*(2-t)});}
+  } else if(!mlReady&&isFirst&&followMode){
+    // Mapa todavía no cargó — registrar callback para mover cuando esté listo
+    mlReadyCallbacks.push(()=>{
+      if(mlMap)mlMap.flyTo({center:[lng,lat],zoom:CONFIG.FOLLOW_ZOOM,duration:600});
+      updateGpsBtnUI();
+    });
   }
-  if(isFirst){updateGpsBtnUI();ensurePlacesLoadedAt(lat,lng);lastLoadTileKey=latLngToTileKey(lat,lng);}
-  else{
+  if(isFirst){
+    updateGpsBtnUI();
+    lastLoadTileKey=latLngToTileKey(lat,lng);
+    if(mlReady){ensurePlacesLoadedAt(lat,lng);}
+    else{mlReadyCallbacks.push(()=>ensurePlacesLoadedAt(lat,lng));}
+  } else {
     const currentTileKey=latLngToTileKey(lat,lng);
     if(currentTileKey!==lastLoadTileKey){lastLoadTileKey=currentTileKey;ensurePlacesLoadedAt(lat,lng);}
   }
