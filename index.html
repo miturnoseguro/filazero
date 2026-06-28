@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1411,7 +1409,7 @@ function onZoomOut(){if(!mlMap)return;mlMap.zoomOut({duration:300});}
 function initMap(){
   mlMap=new maplibregl.Map({
     container:'maplibre-map',
-    style:'https://tiles.openfreemap.org/styles/liberty',
+    style:'https://tiles.openfreemap.org/styles/bright',
     center:[CONFIG.DEFAULT_CENTER.lng,CONFIG.DEFAULT_CENTER.lat],
     zoom:13,
     attributionControl:false,
@@ -1422,6 +1420,18 @@ function initMap(){
   });
 
   mlMap.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-right');
+  // Silenciar errores internos de estilo (null values en features OSM del tile)
+  mlMap.on('error',(e)=>{
+    const msg=(e&&e.error&&e.error.message)||'';
+    if(msg.includes('Expected value to be of type number'))return;
+    console.warn('[Map error]',msg);
+  });
+  // Silenciar errores internos de estilo de MapLibre (null values en features OSM)
+  mlMap.on('error',(e)=>{
+    const msg=e&&e.error&&e.error.message||'';
+    if(msg.includes('Expected value to be of type number'))return;
+    console.warn('[Map error]',msg);
+  });
 
   mlMap.on('load',()=>{
     mlReady=true;
