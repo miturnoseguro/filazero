@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -589,7 +587,7 @@ const CONFIG = {
   PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
   LOAD_TRIGGER_M: 40,
   VOTE_COOLDOWN_MS: 24 * 60 * 60 * 1000,
-  FOLLOW_ZOOM: 16,
+  FOLLOW_ZOOM: 17,
   POIS_TILES_BASE_URL: 'https://miturnoseguro.github.io/qooentum/tiles', // URL base de los tiles
 };
 
@@ -1268,6 +1266,9 @@ function initMap(){
 
   mlMap.on('moveend',()=>{
     if(!mlMap)return;
+    // Si el mapa se movió por GPS (followMode activo y tenemos coords GPS),
+    // no re-disparar desde el centro del mapa — ya lo hizo onGpsSuccess
+    if(followMode&&userLat!==null)return;
     const center=mlMap.getCenter();
     const lat=center.lat,lng=center.lng;
     const tileKey=latLngToTileKey(lat,lng);
@@ -1279,25 +1280,40 @@ function initMap(){
 }
 
 function startGpsWatch(){
-  if(!navigator.geolocation)return;
+  if(!navigator.geolocation){
+    // No GPS support — load default location
+    if(!mapInitialLoaded){const{lat,lng}=CONFIG.DEFAULT_CENTER;ensurePlacesLoadedAt(lat,lng);mapInitialLoaded=true;}
+    return;
+  }
   if(gpsWatchId!==null)navigator.geolocation.clearWatch(gpsWatchId);
-  gpsWatchId=navigator.geolocation.watchPosition(pos=>onGpsSuccess(pos),err=>{
+
+  function onErr(err){
     if(!mapInitialLoaded){
       const{lat,lng}=CONFIG.DEFAULT_CENTER;
       ensurePlacesLoadedAt(lat,lng);
       mapInitialLoaded=true;
     }
-  // FIX: maximumAge:500 — fuerza lecturas frescas cada 500ms para mayor fluidez
-  },{enableHighAccuracy:true,timeout:10000,maximumAge:500});
+    console.warn('GPS error:',err.code,err.message);
+  }
+
+  const gpsOpts={enableHighAccuracy:true,timeout:12000,maximumAge:0};
+
+  // Pedir posición inmediata — no esperar al watch
+  navigator.geolocation.getCurrentPosition(pos=>{
+    onGpsSuccess(pos);
+  }, onErr, gpsOpts);
+
+  // Continuar escuchando cambios de posición
+  gpsWatchId=navigator.geolocation.watchPosition(pos=>onGpsSuccess(pos), onErr, {enableHighAccuracy:true,timeout:12000,maximumAge:2000});
 }
 
 function onGpsSuccess(pos){
   const{latitude:rawLat,longitude:rawLng,accuracy}=pos.coords;
-  // FIX: ignorar lecturas muy imprecisas (accuracy en metros, número alto = impreciso)
-  if(accuracy>80&&userLat!==null)return;
-  // FIX: filtro de suavizado — promedio ponderado 75% nueva / 25% anterior
-  const lat=userLat===null?rawLat:rawLat*0.75+userLat*0.25;
-  const lng=userLng===null?rawLng:rawLng*0.75+userLng*0.25;
+  // Solo ignorar lecturas muy imprecisas en updates posteriores (no en la primera)
+  if(accuracy>120&&userLat!==null)return;
+  // Suavizado solo en updates, primer fix se toma tal cual
+  const lat=userLat===null?rawLat:rawLat*0.8+userLat*0.2;
+  const lng=userLng===null?rawLng:rawLng*0.8+userLng*0.2;
   const isFirst=userLat===null;
   userLat=lat;userLng=lng;
   if(mlReady)updateUserMarker(lat,lng);
