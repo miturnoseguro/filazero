@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -641,6 +643,8 @@ let isLoggedIn=false, pendingVote=null;
 let placeCooldowns={}, gpsWatchId=null;
 let mapInitialLoaded=false, userLat=null, userLng=null;
 let checkinShown=false, pickModeActive=false;
+let lastCheckinLat=null, lastCheckinLng=null;
+let lastCheckinLat=null, lastCheckinLng=null;
 let searchTimer=null;
 let tileCache={}, placeStore={};
 let followMode=true, lastLoadTileKey=null;
@@ -854,7 +858,13 @@ async function ensurePlacesLoadedAt(lat,lng){
   if(missingKeys.length===0){
     // No hay tiles nuevos — solo actualizar estados (no mover el usuario, solo sync de ocupación)
     syncBackendStatus(lat,lng).then(()=>{rebuildNearby(lat,lng);buildMapMarkers(nearbyPlaces);});
-    if(!mapInitialLoaded){mapInitialLoaded=true;if(!checkinShown&&nearbyPlaces.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(lat,lng),800);}}
+    if(!mapInitialLoaded){
+      mapInitialLoaded=true;
+      // Use real GPS coords if available, otherwise map center
+      const cLat=userLat??lat, cLng=userLng??lng;
+      const _moved2 = lastCheckinLat===null || distanceMeter(cLat,cLng,lastCheckinLat,lastCheckinLng)>50;
+      if((!checkinShown||_moved2)&&nearbyPlaces.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(cLat,cLng),800);}
+    }
     return;
   }
   if(!mapInitialLoaded)mapInitialLoaded=true;
@@ -868,7 +878,14 @@ async function ensurePlacesLoadedAt(lat,lng){
   // Guardar definitivamente en cache (no expiran hasta pruneOldTiles)
   missingKeys.forEach(key=>{const[s,w,n,e]=tileToBbox(key);const forThisTile=allNew.filter(p=>p.lat>=s&&p.lat<=n&&p.lng>=w&&p.lng<=e);mergePlacesIntoCache(forThisTile,key);});
   persistCache();rebuildNearby(lat,lng);applySeedReports([...placeIndex.values()],lat,lng);buildMapMarkers(nearbyPlaces);
-  if(!checkinShown&&nearbyPlaces.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(lat,lng),800);}
+  // Checkin: usar coords GPS reales si están disponibles
+  const _cLat=userLat??lat, _cLng=userLng??lng;
+  // Allow re-trigger if user moved >50m from where checkin last showed
+  const _movedFar = lastCheckinLat===null || distanceMeter(_cLat,_cLng,lastCheckinLat,lastCheckinLng)>50;
+  if((!checkinShown||_movedFar)&&nearbyPlaces.length>0){
+    checkinShown=true;
+    setTimeout(()=>showCheckinModal(_cLat,_cLng),900);
+  }
 }
 
 async function syncBackendStatus(lat,lng){
@@ -1295,7 +1312,8 @@ function onGpsSuccess(pos){
     const currentTileKey=latLngToTileKey(lat,lng);
     if(currentTileKey!==lastLoadTileKey){lastLoadTileKey=currentTileKey;ensurePlacesLoadedAt(lat,lng);}
   }
-  if(!checkinShown&&places.length>0){checkinShown=true;setTimeout(()=>showCheckinModal(lat,lng),1200);}
+  // Nota: el checkin se dispara desde ensurePlacesLoadedAt cuando los lugares ya están cargados
+  // Así evitamos race conditions donde showCheckinModal se llama con pool vacío
 }
 
 async function manualRefresh(){
@@ -1652,6 +1670,7 @@ function showCheckinModal(lat,lng){
   function confirmPlace(p){close();setTimeout(()=>openPlacePopup(p),300);}
   // Single-place "estás en X ahora?" prompt
   root.innerHTML=`<div class="checkin-overlay" id="checkin-overlay"><div class="checkin-card"><div class="checkin-header"><div class="checkin-header-emoji">${closest.logo||'📍'}</div><div class="checkin-header-title">¿Estás en ${closest.name} en este momento?</div><div class="checkin-header-sub">${closest._dist}m de tu ubicación actual · podés reportar cuánta gente hay</div></div><div class="checkin-body"><div style="display:flex;flex-direction:column;gap:10px"><button class="checkin-confirm-btn" id="checkin-yes-btn">✅ Sí, estoy aquí — reportar</button><button class="checkin-skip-main" id="checkin-skip-btn"><span style="font-size:16px;opacity:.65">🗺️</span>No, solo ver el mapa</button></div></div></div></div>`;
+  lastCheckinLat=lat; lastCheckinLng=lng;
   root.querySelector('#checkin-yes-btn').addEventListener('click',()=>confirmPlace(closest));
   root.querySelector('#checkin-skip-btn').addEventListener('click',close);
   root.querySelector('#checkin-overlay').addEventListener('click',e=>{if(e.target.id==='checkin-overlay')close();});
