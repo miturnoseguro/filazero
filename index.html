@@ -1151,21 +1151,23 @@ function clearSearch(){document.getElementById('map-search-input').value='';docu
    ════════════════════════════════════════════════════════════ */
 
 // Ajuste de agrupación: grid más fino para que a 5 cuadras (zoom ~15) se vean clústeres más compactos
-const CLUSTER_ZOOM_THRESHOLD = 16; // por encima de 16 se muestran individuales
+const CLUSTER_ZOOM_THRESHOLD = 18; // por encima de 18 se muestran individuales (~100m)
 let mlMap = null, mlReady = false, mlReadyCallbacks = [];
 let mlMarkers = {}; // id -> {marker, el}
 let mlClusterMarkers = [];
 let mlUserMarker = null;
 
 function getClusterGridDeg(zoom){
-  // grid más pequeño para agrupar más finamente a nivel de manzanas
-  if(zoom>=16) return 0.006;   // muy fino (no se usa porque threshold=16)
-  if(zoom>=15) return 0.010;   // ~1.1km
-  if(zoom>=14) return 0.018;   // ~2km
-  if(zoom>=13) return 0.035;
-  if(zoom>=12) return 0.070;
-  if(zoom>=11) return 0.140;
-  return 0.30;
+  // Cards individuales solo a zoom>=18 (~100m radio)
+  if(zoom>=18) return 0.003;   // ~330m — no se usa (threshold=18), por si acaso
+  if(zoom>=17) return 0.005;   // ~550m — agrupa manzanas cercanas
+  if(zoom>=16) return 0.008;   // ~880m
+  if(zoom>=15) return 0.012;   // ~1.3km
+  if(zoom>=14) return 0.022;   // ~2.4km
+  if(zoom>=13) return 0.045;
+  if(zoom>=12) return 0.090;
+  if(zoom>=11) return 0.180;
+  return 0.35;
 }
 
 function densityClass(count){
@@ -1343,7 +1345,7 @@ function _buildMapMarkersNow(placesToShow){
       const el=makeClusterMarkerEl(cluster);
       el.addEventListener('click',()=>{
         const currentZoom=mlMap.getZoom();
-        const targetZoom=CLUSTER_ZOOM_THRESHOLD+1; // siempre ir directo a ver individuales
+        const targetZoom=CLUSTER_ZOOM_THRESHOLD; // ir a zoom 18 = vista individual ~100m
         if(isValidCoord(cluster.lat,cluster.lng))safeMapMove(()=>mlMap.flyTo({center:[cluster.lng,cluster.lat],zoom:targetZoom,duration:400}));
       });
       if(!isValidCoord(cluster.lat,cluster.lng))return;
