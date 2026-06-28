@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -776,13 +778,16 @@ async function loadPoisTile(lat, lng) {
   if (cached && Date.now() - cached.ts < POIS_CACHE_TTL) return cached.pois;
   try {
     const url = `${POIS_TILES_BASE_URL}/${key}.json`;
-    const res = await fetch(url);
+    const res = await fetch(url, {mode:'cors',cache:'default'});
     if (!res.ok) return []; // tile vacío para esa zona
     const data = await res.json();
     const pois = data.pois || [];
     POIS_CACHE.set(key, { pois, ts: Date.now() });
     return pois;
-  } catch(e) { return []; }
+  } catch(e) {
+    // CORS o red — falla silenciosa, se usarán demo places como fallback
+    return [];
+  }
 }
 
 // Carga tiles adyacentes también (para no quedarse sin datos en los bordes)
@@ -804,15 +809,17 @@ async function loadPoisNearby(lat, lng) {
 }
 
 function poisToPlace(poi, refLat, refLng) {
-  const dist = refLat != null ? Math.round(distanceMeter(refLat, refLng, poi.lat, poi.lon)) : 0;
+  const lat=parseFloat(poi.lat), lng=parseFloat(poi.lon||poi.lng);
+  if(!isValidCoord(lat,lng))return null;
+  const dist = refLat != null ? Math.round(distanceMeter(refLat, refLng, lat, lng)) : 0;
   const typeInfo = POI_TYPE_MAP[poi.categoria] || {emoji: poi.icono || '📍', tipo: poi.label || 'Lugar'};
   return {
     id: poi.id,
     name: poi.nombre,
     type: poi.label || typeInfo.tipo,
     logo: poi.icono || typeInfo.emoji,
-    lat: poi.lat,
-    lng: poi.lon,
+    lat: lat,
+    lng: lng,
     addr: poi.direccion || '',
     status: 0,
     reporters: 0,
@@ -830,7 +837,7 @@ async function staticPoisSearch(lat, lng, radius) {
   if (!pois.length) return [];
   return pois
     .map(p => poisToPlace(p, lat, lng))
-    .filter(p => p.dist <= radius)
+    .filter(p => p !== null && isValidCoord(p.lat, p.lng) && p.dist <= radius)
     .sort((a, b) => a.dist - b.dist)
     .slice(0, window.innerWidth < 768 ? 30 : 60);
 }
@@ -1014,17 +1021,22 @@ function densityClass(count){
   return'density-max';
 }
 
+function isValidCoord(lat,lng){return typeof lat==='number'&&typeof lng==='number'&&!isNaN(lat)&&!isNaN(lng)&&lat>=-90&&lat<=90&&lng>=-180&&lng<=180;}
+
 function computeClusters(placesToCluster,gridDeg){
   const cells={};
   placesToCluster.forEach(p=>{
+    if(!isValidCoord(p.lat,p.lng))return;
     const cx=Math.floor(p.lat/gridDeg),cy=Math.floor(p.lng/gridDeg),key=`${cx}:${cy}`;
     if(!cells[key])cells[key]={lat:(cx+0.5)*gridDeg,lng:(cy+0.5)*gridDeg,places:[]};
     cells[key].places.push(p);
   });
-  return Object.values(cells).map(c=>({
-    lat:c.lat,lng:c.lng,count:c.places.length,places:c.places,
-    totalReporters:c.places.reduce((s,p)=>s+(p.reporters||0),0),
-  }));
+  return Object.values(cells)
+    .filter(c=>isValidCoord(c.lat,c.lng))
+    .map(c=>({
+      lat:c.lat,lng:c.lng,count:c.places.length,places:c.places,
+      totalReporters:c.places.reduce((s,p)=>s+(p.reporters||0),0),
+    }));
 }
 
 function makePlaceMarkerEl(place){
@@ -1089,6 +1101,9 @@ function buildMapMarkers(placesToShow){
   if(!mlMap||!mlReady)return;
   placesToShow=placesToShow||nearbyPlaces;
   if(!placesToShow||!placesToShow.length)return;
+  // Filter out places with invalid coordinates
+  placesToShow=placesToShow.filter(p=>isValidCoord(p.lat,p.lng));
+  if(!placesToShow.length)return;
 
   // Limitar cantidad de markers en mobile para no congelar
   const isMobile = window.innerWidth < 768;
