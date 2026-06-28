@@ -993,12 +993,16 @@ let _ensurePlacesPending = null;
 function ensurePlacesLoadedAt(lat, lng) {
   _ensurePlacesPending = {lat, lng};
   if(_ensurePlacesTimer) clearTimeout(_ensurePlacesTimer);
+  // Si el tile ya está en caché, ejecutar de inmediato sin debounce
+  const tileKey = latLngToTileKey(lat, lng);
+  const isCached = isTileCached(tileKey);
+  const delay = isCached ? 0 : 400; // 0ms si hay caché, 400ms de debounce si hay que ir a la red
   return new Promise(resolve=>{
     _ensurePlacesTimer = setTimeout(() => {
       const {lat: l, lng: g} = _ensurePlacesPending;
       _ensurePlacesTimer = null;
       _ensurePlacesLoadedAtNow(l, g).then(resolve).catch(resolve);
-    }, 2500);
+    }, delay);
   });
 }
 
@@ -1576,10 +1580,9 @@ function onGpsSuccess(pos){
     updateGpsBtnUI();
     mapInitialLoaded=true;
     lastLoadTileKey=latLngToTileKey(lat,lng);
-    ensurePlacesLoadedAt(lat,lng).then(()=>{
-      // Intentar checkin después de cargar los lugares
-      maybeShowCheckin(lat,lng);
-    });
+    ensurePlacesLoadedAt(lat,lng).then(()=>maybeShowCheckin(lat,lng));
+    // Si ya hay lugares en caché, intentar checkin de inmediato también
+    if(nearbyPlaces.length||places.length) maybeShowCheckin(lat,lng);
     if(window._showWelcomeToast){
       window._showWelcomeToast=false;
       setTimeout(()=>showToast('📍 Ubicación encontrada — mostrando tu zona'),600);
@@ -1606,7 +1609,7 @@ function maybeShowCheckin(lat,lng){
   const last=parseInt(sessionStorage.getItem(key)||'0');
   if(Date.now()-last < 5*60*1000)return;
   sessionStorage.setItem(key, Date.now());
-  setTimeout(()=>showCheckinModal(lat,lng), 1200);
+  setTimeout(()=>showCheckinModal(lat,lng), 400);
 }
 
 async function manualRefresh(){
