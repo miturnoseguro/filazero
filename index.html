@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1530,21 +1531,20 @@ function startGpsWatch(){
   );
 }
 
+let gpsEverReceived=false;
 function onGpsSuccess(pos){
   const{latitude:lat,longitude:lng,accuracy}=pos.coords;
   if(typeof lat!=='number'||typeof lng!=='number'||isNaN(lat)||isNaN(lng))return;
+  const isFirstGps=!gpsEverReceived;
   const isFirst=(userLat===null);
   // Ignorar lecturas muy imprecisas solo si ya tenemos una buena
   if(!isFirst && accuracy>150)return;
   userLat=lat; userLng=lng;
+  gpsEverReceived=true;
   if(mlReady)updateUserMarker(lat,lng);
-  // Mover el mapa solo si followMode está activo
-  if(mlReady && followMode && mlMap){
-    if(isFirst){
-      if(isValidCoord(lat,lng))safeMapMove(()=>mlMap.flyTo({center:[lng,lat],zoom:CONFIG.FOLLOW_ZOOM,duration:800}));
-    } else {
-      if(isValidCoord(lat,lng))safeMapMove(()=>mlMap.easeTo({center:[lng,lat],duration:600}));
-    }
+  // Mover el mapa si followMode está activo, o si es la primera vez que recibimos GPS
+  if(mlReady && mlMap && (followMode || isFirstGps)){
+    if(isValidCoord(lat,lng))safeMapMove(()=>mlMap.flyTo({center:[lng,lat],zoom:CONFIG.FOLLOW_ZOOM,duration:800}));
   }
   if(isFirst){
     updateGpsBtnUI();
