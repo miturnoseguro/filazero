@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1133,8 +1135,15 @@ function clearPlaceMarkers(){
 
 // Token para cancelar batches anteriores si llega uno nuevo
 let _markerBatchToken = 0;
+let _buildMarkersTimer = null;
 
 function buildMapMarkers(placesToShow){
+  // Debounce: cancelar llamadas anteriores pendientes
+  if(_buildMarkersTimer)clearTimeout(_buildMarkersTimer);
+  _buildMarkersTimer=setTimeout(()=>_buildMapMarkersNow(placesToShow),80);
+}
+
+function _buildMapMarkersNow(placesToShow){
   if(!mlMap||!mlReady)return;
   placesToShow=placesToShow||nearbyPlaces;
   if(!placesToShow||!placesToShow.length)return;
@@ -1189,6 +1198,7 @@ function buildMapMarkers(placesToShow){
           if(pickModeActive){exitPickMode();openPlacePopup(p);}
           else{openPlacePopup(p);}
         });
+        if(!isValidCoord(p.lat,p.lng))return;
         const marker=new maplibregl.Marker({element:el,anchor:'bottom'})
           .setLngLat([p.lng,p.lat])
           .addTo(mlMap);
@@ -1215,6 +1225,7 @@ function buildMapMarkers(placesToShow){
         const targetZoom=Math.min(currentZoom+3,CLUSTER_ZOOM_THRESHOLD+1);
         mlMap.flyTo({center:[cluster.lng,cluster.lat],zoom:targetZoom,duration:400});
       });
+      if(!isValidCoord(cluster.lat,cluster.lng))return;
       const marker=new maplibregl.Marker({element:el,anchor:'bottom'})
         .setLngLat([cluster.lng,cluster.lat])
         .addTo(mlMap);
@@ -1252,6 +1263,7 @@ function refreshMarkerIcon(id){
 function updateUserMarker(lat,lng){
   if(!mlMap||!mlReady)return;
   if(lat===null||lat===undefined||lng===null||lng===undefined)return;
+  if(typeof lat!=='number'||typeof lng!=='number'||isNaN(lat)||isNaN(lng))return;
   if(mlUserMarker){
     mlUserMarker.setLngLat([lng,lat]);
   } else {
@@ -1357,6 +1369,12 @@ function initMap(){
     .observe(document.getElementById('maplibre-map'));
 
   mlMap.on('zoom',()=>{
+    // El debounce interno de buildMapMarkers evita llamadas excesivas
+    const toShow=nearbyPlaces.length?nearbyPlaces:places;
+    if(toShow.length)buildMapMarkers(toShow);
+  });
+  mlMap.on('zoomend',()=>{
+    // Re-render final al terminar el zoom para asegurar estado correcto
     const toShow=nearbyPlaces.length?nearbyPlaces:places;
     if(toShow.length)buildMapMarkers(toShow);
   });
