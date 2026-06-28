@@ -1421,13 +1421,22 @@ function updateGpsBtnUI(){
 }
 
 function onGpsBtnClick(){
-  // Solo pausar si followMode está activo Y ya tenemos ubicación real
-  if(followMode&&userLat!==null){followMode=false;updateGpsBtnUI();showToast('📍 Seguimiento pausado');return;}
+  // Si ya tenemos ubicación y followMode activo: centrar primero, no pausar
+  if(followMode&&userLat!==null){
+    // Volar a la ubicación del usuario con zoom cercano
+    if(mlMap&&isValidCoord(userLat,userLng)){
+      safeMapMove(()=>mlMap.flyTo({center:[userLng,userLat],zoom:CONFIG.FOLLOW_ZOOM,duration:500}));
+    }
+    showToast('📍 Mostrando tu ubicación');
+    return;
+  }
+  // Sin followMode pero con ubicación conocida: reactivar y centrar
   if(userLat!==null){
     followMode=true;updateGpsBtnUI();
-    if(mlMap&&userLat!==null&&userLng!==null&&isValidCoord(userLat,userLng)){safeMapMove(()=>mlMap.flyTo({center:[userLng,userLat],zoom:CONFIG.FOLLOW_ZOOM,duration:500}));}
+    if(mlMap&&isValidCoord(userLat,userLng)){safeMapMove(()=>mlMap.flyTo({center:[userLng,userLat],zoom:CONFIG.FOLLOW_ZOOM,duration:500}));}
     showToast('📍 Siguiendo tu posición');return;
   }
+  // Sin ubicación aún: pedirla
   const btn=document.getElementById('gps-btn');btn.classList.add('pulsing');
   if(!navigator.geolocation){showToast('⚠️ Tu navegador no soporta GPS');btn.classList.remove('pulsing');return;}
   navigator.geolocation.getCurrentPosition(pos=>{followMode=true;onGpsSuccess(pos);startGpsWatch();},err=>{btn.classList.remove('pulsing');showToast(err.code===1?'🔒 Permiso de ubicación denegado':'⚠️ No se pudo obtener tu ubicación');},{enableHighAccuracy:true,timeout:10000});
