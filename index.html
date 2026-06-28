@@ -644,7 +644,6 @@ let placeCooldowns={}, gpsWatchId=null;
 let mapInitialLoaded=false, userLat=null, userLng=null;
 let checkinShown=false, pickModeActive=false;
 let lastCheckinLat=null, lastCheckinLng=null;
-let lastCheckinLat=null, lastCheckinLng=null;
 let searchTimer=null;
 let tileCache={}, placeStore={};
 let followMode=true, lastLoadTileKey=null;
@@ -665,6 +664,9 @@ function isTileCached(tileKey){const t=tileCache[tileKey];return t&&(Date.now()-
 function mergePlacesIntoCache(newPlaces,tileKey){const addedIds=[];newPlaces.forEach(p=>{placeStore[p.id]=p;addedIds.push(p.id);if(!placeIndex.has(p.id)){placeIndex.set(p.id,p);places.push(p);}else{Object.assign(placeIndex.get(p.id),p);}});if(tileKey)markTileLoaded(tileKey,addedIds);}
 function tileToBbox(tileKey){const[tLat,tLng]=tileKey.split(':').map(Number);return[tLat*CONFIG.TILE_DEG-CONFIG.BBOX_PAD,tLng*CONFIG.TILE_DEG-CONFIG.BBOX_PAD,(tLat+1)*CONFIG.TILE_DEG+CONFIG.BBOX_PAD,(tLng+1)*CONFIG.TILE_DEG+CONFIG.BBOX_PAD];}
 function getAdjacentTileKeys(lat,lng){const d=CONFIG.TILE_DEG,relLat=(lat/d)-Math.floor(lat/d),relLng=(lng/d)-Math.floor(lng/d),keys=[];if(relLat<0.3)keys.push(latLngToTileKey(lat-d,lng));if(relLat>0.7)keys.push(latLngToTileKey(lat+d,lng));if(relLng<0.3)keys.push(latLngToTileKey(lat,lng-d));if(relLng>0.7)keys.push(latLngToTileKey(lat,lng+d));return keys;}
+
+/* ── DATE UTILS ── */
+function getDailyDateStr(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
 
 /* ── COOLDOWN ── */
 function loadCooldownsFromStorage(){
@@ -904,7 +906,6 @@ function rebuildNearby(lat,lng){
 
 /* ── DAILY SEEDED REPORTS ── 5 random nearby places (<300m) get fake activity each day */
 const DAILY_SEED_KEY='qooentum_daily_seed';
-function getDailyDateStr(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
 function getSeedData(){try{const raw=localStorage.getItem(DAILY_SEED_KEY);if(!raw)return null;const d=JSON.parse(raw);if(d.date!==getDailyDateStr()){localStorage.removeItem(DAILY_SEED_KEY);return null;}return d;}catch{return null;}}
 function saveSeedData(data){try{localStorage.setItem(DAILY_SEED_KEY,JSON.stringify({...data,date:getDailyDateStr()}));}catch(e){}}
 
