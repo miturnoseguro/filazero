@@ -754,7 +754,7 @@ function maybeStartOccupancySync(){if(isLoggedIn&&!occupancySyncInterval)startOc
 
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 const OVERPASS_CACHE = new Map(); // tileKey -> {places, ts}
-const OVERPASS_CACHE_TTL = 30 * 60 * 1000; // 30 min
+const OVERPASS_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 horas
 
 // Mapeo de tags OSM → emoji + tipo legible
 const OSM_TAG_MAP = [
@@ -800,6 +800,45 @@ const OSM_TAG_MAP = [
   {match:{shop:true},                 emoji:'🏪',  tipo:'Comercio',       cat:'shopping'},
   {match:{amenity:true},              emoji:'📍',  tipo:'Lugar',          cat:'other'},
 ];
+
+// ── OVERPASS RATE LIMITER ──
+let _overpassLastReq = 0;
+let _overpassInFlight = false;
+const OVERPASS_MIN_INTERVAL = 12000; // mínimo 12s entre requests
+
+async function overpassRateLimitedFetch(query) {
+  // Si ya hay un request en vuelo, esperar a que termine
+  if(_overpassInFlight) {
+    console.log('[Overpass] Request en vuelo, saltando');
+    return null;
+  }
+  const now = Date.now();
+  const elapsed = now - _overpassLastReq;
+  if(elapsed < OVERPASS_MIN_INTERVAL) {
+    const wait = OVERPASS_MIN_INTERVAL - elapsed;
+    console.log(`[Overpass] Rate limit: esperando ${wait}ms`);
+    await new Promise(r => setTimeout(r, wait));
+  }
+  _overpassInFlight = true;
+  _overpassLastReq = Date.now();
+  try {
+    const res = await fetch(OVERPASS_URL, {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      signal: AbortSignal.timeout(20000),
+    });
+    if(res.status === 429) {
+      console.warn('[Overpass] 429 - esperar 30s antes de reintentar');
+      _overpassLastReq = Date.now() + 30000; // penalizar 30s extra
+      throw new Error('Overpass 429');
+    }
+    if(!res.ok) throw new Error('Overpass error ' + res.status);
+    return await res.json();
+  } finally {
+    _overpassInFlight = false;
+  }
+}
 
 function osmTagsToMeta(tags) {
   for (const rule of OSM_TAG_MAP) {
@@ -860,13 +899,11 @@ async function overpassSearch(lat, lng, radiusM) {
 out center 60;`;
 
   try {
-    const res = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    });
-    if (!res.ok) throw new Error('Overpass error ' + res.status);
-    const data = await res.json();
+    const data = await overpassRateLimitedFetch(query);
+    if(!data) { // rate limited / in-flight, devolver cache o vacío
+      const cached2 = OVERPASS_CACHE.get(cacheKey);
+      return cached2 ? cached2.places : [];
+    }
     const places = (data.elements || [])
       .map(el => osmNodeToPlace(el, lat, lng))
       .filter(p => p !== null && p.dist <= radiusM)
@@ -898,10 +935,23 @@ async function loadPlacesForTiles(tileKeys){
   return overpassSearch(centerLat, centerLng, radius);
 }
 
-async function ensurePlacesLoadedAt(lat,lng){
+let _ensurePlacesTimer = null;
+let _ensurePlacesPending = null;
+
+function ensurePlacesLoadedAt(lat, lng) {
+  _ensurePlacesPending = {lat, lng};
+  if(_ensurePlacesTimer) clearTimeout(_ensurePlacesTimer);
+  _ensurePlacesTimer = setTimeout(() => {
+    const {lat: l, lng: g} = _ensurePlacesPending;
+    _ensurePlacesTimer = null;
+    _ensurePlacesLoadedAtNow(l, g);
+  }, 2500); // esperar 2.5s antes de lanzar la query
+}
+
+async function _ensurePlacesLoadedAtNow(lat,lng){
   const tileKey=latLngToTileKey(lat,lng);
-  const adjacentKeys=getAdjacentTileKeys(lat,lng);
-  const allKeys=[tileKey,...adjacentKeys];
+  // Solo cargar tile actual (no adyacentes) para reducir requests a Overpass
+  const allKeys=[tileKey];
   const missingKeys=allKeys.filter(k=>!isTileCached(k));
 
   // Si ya tenemos lugares en cache, mostrarlos de inmediato
@@ -1659,16 +1709,16 @@ async function cercaLoadPlaces(forceReload){
   try{
     // Primero intentar usar los datos ya cargados en el mapa (placeIndex)
     let placesData=[];
-    if(placeIndex.size>0){
+    if(placeIndex.size>=3){
       placeIndex.forEach(p=>{
         const dist=Math.round(distanceMeter(lat,lng,p.lat,p.lng));
-        if(dist<=cercaRadius)placesData.push({...p,dist,cat:cercaGuessCategory(p.name,p.type)});
+        if(dist<=cercaRadius)placesData.push({...p,dist,cat:p.cat||cercaGuessCategory(p.name,p.type)});
       });
       placesData.sort((a,b)=>a.dist-b.dist);
     }
-    // Si no hay datos en placeIndex, cargar desde tiles
-    if(!placesData.length){
-      const fetched=await cercaFetchPlaces(lat,lng,cercaRadius);
+    // Solo ir a Overpass si placeIndex tiene muy pocos datos
+    if(placesData.length<3){
+      const fetched=await cercaFetchPlaces(lat,lng,Math.min(cercaRadius,600));
       placesData=fetched;
     }
     if(!placesData.length)placesData=cercaBuildDemoPlaces(lat,lng);
