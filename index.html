@@ -993,11 +993,13 @@ let _ensurePlacesPending = null;
 function ensurePlacesLoadedAt(lat, lng) {
   _ensurePlacesPending = {lat, lng};
   if(_ensurePlacesTimer) clearTimeout(_ensurePlacesTimer);
-  _ensurePlacesTimer = setTimeout(() => {
-    const {lat: l, lng: g} = _ensurePlacesPending;
-    _ensurePlacesTimer = null;
-    _ensurePlacesLoadedAtNow(l, g);
-  }, 2500); // esperar 2.5s antes de lanzar la query
+  return new Promise(resolve=>{
+    _ensurePlacesTimer = setTimeout(() => {
+      const {lat: l, lng: g} = _ensurePlacesPending;
+      _ensurePlacesTimer = null;
+      _ensurePlacesLoadedAtNow(l, g).then(resolve).catch(resolve);
+    }, 2500);
+  });
 }
 
 async function _ensurePlacesLoadedAtNow(lat,lng){
@@ -1033,19 +1035,6 @@ async function _ensurePlacesLoadedAtNow(lat,lng){
     buildMapMarkers(nearbyPlaces);
   }
 
-  // Checkin: siempre intentar mostrar después de cargar/recibir lugares
-  // usando las coords GPS reales del usuario
-  const cLat=userLat??lat, cLng=userLng??lng;
-  const movedFar=lastCheckinLat===null||distanceMeter(cLat,cLng,lastCheckinLat,lastCheckinLng)>50;
-  if((!checkinShown||movedFar)&&nearbyPlaces.length>0){
-    // Solo mostrar checkin si hay un lugar a menos de 20m
-    const veryNear=nearbyPlaces.filter(p=>isValidCoord(p.lat,p.lng)&&distanceMeter(cLat,cLng,p.lat,p.lng)<=20);
-    if(veryNear.length>0){
-      checkinShown=true;
-      lastCheckinLat=cLat;lastCheckinLng=cLng;
-      setTimeout(()=>showCheckinModal(cLat,cLng),1000);
-    }
-  }
 }
 
 async function syncBackendStatus(lat,lng){
@@ -1587,16 +1576,37 @@ function onGpsSuccess(pos){
     updateGpsBtnUI();
     mapInitialLoaded=true;
     lastLoadTileKey=latLngToTileKey(lat,lng);
-    ensurePlacesLoadedAt(lat,lng);
-    // Toast de bienvenida si es la primera apertura del día
+    ensurePlacesLoadedAt(lat,lng).then(()=>{
+      // Intentar checkin después de cargar los lugares
+      maybeShowCheckin(lat,lng);
+    });
     if(window._showWelcomeToast){
       window._showWelcomeToast=false;
       setTimeout(()=>showToast('📍 Ubicación encontrada — mostrando tu zona'),600);
     }
   } else {
     const tileKey=latLngToTileKey(lat,lng);
-    if(tileKey!==lastLoadTileKey){lastLoadTileKey=tileKey;ensurePlacesLoadedAt(lat,lng);}
+    if(tileKey!==lastLoadTileKey){lastLoadTileKey=tileKey;ensurePlacesLoadedAt(lat,lng).then(()=>maybeShowCheckin(lat,lng));}
+    else { maybeShowCheckin(lat,lng); }
   }
+}
+
+/* ── CHECKIN TRIGGER ── */
+function maybeShowCheckin(lat,lng){
+  // No mostrar si ya hay un checkin visible
+  if(document.querySelector('.checkin-overlay'))return;
+  const pool=nearbyPlaces.length?nearbyPlaces:places;
+  if(!pool.length)return;
+  // Solo disparar si hay un local a menos de 20m
+  const veryNear=pool.filter(p=>isValidCoord(p.lat,p.lng)&&distanceMeter(lat,lng,p.lat,p.lng)<=20);
+  if(!veryNear.length)return;
+  // No repetir si ya se mostró para este mismo local recientemente (menos de 5 min)
+  const closest=veryNear.sort((a,b)=>distanceMeter(lat,lng,a.lat,a.lng)-distanceMeter(lat,lng,b.lat,b.lng))[0];
+  const key='checkin_shown_'+closest.id;
+  const last=parseInt(sessionStorage.getItem(key)||'0');
+  if(Date.now()-last < 5*60*1000)return;
+  sessionStorage.setItem(key, Date.now());
+  setTimeout(()=>showCheckinModal(lat,lng), 1200);
 }
 
 async function manualRefresh(){
