@@ -631,22 +631,16 @@ const SEED_PRIZES = [
 /* ── STATE ── */
 function safeMapMove(fn){try{fn();}catch(e){console.warn('[MapCamera]',e.message);}}
 
-// Silenciar warning de MapLibre style con null values (bug del tile style de openfreemap)
+// Silenciar error de MapLibre style expressions con null values (bug del tile style de openfreemap)
 (function(){
-  const _origErr=window.console.error.bind(console);
-  window.console.error=function(...a){
-    if(typeof a[0]==='string'&&a[0].includes('Expected value to be of type number'))return;
-    _origErr(...a);
-  };
-})();
-
-// Silenciar el error de MapLibre style expressions con null values (bug del tile style)
-(function(){
-  const origError=console.error.bind(console);
+  const _origErr=console.error.bind(console);
   console.error=function(...args){
     const msg=args[0];
-    if(typeof msg==='string'&&msg.includes('Expected value to be of type number'))return;
-    origError(...args);
+    if(typeof msg==='string'&&(
+      msg.includes('Expected value to be of type number')||
+      msg.includes('style layer') // otros errores menores de estilo de MapLibre
+    ))return;
+    _origErr(...args);
   };
 })();
 let userPts=0, currentUser=null;
