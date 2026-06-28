@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -619,6 +618,7 @@ const SESSION_STORAGE_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
 const COOLDOWNS_STORAGE_KEY = 'qooentum_cooldowns';
 const PLACE_CACHE_KEY = 'qooentum_place_cache_v2';
+const FIRST_OPEN_KEY = 'qooentum_first_open_date';
 
 const STATUS_CFG = [
   {label:'Poca gente',     sub:'Entrá tranquilo',   color:'#00C48C'},
@@ -701,6 +701,18 @@ function getAdjacentTileKeys(lat,lng){const d=CONFIG.TILE_DEG,relLat=(lat/d)-Mat
 function getDailyDateStr(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
 // Retorna ms hasta la próxima medianoche (reset diario)
 function msUntilMidnight(){const now=new Date();const midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,0,0);return midnight-now;}
+
+/* ── FIRST OPEN TODAY ── */
+function isFirstOpenToday(){
+  try{
+    const stored=localStorage.getItem(FIRST_OPEN_KEY);
+    const today=getDailyDateStr();
+    if(stored===today)return false;
+    localStorage.setItem(FIRST_OPEN_KEY,today);
+    return true;
+  }catch(e){return false;}
+}
+const FIRST_OPEN_TODAY=isFirstOpenToday();
 
 /* ── COOLDOWN ── */
 function loadCooldownsFromStorage(){
@@ -1462,6 +1474,11 @@ function initMap(){
     // Arrancar siempre con GPS siguiendo al usuario
     followMode=true;
     updateGpsBtnUI();
+    // Si es la primera apertura del día, mostrar toast de bienvenida cuando llegue GPS
+    if(FIRST_OPEN_TODAY){
+      // El toast se muestra en onGpsSuccess la primera vez que llega la ubicación
+      window._showWelcomeToast=true;
+    }
     // Solicitar GPS activamente al arrancar
     if(navigator.geolocation){
       const gpsBtn=document.getElementById('gps-btn');
@@ -1544,7 +1561,8 @@ function onGpsSuccess(pos){
   if(mlReady)updateUserMarker(lat,lng);
   // Primera vez que llega GPS: siempre volar a la ubicación real del usuario
   if(mlReady && mlMap && isValidCoord(lat,lng)){
-    if(isFirstGps){
+    if(isFirstGps || FIRST_OPEN_TODAY){
+      // Primera GPS de la sesión O primera apertura del día: zoom cercano al usuario
       safeMapMove(()=>mlMap.flyTo({center:[lng,lat],zoom:CONFIG.FOLLOW_ZOOM,duration:800}));
     } else if(followMode){
       safeMapMove(()=>mlMap.easeTo({center:[lng,lat],duration:600}));
@@ -1555,6 +1573,11 @@ function onGpsSuccess(pos){
     mapInitialLoaded=true;
     lastLoadTileKey=latLngToTileKey(lat,lng);
     ensurePlacesLoadedAt(lat,lng);
+    // Toast de bienvenida si es la primera apertura del día
+    if(window._showWelcomeToast){
+      window._showWelcomeToast=false;
+      setTimeout(()=>showToast('📍 Ubicación encontrada — mostrando tu zona'),600);
+    }
   } else {
     const tileKey=latLngToTileKey(lat,lng);
     if(tileKey!==lastLoadTileKey){lastLoadTileKey=tileKey;ensurePlacesLoadedAt(lat,lng);}
