@@ -664,7 +664,9 @@ function tileToBbox(tileKey){const[tLat,tLng]=tileKey.split(':').map(Number);ret
 function getAdjacentTileKeys(lat,lng){const d=CONFIG.TILE_DEG,relLat=(lat/d)-Math.floor(lat/d),relLng=(lng/d)-Math.floor(lng/d),keys=[];if(relLat<0.3)keys.push(latLngToTileKey(lat-d,lng));if(relLat>0.7)keys.push(latLngToTileKey(lat+d,lng));if(relLng<0.3)keys.push(latLngToTileKey(lat,lng-d));if(relLng>0.7)keys.push(latLngToTileKey(lat,lng+d));return keys;}
 
 /* ── DATE UTILS ── */
-function getDailyDateStr(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;}
+function getDailyDateStr(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
+// Retorna ms hasta la próxima medianoche (reset diario)
+function msUntilMidnight(){const now=new Date();const midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,0,0);return midnight-now;}
 
 /* ── COOLDOWN ── */
 function loadCooldownsFromStorage(){
@@ -684,7 +686,11 @@ function loadCooldownsFromStorage(){
   }catch(e){}
 }
 function saveCooldownsToStorage(){try{const now=Date.now();const toSave={_day:getDailyDateStr()};Object.keys(placeCooldowns).forEach(pid=>{const ts=placeCooldowns[pid] instanceof Date?placeCooldowns[pid].getTime():0;if(ts>now)toSave[pid]=ts;});localStorage.setItem(COOLDOWNS_STORAGE_KEY,JSON.stringify(toSave));}catch(e){}}
-function applyLocalCooldown(pid){placeCooldowns[pid]=new Date(Date.now()+CONFIG.VOTE_COOLDOWN_MS);saveCooldownsToStorage();}
+function applyLocalCooldown(pid){
+  // Expira a medianoche del día siguiente (reset diario a las 0:00)
+  const midnight=new Date();midnight.setDate(midnight.getDate()+1);midnight.setHours(0,0,0,0);
+  placeCooldowns[pid]=midnight;saveCooldownsToStorage();
+}
 function applyCooldownInfo(map){if(!map)return;Object.keys(map).forEach(pid=>{if(map[pid])placeCooldowns[pid]=new Date(map[pid]);});saveCooldownsToStorage();}
 function getVoteCooldownRemainingMs(pid){const next=placeCooldowns[pid];if(!next)return 0;return Math.max(0,next.getTime()-Date.now());}
 function formatCooldownRemaining(ms){const totalMin=Math.ceil(ms/60000),h=Math.floor(totalMin/60),m=totalMin%60;if(h<=0)return`${m} min`;if(m<=0)return`${h} h`;return`${h} h ${m} min`;}
@@ -916,9 +922,19 @@ function applySeedReports(allPlaces,userLat,userLng){
   const nearby300=allPlaces.filter(p=>distanceMeter(userLat,userLng,p.lat,p.lng)<=300);
   if(!nearby300.length)return;
   if(!seed||!seed.ids||!seed.ids.length){
-    // Pick 5 random places deterministically for today
-    const shuffled=[...nearby300].sort(()=>Math.random()-0.5).slice(0,Math.min(5,nearby300.length));
-    seed={ids:shuffled.map(p=>p.id),statuses:shuffled.map(()=>Math.floor(Math.random()*3)),reporters:shuffled.map(()=>Math.floor(Math.random()*12)+2)};
+    // Shuffle determinista por fecha usando índices
+    const dateNum=parseInt(getDailyDateStr().replace(/-/g,''));
+    const shuffled=[...nearby300].sort((a,b)=>{
+      const ha=(a.id.split('').reduce((acc,c,i)=>acc+(c.charCodeAt(0)*(i+1)),0)+dateNum)%997;
+      const hb=(b.id.split('').reduce((acc,c,i)=>acc+(c.charCodeAt(0)*(i+1)),0)+dateNum)%997;
+      return ha-hb;
+    }).slice(0,Math.min(5,nearby300.length));
+    const dateRnd=(dateNum%100)/100;
+    seed={
+      ids:shuffled.map(p=>p.id),
+      statuses:shuffled.map((_,i)=>Math.floor(((dateNum*(i+3))%100)/34)), // 0,1,2 only
+      reporters:shuffled.map((_,i)=>2+Math.floor(((dateNum*(i+7))%100)/8))
+    };
     saveSeedData(seed);
   }
   // Apply seed to place objects
@@ -978,16 +994,16 @@ function clearSearch(){document.getElementById('map-search-input').value='';docu
    MAPLIBRE GL — MARKERS + MAP INIT + GPS
    ════════════════════════════════════════════════════════════ */
 
-const CLUSTER_ZOOM_THRESHOLD = 15; // group at ~5 city blocks (zoom<15)
+const CLUSTER_ZOOM_THRESHOLD = 16; // agrupar cuando se ven ~5 manzanas (zoom<16)
 let mlMap = null, mlReady = false, mlReadyCallbacks = [];
 let mlMarkers = {}; // id -> {marker, el}
 let mlClusterMarkers = [];
 let mlUserMarker = null;
 
 function getClusterGridDeg(zoom){
-  if(zoom>=16)return 0.003;
-  if(zoom>=14)return 0.010;
-  if(zoom>=12)return 0.025;
+  if(zoom>=15)return 0.0015; // ~150m — no debería llegar aquí con threshold=16
+  if(zoom>=13)return 0.006;  // ~600m
+  if(zoom>=11)return 0.018;  // ~2km
   return 0.05;
 }
 
@@ -1253,7 +1269,10 @@ function initMap(){
     mlReadyCallbacks.forEach(fn=>fn());
     mlReadyCallbacks=[];
     initSearch();
+    // Arrancar siempre con GPS siguiendo al usuario
+    followMode=true;
     startGpsWatch();
+    updateGpsBtnUI();
   });
 
   // Resize cuando el contenedor cambia (orientación, DevTools, etc.)
@@ -1295,6 +1314,7 @@ function startGpsWatch(){
 
 function onGpsSuccess(pos){
   const{latitude:lat,longitude:lng,accuracy}=pos.coords;
+  if(typeof lat!=='number'||typeof lng!=='number'||isNaN(lat)||isNaN(lng))return;
   const isFirst=(userLat===null);
   // Ignorar lecturas muy imprecisas solo si ya tenemos una buena
   if(!isFirst && accuracy>150)return;
@@ -1448,9 +1468,17 @@ async function handlePopupVoteSubmit(placeId,voteIdx){
   if(!isLoggedIn){showToastAction('🔑 Iniciá sesión para ganar puntos');return;}
   if(getVoteCooldownRemainingMs(placeId)>0){showToast(`⏳ Ya reportaste ${p.name}`);return;}
   if(!canReportThisPlace(p)){showToast('📍 Tenés que estar dentro del comercio para reportar');return;}
-  applyLocalCooldown(placeId);p.status=voteIdx;p.reporters=(p.reporters||0)+1;
-  placeStore[p.id]=p;placeIndex.set(p.id,p); // keep both in sync
+  applyLocalCooldown(placeId);
+  p.status=voteIdx;
+  p.reporters=(p.reporters||0)+1;
+  placeStore[p.id]=p;
+  placeIndex.set(p.id,p); // keep both in sync
+  // También actualizar en el array places
+  const pi=places.findIndex(x=>x.id===placeId);
+  if(pi>=0)places[pi]=p;
   refreshMarkerIcon(p.id);
+  // Actualizar popup si sigue abierto
+  if(currentPopupPlace&&currentPopupPlace.id===p.id){Object.assign(currentPopupPlace,p);}
   if(document.getElementById('panel-cerca').classList.contains('visible'))cercaUpdateFromStore();
   await submitVoteToBackend(p,voteIdx);
 }
@@ -1558,6 +1586,9 @@ async function cercaLoadPlaces(forceReload){
     }
     cercaAllPlaces=placesData;
     if(!cercaAllPlaces.length)cercaAllPlaces=cercaBuildDemoPlaces(lat,lng);
+    // Aplicar seed reports también en la lista cerca
+    applySeedReports([...placeIndex.values()],lat,lng);
+    cercaAllPlaces=cercaAllPlaces.map(p=>{const stored=placeIndex.get(p.id);if(stored&&stored.reporters>0){return{...p,status:stored.status,reporters:stored.reporters};}return p;});
     const now=new Date();
     const updatedLbl=document.getElementById('cerca-updated-lbl');
     if(updatedLbl)updatedLbl.textContent=`Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
