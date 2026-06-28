@@ -1421,7 +1421,8 @@ function updateGpsBtnUI(){
 }
 
 function onGpsBtnClick(){
-  if(followMode){followMode=false;updateGpsBtnUI();showToast('📍 Seguimiento pausado');return;}
+  // Solo pausar si followMode está activo Y ya tenemos ubicación real
+  if(followMode&&userLat!==null){followMode=false;updateGpsBtnUI();showToast('📍 Seguimiento pausado');return;}
   if(userLat!==null){
     followMode=true;updateGpsBtnUI();
     if(mlMap&&userLat!==null&&userLng!==null&&isValidCoord(userLat,userLng)){safeMapMove(()=>mlMap.flyTo({center:[userLng,userLat],zoom:CONFIG.FOLLOW_ZOOM,duration:500}));}
