@@ -195,6 +195,14 @@ html,body{height:100%;width:100%;overflow:hidden;background:#fff;color:var(--tex
 @keyframes gpsPulse{0%,100%{box-shadow:var(--shadow-float)}50%{box-shadow:0 0 0 6px rgba(99,102,241,.18),var(--shadow-float)}}
 @keyframes followingPulse{0%,100%{box-shadow:0 0 0 3px rgba(0,196,140,.18),var(--shadow-float);background:linear-gradient(135deg,var(--green-lt),#D1FAF0);}50%{box-shadow:0 0 0 6px rgba(0,196,140,.28),var(--shadow-float);background:linear-gradient(135deg,#D1FAF0,var(--green-lt));}}
 @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+/* ── GPS bloqueado banner ── */
+.gps-blocked-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:1000;background:#fff;border:1.5px solid var(--orange);border-radius:14px;padding:10px 14px;display:none;align-items:center;gap:10px;box-shadow:var(--shadow-float);white-space:nowrap;max-width:calc(100vw - 28px);}
+.gps-blocked-banner.show{display:flex;}
+.gps-blocked-banner-icon{font-size:20px;flex-shrink:0;}
+.gps-blocked-banner-body{flex:1;min-width:0;}
+.gps-blocked-banner-title{font-size:12px;font-weight:800;color:var(--text);}
+.gps-blocked-banner-sub{font-size:10.5px;color:var(--text2);margin-top:1px;}
+.gps-blocked-banner-close{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0;}
 .follow-pill{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:998;background:rgba(0,196,140,.92);color:#fff;border-radius:99px;padding:5px 14px;font-size:11px;font-weight:800;display:none;align-items:center;gap:6px;pointer-events:none;box-shadow:0 3px 12px rgba(0,196,140,.35);white-space:nowrap;backdrop-filter:blur(8px);letter-spacing:.1px;}
 .follow-pill.show{display:flex;}
 .follow-dot{width:6px;height:6px;border-radius:50%;background:#fff;opacity:.8;animation:gpsPulse .9s ease-in-out infinite;}
@@ -458,6 +466,14 @@ html,body{height:100%;width:100%;overflow:hidden;background:#fff;color:var(--tex
 
       <div class="follow-pill" id="follow-pill"><div class="follow-dot"></div>Siguiendo tu posición</div>
       <div class="pick-mode-banner" id="pick-mode-banner"><div class="pick-mode-dot"></div>Tocá el comercio donde estás</div>
+      <div class="gps-blocked-banner" id="gps-blocked-banner">
+        <span class="gps-blocked-banner-icon">📍</span>
+        <div class="gps-blocked-banner-body">
+          <div class="gps-blocked-banner-title">Ubicación bloqueada</div>
+          <div class="gps-blocked-banner-sub" id="gps-blocked-sub">Activá el GPS en la configuración del navegador</div>
+        </div>
+        <button class="gps-blocked-banner-close" onclick="document.getElementById('gps-blocked-banner').classList.remove('show')">✕</button>
+      </div>
 
 
       <div class="install-banner" id="install-banner" style="display:none">
@@ -1435,7 +1451,7 @@ function onGpsBtnClick(){
   // Sin ubicación aún: pedirla
   const btn=document.getElementById('gps-btn');btn.classList.add('pulsing');
   if(!navigator.geolocation){showToast('⚠️ Tu navegador no soporta GPS');btn.classList.remove('pulsing');return;}
-  navigator.geolocation.getCurrentPosition(pos=>{followMode=true;onGpsSuccess(pos);startGpsWatch();},err=>{btn.classList.remove('pulsing');showToast(err.code===1?'🔒 Permiso de ubicación denegado':'⚠️ No se pudo obtener tu ubicación');},{enableHighAccuracy:true,timeout:10000});
+  navigator.geolocation.getCurrentPosition(pos=>{followMode=true;const banner=document.getElementById('gps-blocked-banner');if(banner)banner.classList.remove('show');onGpsSuccess(pos);startGpsWatch();},err=>{btn.classList.remove('pulsing');const banner=document.getElementById('gps-blocked-banner');const sub=document.getElementById('gps-blocked-sub');if(banner&&sub){sub.textContent=err.code===1?'Permiso denegado — activalo en Configuración > Privacidad > Ubicación':'No se pudo obtener tu ubicación. Chequeá que el GPS esté activado.';banner.classList.add('show');}showToast(err.code===1?'🔒 Permiso de ubicación denegado':'⚠️ No se pudo obtener tu ubicación');},{enableHighAccuracy:true,timeout:10000});
 }
 
 /* ── ZOOM CONTROLS ── */
@@ -1492,15 +1508,29 @@ function initMap(){
       navigator.geolocation.getCurrentPosition(
         pos=>{
           if(gpsBtn)gpsBtn.classList.remove('pulsing');
+          // GPS obtenido: ocultar banner de error si estaba visible
+          const banner=document.getElementById('gps-blocked-banner');
+          if(banner)banner.classList.remove('show');
           onGpsSuccess(pos);
           startGpsWatch();
-          // FIX BUG 4: recargar cerca con coordenadas reales si todavía no se cargó
           if(!cercaLoaded){cercaLoadPlaces();}
         },
         err=>{
           if(gpsBtn)gpsBtn.classList.remove('pulsing');
-          console.warn('GPS inicial denegado:',err.code);
-          // Sin GPS: cargar cerca con ubicación por defecto y arrancar desde allí
+          console.warn('GPS error code:',err.code, err.message);
+          // Mostrar banner explicativo según el tipo de error
+          const banner=document.getElementById('gps-blocked-banner');
+          const sub=document.getElementById('gps-blocked-sub');
+          if(banner&&sub){
+            if(err.code===1){// PERMISSION_DENIED
+              sub.textContent='Permiso denegado — activalo en Configuración > Privacidad > Ubicación';
+            } else if(err.code===2){// POSITION_UNAVAILABLE
+              sub.textContent='No se pudo obtener tu ubicación. Chequeá que el GPS esté activado.';
+            } else if(err.code===3){// TIMEOUT
+              sub.textContent='El GPS tardó demasiado. Intentando de nuevo…';
+            }
+            banner.classList.add('show');
+          }
           followMode=false;
           updateGpsBtnUI();
           if(!mapInitialLoaded){
@@ -1509,9 +1539,8 @@ function initMap(){
             ensurePlacesLoadedAt(lat,lng);
             mapInitialLoaded=true;
           }
-          // FIX BUG 3: cargar cerca con default center si GPS no disponible
           if(!cercaLoaded){cercaLoadPlaces();}
-          startGpsWatch(); // seguir intentando via watch
+          startGpsWatch();
         },
         {enableHighAccuracy:true,timeout:10000,maximumAge:5000}
       );
