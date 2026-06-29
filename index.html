@@ -616,7 +616,8 @@ const CONFIG = {
   GOOGLE_CLIENT_ID: '283820904318-leis6rl3mfhtve2amj59q8sq221dg3qf.apps.googleusercontent.com',
   DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
   REPORT_RADIUS_M: 20,
-  GPS_ZOOM: 19,
+  GPS_ZOOM: 19,                // zoom al obtener ubicación por primera vez
+  FOLLOW_ZOOM: 18,             // zoom durante el seguimiento
   CHECKIN_RADIUS_M: 150,
   CHECKIN_NEAR_M: 50,
   TILE_DEG: 0.0025,
@@ -624,7 +625,6 @@ const CONFIG = {
   PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
   LOAD_TRIGGER_M: 40,
   VOTE_COOLDOWN_MS: 24 * 60 * 60 * 1000,
-  FOLLOW_ZOOM: 17,
 };
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
@@ -1501,10 +1501,54 @@ function initMap(){
       // El toast se muestra en onGpsSuccess la primera vez que llega la ubicación
       window._showWelcomeToast=true;
     }
-    // Solicitar GPS activamente al arrancar — watchPosition único, sin caché (maximumAge:0)
-    // Evita el doble-pedido (getCurrentPosition + watchPosition) que causaba que la primera
-    // lectura llegara tarde o fuera ignorada por el filtro de accuracy.
-    startGpsWatch();
+    // Solicitar GPS activamente al arrancar — UNA SOLA solicitud para todo el ciclo de vida
+    if(navigator.geolocation){
+      const gpsBtn=document.getElementById('gps-btn');
+      if(gpsBtn)gpsBtn.classList.add('pulsing');
+      navigator.geolocation.getCurrentPosition(
+        pos=>{
+          if(gpsBtn)gpsBtn.classList.remove('pulsing');
+          // GPS obtenido: ocultar banner de error si estaba visible
+          const banner=document.getElementById('gps-blocked-banner');
+          if(banner)banner.classList.remove('show');
+          onGpsSuccess(pos);
+          startGpsWatch();
+          if(!cercaLoaded){cercaLoadPlaces();}
+        },
+        err=>{
+          if(gpsBtn)gpsBtn.classList.remove('pulsing');
+          console.warn('GPS error code:',err.code, err.message);
+          // Mostrar banner explicativo según el tipo de error
+          const banner=document.getElementById('gps-blocked-banner');
+          const sub=document.getElementById('gps-blocked-sub');
+          if(banner&&sub){
+            if(err.code===1){// PERMISSION_DENIED
+              sub.textContent='Permiso denegado — activalo en Configuración > Privacidad > Ubicación';
+            } else if(err.code===2){// POSITION_UNAVAILABLE
+              sub.textContent='No se pudo obtener tu ubicación. Chequeá que el GPS esté activado.';
+            } else if(err.code===3){// TIMEOUT
+              sub.textContent='El GPS tardó demasiado. Intentando de nuevo…';
+            }
+            banner.classList.add('show');
+          }
+          followMode=false;
+          updateGpsBtnUI();
+          if(!mapInitialLoaded){
+            const{lat,lng}=CONFIG.DEFAULT_CENTER;
+            safeMapMove(()=>mlMap.flyTo({center:[lng,lat],zoom:13,duration:600}));
+            ensurePlacesLoadedAt(lat,lng);
+            mapInitialLoaded=true;
+          }
+          if(!cercaLoaded){cercaLoadPlaces();}
+          startGpsWatch();
+        },
+        {enableHighAccuracy:true,timeout:10000,maximumAge:5000}
+      );
+    } else {
+      // Sin API de geolocalización
+      if(!cercaLoaded){cercaLoadPlaces();}
+      startGpsWatch();
+    }
   });
 
   // Resize cuando el contenedor cambia (orientación, DevTools, etc.)
@@ -1532,59 +1576,40 @@ function initMap(){
 function startGpsWatch(){
   if(!navigator.geolocation){
     if(!mapInitialLoaded){const{lat,lng}=CONFIG.DEFAULT_CENTER;ensurePlacesLoadedAt(lat,lng);mapInitialLoaded=true;}
-    if(!cercaLoaded){cercaLoadPlaces();}
     return;
   }
-  const gpsBtn=document.getElementById('gps-btn');
-  if(gpsBtn)gpsBtn.classList.add('pulsing');
   if(gpsWatchId!==null){navigator.geolocation.clearWatch(gpsWatchId);gpsWatchId=null;}
   gpsWatchId=navigator.geolocation.watchPosition(
-    pos=>{
-      if(gpsBtn)gpsBtn.classList.remove('pulsing');
-      const banner=document.getElementById('gps-blocked-banner');
-      if(banner)banner.classList.remove('show');
-      onGpsSuccess(pos);
-      if(!cercaLoaded){cercaLoadPlaces();}
-    },
+    pos=>onGpsSuccess(pos),
     err=>{
-      if(gpsBtn)gpsBtn.classList.remove('pulsing');
       console.warn('GPS error:',err.code,err.message);
-      const banner=document.getElementById('gps-blocked-banner');
-      const sub=document.getElementById('gps-blocked-sub');
-      if(banner&&sub){
-        if(err.code===1){sub.textContent='Permiso denegado — activalo en Configuración > Privacidad > Ubicación';}
-        else if(err.code===2){sub.textContent='No se pudo obtener tu ubicación. Chequeá que el GPS esté activado.';}
-        else if(err.code===3){sub.textContent='El GPS tardó demasiado. Intentando de nuevo…';}
-        banner.classList.add('show');
-      }
-      followMode=false;
-      updateGpsBtnUI();
-      if(!mapInitialLoaded){const{lat,lng}=CONFIG.DEFAULT_CENTER;if(mlMap)safeMapMove(()=>mlMap.flyTo({center:[lng,lat],zoom:13,duration:600}));ensurePlacesLoadedAt(lat,lng);mapInitialLoaded=true;}
-      if(!cercaLoaded){cercaLoadPlaces();}
+      if(!mapInitialLoaded){const{lat,lng}=CONFIG.DEFAULT_CENTER;ensurePlacesLoadedAt(lat,lng);mapInitialLoaded=true;}
     },
     {enableHighAccuracy:true,timeout:15000,maximumAge:0}
   );
 }
 
-let userAccuracy=null; // mejor accuracy obtenida hasta ahora
 function onGpsSuccess(pos){
   const{latitude:lat,longitude:lng,accuracy}=pos.coords;
   if(typeof lat!=='number'||typeof lng!=='number'||isNaN(lat)||isNaN(lng))return;
   const isFirstGps=!gpsEverReceived;
-  // Ignorar lecturas muy imprecisas SOLO si ya tenemos una buena lectura previa (< 50m).
-  // Antes el filtro bloqueaba incluso la 1ª lectura si llegaba con accuracy>150 (común en wifi fría).
-  if(!isFirstGps && accuracy>150 && userAccuracy!==null && userAccuracy<50)return;
+  // Ignorar lecturas muy imprecisas solo si ya tenemos una buena
+  if(!isFirstGps && accuracy>150)return;
   userLat=lat; userLng=lng;
-  if(userAccuracy===null||accuracy<userAccuracy)userAccuracy=accuracy;
   gpsEverReceived=true;
   if(mlReady)updateUserMarker(lat,lng);
-  // Primera vez que llega GPS: siempre volar a la ubicación real del usuario
+  // Primera vez que llega GPS: siempre volar a la ubicación real del usuario con ZOOM 19
   if(mlReady && mlMap && isValidCoord(lat,lng)){
     if(isFirstGps || FIRST_OPEN_TODAY){
-      // Primera GPS de la sesión O primera apertura del día: zoom cercano al usuario
-      safeMapMove(()=>mlMap.flyTo({center:[lng,lat],zoom:CONFIG.FOLLOW_ZOOM,duration:800}));
+      // Primera GPS de la sesión O primera apertura del día: zoom muy cercano (19)
+      safeMapMove(()=>mlMap.flyTo({
+        center: [lng, lat],
+        zoom: CONFIG.GPS_ZOOM,     // 19
+        duration: 800
+      }));
     } else if(followMode){
-      safeMapMove(()=>mlMap.easeTo({center:[lng,lat],duration:600}));
+      // Seguimiento activo: mantiene el centro, NO cambia el zoom
+      safeMapMove(()=>mlMap.easeTo({ center: [lng, lat], duration: 600 }));
     }
   }
   if(isFirstGps){
