@@ -332,6 +332,29 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 .install-banner-btn { background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 5px 10px; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; font-family: inherit; }
 .install-banner-close { background: none; border: none; color: rgba(255,255,255,.45); font-size: 14px; cursor: pointer; padding: 2px; line-height: 1; }
 
+.offline-panel {
+  position: absolute; left: 12px; right: 12px;
+  bottom: calc(76px + max(16px, var(--safe-bottom)));
+  z-index: 1001; display: none;
+  background: rgba(15,23,42,.94); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius-lg);
+  padding: 12px 14px; box-shadow: var(--shadow-lg);
+  animation: adSlideIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+.offline-panel.show { display: block; }
+.offline-panel-head { display: flex; align-items: center; gap: 10px; }
+.offline-panel-icon { font-size: 18px; flex-shrink: 0; }
+.offline-panel-body { flex: 1; min-width: 0; }
+.offline-panel-title { font-size: 12px; font-weight: 800; color: #fff; }
+.offline-panel-sub { font-size: 10.5px; color: rgba(255,255,255,.62); margin-top: 1px; }
+.offline-panel-close { background: none; border: none; color: rgba(255,255,255,.45); font-size: 14px; cursor: pointer; padding: 2px; line-height: 1; flex-shrink: 0; }
+.offline-panel-bar-track { margin-top: 10px; height: 6px; border-radius: 40px; background: rgba(255,255,255,.14); overflow: hidden; }
+.offline-panel-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--green-dk)); border-radius: 40px; transition: width .25s ease; }
+.offline-panel-actions { margin-top: 10px; display: flex; gap: 8px; }
+.offline-panel-btn { flex: 1; border: none; border-radius: 10px; padding: 8px 10px; font-size: 11.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.offline-panel-btn.primary { background: var(--green); color: #fff; }
+.offline-panel-btn.secondary { background: rgba(255,255,255,.12); color: #fff; }
+
 /* ===== BOTTOM NAV ===== */
 .bottom-nav {
   position: absolute; bottom: max(16px, calc(var(--safe-bottom) + 12px));
@@ -701,6 +724,9 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
         <div class="gps-float-btn" id="gps-btn" onclick="onGpsBtnClick()" title="Centrar / seguir mi ubicación">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7" stroke-dasharray="2 3"/></svg>
         </div>
+        <div class="gps-float-btn" id="offline-dl-btn" onclick="onOfflineBtnClick()" title="Descargar mi zona para usar el mapa sin conexión">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
       </div>
       <div class="zoom-float-controls">
         <button class="zoom-btn" id="zoom-in-btn" onclick="onZoomIn()" title="Acercar">
@@ -729,6 +755,22 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
         </div>
         <button class="install-banner-btn" onclick="installPwa()">Instalar</button>
         <button class="install-banner-close" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+      </div>
+      <div class="offline-panel" id="offline-panel">
+        <div class="offline-panel-head">
+          <span class="offline-panel-icon" id="offline-panel-icon">⬇️</span>
+          <div class="offline-panel-body">
+            <div class="offline-panel-title" id="offline-panel-title">Descargar tu zona</div>
+            <div class="offline-panel-sub" id="offline-panel-sub">Para usar el mapa sin conexión</div>
+          </div>
+          <button class="offline-panel-close" id="offline-panel-close" onclick="closeOfflinePanel()">✕</button>
+        </div>
+        <div class="offline-panel-bar-track" id="offline-panel-bar-track" style="display:none">
+          <div class="offline-panel-bar-fill" id="offline-panel-bar-fill"></div>
+        </div>
+        <div class="offline-panel-actions" id="offline-panel-actions">
+          <button class="offline-panel-btn primary" id="offline-panel-start" onclick="startOfflineDownloadFromUI()">Descargar ahora</button>
+        </div>
       </div>
       <nav class="bottom-nav">
         <button class="nav-btn active" onclick="switchTab('map')">
@@ -856,6 +898,19 @@ const CONFIG = {
   PLACE_CACHE_TTL_MS: 24 * 60 * 60 * 1000,
   VOTE_COOLDOWN_MS: 24 * 60 * 60 * 1000,
   GPS_TIMEOUT_MS: 5000,  // 5 segundos (valor razonable)
+
+  // ── Mapa offline ──
+  OFFLINE_TILEJSON_URL: 'https://tiles.openfreemap.org/planet',
+  OFFLINE_SPRITE_BASE: 'https://tiles.openfreemap.org/sprites/ofm_f384/ofm',
+  OFFLINE_GLYPHS_TPL: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+  OFFLINE_RASTER_TPL: 'https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png',
+  OFFLINE_RASTER_MAXZOOM: 6,
+  OFFLINE_FONTSTACKS: ['Noto Sans Regular', 'Noto Sans Bold', 'Noto Sans Italic'],
+  OFFLINE_GLYPH_RANGES: ['0-255', '256-511'], // cubre español/portugués/inglés y la mayoría de idiomas latinos
+  OFFLINE_DEFAULT_RADIUS_KM: 10,
+  OFFLINE_MAX_ZOOM_CAP: 14,   // los tiles vectoriales no suelen pasar de 14; el mapa hace "over-zoom" del mismo dato hasta z17+
+  OFFLINE_CONCURRENCY: 6,     // descargas en paralelo (no saturar el servidor gratuito de OpenFreeMap)
+  TILE_CACHE_NAME: 'qooentum-tiles-v1', // debe coincidir con TILE_CACHE_NAME en sw.js
 };
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
@@ -954,6 +1009,243 @@ const pruneTiles = () => {
   const all = new Set();
   Object.values(tileCache).forEach(t => (t.placeIds||[]).forEach(id => all.add(id)));
   Object.keys(placeStore).forEach(id => { if (!all.has(id)) delete placeStore[id]; });
+};
+
+// ============================================================
+// MAPA OFFLINE — descarga del mapa base (tiles, sprite, glyphs)
+// para usar sin conexión a partir de la 2da vez.
+// Los REPORTES de gente (status_only / sync_places) NUNCA se
+// cachean acá: siguen siendo en tiempo real contra el backend.
+// ============================================================
+const OFFLINE_REGION_KEY = 'qooentum_offline_region';
+let offlineDownloadActive = false;
+let offlineDownloadAbort = false;
+
+// ── Matemática de tiles (slippy map / XYZ estándar) ──
+const lon2tileX = (lon, z) => Math.floor((lon + 180) / 360 * Math.pow(2, z));
+const lat2tileY = (lat, z) => {
+  const rad = lat * Math.PI / 180;
+  return Math.floor((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * Math.pow(2, z));
+};
+const kmToDegLat = km => km / 110.574;
+const kmToDegLng = (km, lat) => km / (111.320 * Math.cos(lat * Math.PI / 180));
+
+// Devuelve la lista de tiles {z,x,y} que cubren un círculo de radioKm
+// alrededor de (lat,lng), entre minZoom y maxZoom inclusive.
+const tilesForRadius = (lat, lng, radiusKm, minZoom, maxZoom) => {
+  const dLat = kmToDegLat(radiusKm);
+  const dLng = kmToDegLng(radiusKm, lat);
+  const north = Math.min(85, lat + dLat), south = Math.max(-85, lat - dLat);
+  const west = lng - dLng, east = lng + dLng;
+  const tiles = [];
+  for (let z = minZoom; z <= maxZoom; z++) {
+    const xMin = lon2tileX(west, z), xMax = lon2tileX(east, z);
+    const yMin = lat2tileY(north, z), yMax = lat2tileY(south, z);
+    for (let x = xMin; x <= xMax; x++) {
+      for (let y = yMin; y <= yMax; y++) tiles.push({ z, x, y });
+    }
+  }
+  return tiles;
+};
+
+// ── TileJSON real de OpenFreeMap (trae el template de tiles + maxzoom real) ──
+let _tileJsonCache = null;
+const getOfflineTileJSON = async () => {
+  if (_tileJsonCache) return _tileJsonCache;
+  const res = await fetch(CONFIG.OFFLINE_TILEJSON_URL);
+  if (!res.ok) throw new Error('No se pudo leer el TileJSON de OpenFreeMap');
+  _tileJsonCache = await res.json();
+  return _tileJsonCache;
+};
+
+const tileUrlFromTemplate = (tpl, z, x, y) =>
+  tpl.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+
+// ── Arma la lista completa de URLs a bajar: tiles vectoriales + raster + sprite + glyphs ──
+const buildOfflineUrlList = async (lat, lng, radiusKm) => {
+  const tilejson = await getOfflineTileJSON();
+  const tileTpl = tilejson.tiles && tilejson.tiles[0];
+  if (!tileTpl) throw new Error('TileJSON sin template de tiles');
+  const maxZoom = Math.min(tilejson.maxzoom ?? CONFIG.OFFLINE_MAX_ZOOM_CAP, CONFIG.OFFLINE_MAX_ZOOM_CAP);
+  const minZoom = tilejson.minzoom ?? 0;
+
+  const vectorTiles = tilesForRadius(lat, lng, radiusKm, minZoom, maxZoom)
+    .map(t => tileUrlFromTemplate(tileTpl, t.z, t.x, t.y));
+
+  const rasterTiles = tilesForRadius(lat, lng, radiusKm, 0, CONFIG.OFFLINE_RASTER_MAXZOOM)
+    .map(t => tileUrlFromTemplate(CONFIG.OFFLINE_RASTER_TPL, t.z, t.x, t.y));
+
+  const spriteUrls = [
+    `${CONFIG.OFFLINE_SPRITE_BASE}.json`, `${CONFIG.OFFLINE_SPRITE_BASE}.png`,
+    `${CONFIG.OFFLINE_SPRITE_BASE}@2x.json`, `${CONFIG.OFFLINE_SPRITE_BASE}@2x.png`,
+  ];
+
+  const glyphUrls = [];
+  CONFIG.OFFLINE_FONTSTACKS.forEach(fs => {
+    CONFIG.OFFLINE_GLYPH_RANGES.forEach(range => {
+      glyphUrls.push(CONFIG.OFFLINE_GLYPHS_TPL.replace('{fontstack}', encodeURIComponent(fs)).replace('{range}', range));
+    });
+  });
+
+  return [...spriteUrls, ...glyphUrls, ...vectorTiles, ...rasterTiles];
+};
+
+// ── Descarga con concurrencia limitada, guardando directo en la cache del SW ──
+const downloadOfflineUrls = async (urls, onProgress) => {
+  if (!('caches' in window)) throw new Error('Este navegador no soporta Cache Storage');
+  const cache = await caches.open(CONFIG.TILE_CACHE_NAME);
+  let done = 0, failed = 0;
+  let idx = 0;
+  const worker = async () => {
+    while (idx < urls.length) {
+      if (offlineDownloadAbort) return;
+      const url = urls[idx++];
+      try {
+        const already = await cache.match(url);
+        if (!already) {
+          const res = await fetch(url, { mode: 'cors' });
+          if (res && res.ok) await cache.put(url, res.clone());
+          else failed++;
+        }
+      } catch (e) { failed++; }
+      done++;
+      onProgress(done, urls.length, failed);
+    }
+  };
+  const workers = Array.from({ length: CONFIG.OFFLINE_CONCURRENCY }, worker);
+  await Promise.all(workers);
+  return { done, failed, total: urls.length };
+};
+
+// ── Estado guardado de la última zona descargada ──
+const getOfflineRegion = () => {
+  try { return JSON.parse(localStorage.getItem(OFFLINE_REGION_KEY)) || null; } catch (e) { return null; }
+};
+const saveOfflineRegion = data => {
+  try { localStorage.setItem(OFFLINE_REGION_KEY, JSON.stringify(data)); } catch (e) {}
+};
+
+// ── Orquesta la descarga completa, actualizando la UI ──
+const downloadOfflineCity = async (lat, lng, radiusKm = CONFIG.OFFLINE_DEFAULT_RADIUS_KM) => {
+  if (offlineDownloadActive) return;
+  offlineDownloadActive = true;
+  offlineDownloadAbort = false;
+  updateOfflineUI({ phase: 'preparing' });
+  try {
+    const urls = await buildOfflineUrlList(lat, lng, radiusKm);
+    updateOfflineUI({ phase: 'downloading', done: 0, total: urls.length, failed: 0 });
+    const result = await downloadOfflineUrls(urls, (done, total, failed) => {
+      updateOfflineUI({ phase: 'downloading', done, total, failed });
+    });
+    if (offlineDownloadAbort) {
+      updateOfflineUI({ phase: 'cancelled' });
+    } else {
+      saveOfflineRegion({ lat, lng, radiusKm, downloadedAt: Date.now(), tileCount: result.total, failed: result.failed });
+      updateOfflineUI({ phase: 'done', done: result.done, total: result.total, failed: result.failed });
+      showToast(result.failed > 0 ? `✅ Zona descargada (${result.failed} tiles fallaron, no afecta el uso)` : '✅ Tu zona ya está disponible offline');
+    }
+  } catch (e) {
+    console.warn('Offline download error:', e);
+    updateOfflineUI({ phase: 'error', error: e.message });
+    showToast('⚠️ No se pudo descargar el mapa offline. Probá de nuevo con datos/wifi.');
+  } finally {
+    offlineDownloadActive = false;
+  }
+};
+
+const cancelOfflineDownload = () => { offlineDownloadAbort = true; };
+
+// ── UI del panel ──
+const fmtKb = n => n > 1024 ? (n/1024).toFixed(1)+' MB' : n+' tiles';
+const updateOfflineUI = ({ phase, done = 0, total = 0, failed = 0, error = '' }) => {
+  const panel = document.getElementById('offline-panel');
+  const icon = document.getElementById('offline-panel-icon');
+  const title = document.getElementById('offline-panel-title');
+  const sub = document.getElementById('offline-panel-sub');
+  const barTrack = document.getElementById('offline-panel-bar-track');
+  const barFill = document.getElementById('offline-panel-bar-fill');
+  const actions = document.getElementById('offline-panel-actions');
+  if (!panel) return;
+  panel.classList.add('show');
+
+  if (phase === 'preparing') {
+    icon.textContent = '⏳';
+    title.textContent = 'Preparando descarga…';
+    sub.textContent = 'Calculando el mapa de tu zona';
+    barTrack.style.display = 'none';
+    actions.innerHTML = `<button class="offline-panel-btn secondary" onclick="closeOfflinePanel()">Ocultar</button>`;
+  } else if (phase === 'downloading') {
+    const pct = total ? Math.round((done/total)*100) : 0;
+    icon.textContent = '⬇️';
+    title.textContent = `Descargando tu zona… ${pct}%`;
+    sub.textContent = `${done}/${total} archivos${failed ? ` · ${failed} con error` : ''}`;
+    barTrack.style.display = 'block';
+    barFill.style.width = pct + '%';
+    actions.innerHTML = `<button class="offline-panel-btn secondary" onclick="cancelOfflineDownload()">Cancelar</button>`;
+  } else if (phase === 'done') {
+    icon.textContent = '✅';
+    title.textContent = 'Zona disponible offline';
+    sub.textContent = `${done} archivos guardados en tu celular`;
+    barTrack.style.display = 'block';
+    barFill.style.width = '100%';
+    actions.innerHTML = `<button class="offline-panel-btn primary" onclick="closeOfflinePanel()">Listo</button>`;
+    setTimeout(() => { if (!offlineDownloadActive) closeOfflinePanel(); }, 4000);
+  } else if (phase === 'cancelled') {
+    icon.textContent = '⚠️';
+    title.textContent = 'Descarga cancelada';
+    sub.textContent = 'Podés reintentar cuando quieras';
+    actions.innerHTML = `<button class="offline-panel-btn primary" onclick="startOfflineDownloadFromUI()">Reintentar</button>`;
+  } else if (phase === 'error') {
+    icon.textContent = '⚠️';
+    title.textContent = 'No se pudo descargar';
+    sub.textContent = error || 'Revisá tu conexión e intentá de nuevo';
+    actions.innerHTML = `<button class="offline-panel-btn primary" onclick="startOfflineDownloadFromUI()">Reintentar</button>`;
+  }
+};
+
+const closeOfflinePanel = () => { document.getElementById('offline-panel')?.classList.remove('show'); };
+
+const startOfflineDownloadFromUI = () => {
+  const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
+  const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
+  downloadOfflineCity(lat, lng, CONFIG.OFFLINE_DEFAULT_RADIUS_KM);
+};
+
+// Botón flotante: si ya hay zona descargada reciente, muestra estado; si no, ofrece descargar.
+const onOfflineBtnClick = () => {
+  const region = getOfflineRegion();
+  const panel = document.getElementById('offline-panel');
+  panel.classList.add('show');
+  if (offlineDownloadActive) return; // ya hay una descarga en curso, solo mostramos el panel
+  if (region) {
+    const days = Math.floor((Date.now() - region.downloadedAt) / 86400000);
+    updateOfflineUI({ phase: 'done', done: region.tileCount, total: region.tileCount, failed: region.failed || 0 });
+    document.getElementById('offline-panel-title').textContent = 'Tu zona ya está offline';
+    document.getElementById('offline-panel-sub').textContent = days === 0 ? 'Descargada hoy' : `Descargada hace ${days} día${days===1?'':'s'}`;
+    document.getElementById('offline-panel-actions').innerHTML =
+      `<button class="offline-panel-btn secondary" onclick="closeOfflinePanel()">Cerrar</button>
+       <button class="offline-panel-btn primary" onclick="startOfflineDownloadFromUI()">Actualizar</button>`;
+  } else {
+    document.getElementById('offline-panel-icon').textContent = '⬇️';
+    document.getElementById('offline-panel-title').textContent = 'Descargar tu zona';
+    document.getElementById('offline-panel-sub').textContent = `Vas a poder usar el mapa sin conexión (radio de ${CONFIG.OFFLINE_DEFAULT_RADIUS_KM} km)`;
+    document.getElementById('offline-panel-bar-track').style.display = 'none';
+    document.getElementById('offline-panel-actions').innerHTML =
+      `<button class="offline-panel-btn secondary" onclick="closeOfflinePanel()">Ahora no</button>
+       <button class="offline-panel-btn primary" onclick="startOfflineDownloadFromUI()">Descargar ahora</button>`;
+  }
+};
+window.onOfflineBtnClick = onOfflineBtnClick;
+window.closeOfflinePanel = closeOfflinePanel;
+window.startOfflineDownloadFromUI = startOfflineDownloadFromUI;
+window.cancelOfflineDownload = cancelOfflineDownload;
+
+// Sugiere la descarga UNA sola vez, ~3s después del primer GPS fix,
+// si el usuario todavía no tiene una zona guardada offline.
+const maybeSuggestOfflineDownload = () => {
+  if (getOfflineRegion() || sessionStorage.getItem('qoo_offline_suggested')) return;
+  sessionStorage.setItem('qoo_offline_suggested', '1');
+  setTimeout(() => { if (!offlineDownloadActive) onOfflineBtnClick(); }, 3000);
 };
 
 // Última ubicación guardada
@@ -1311,8 +1603,10 @@ const onGps = pos => {
   const {latitude:lat, longitude:lng, accuracy} = pos.coords;
   if (!validCoord(lat,lng)) return;
   if (gpsEverReceived && accuracy > 150) return;
+  const isFirstFix = !gpsEverReceived;
   userLat = lat; userLng = lng; gpsEverReceived = true;
   saveLastLocation(lat,lng);
+  if (isFirstFix) maybeSuggestOfflineDownload();
   if (mlReady) updateUserMarker(lat,lng);
   if (mlReady && mlMap && validCoord(lat,lng)) {
     if (!window._mapLoaded || document.getElementById('panel-map').classList.contains('visible')) {
