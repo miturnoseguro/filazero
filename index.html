@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1356,7 +1357,7 @@ out center 60;`;
       const meta = osmToMeta(tags);
       const d = Math.round(dist(lat,lng, parseFloat(lat), parseFloat(lng)));
       return {
-        id: `osm_${el.type}_${el.id}`,
+        id: `osm-${el.type}-${el.id}`,
         name, type: meta.tipo, logo: meta.emoji, cat: meta.cat,
         addr: [tags['addr:street'], tags['addr:housenumber']].filter(Boolean).join(' ') || tags.address || '',
         lat: parseFloat(lat), lng: parseFloat(lng), dist: d,
