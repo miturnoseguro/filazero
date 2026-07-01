@@ -2211,7 +2211,7 @@ const PlacePopup = ({ place, onClose }) => {
           ),
           website && React.createElement('a', {
             href: website, target:'_blank', rel:'noopener noreferrer',
-            style:{display:'block',marginTop:8,fontSize:11,fontWeight:800,color:sponsorColor,textAlign:'center',textDecoration:'none', border:'2px solid sponsorColor'}
+            style:{display:'block',marginTop:8,fontSize:11,fontWeight:800,color:sponsorColor,textAlign:'center',textDecoration:'none', border:`2px solid ${sponsorColor}`}
           }, website)
         )
       )
