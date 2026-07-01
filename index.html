@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -199,7 +200,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 
 /* ===== MAP OVERLAYS ===== */
 .map-search-wrap { position: absolute; top: 12px; left: 12px; right: 64px; z-index: 999; }
-.map-search-wrap.inline { position: relative; top: auto; left: auto; right: auto; z-index: auto; }
+.map-search-wrap.inline { position: relative; top: auto; left: auto; right: auto; z-index: 500; }
 .map-search-bar {
   display: flex; align-items: center; gap: 8px;
   background: rgba(255,255,255,.96); backdrop-filter: blur(16px);
@@ -223,9 +224,10 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 .map-search-clear.visible { display: flex; }
 .search-results-dropdown {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  z-index: 500;
   background: rgba(255,255,255,.98); backdrop-filter: blur(16px);
   border: 1px solid var(--border); border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg); overflow: hidden;
+  box-shadow: 0 14px 32px rgba(15,23,42,.28), 0 2px 8px rgba(15,23,42,.12); overflow: hidden;
   display: none; max-height: 300px; overflow-y: auto;
 }
 .search-results-dropdown.open { display: block; }
@@ -866,6 +868,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
       </button>
     </div>
     <div class="cerca-list" id="cerca-list"></div>
+    <div class="places-loading-pill" id="cerca-loading-pill"><div class="places-loading-spinner"></div><span id="cerca-loading-text">Cargando establecimientos…</span></div>
     <nav class="bottom-nav">
       <button class="nav-btn" onclick="switchTab('map')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
@@ -1016,19 +1019,19 @@ const fmtDist = m => m<1000 ? m+'m' : (m/1000).toFixed(1)+'km';
 const normTxt = s => (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 
 // ── Indicador de carga de comercios/cards ──
-let _placesLoadingHideTimer = null;
-const showPlacesLoading = text => {
-  clearTimeout(_placesLoadingHideTimer);
-  const pill = document.getElementById('places-loading-pill');
-  const lbl = document.getElementById('places-loading-text');
+const _placesLoadingHideTimers = {};
+const showPlacesLoading = (text, pillId = 'places-loading-pill', textId = 'places-loading-text') => {
+  clearTimeout(_placesLoadingHideTimers[pillId]);
+  const pill = document.getElementById(pillId);
+  const lbl = document.getElementById(textId);
   if (!pill || !lbl) return;
   lbl.textContent = text;
   pill.classList.add('show');
 };
-const hidePlacesLoading = (delay = 250) => {
-  clearTimeout(_placesLoadingHideTimer);
-  _placesLoadingHideTimer = setTimeout(() => {
-    const pill = document.getElementById('places-loading-pill');
+const hidePlacesLoading = (delay = 250, pillId = 'places-loading-pill') => {
+  clearTimeout(_placesLoadingHideTimers[pillId]);
+  _placesLoadingHideTimers[pillId] = setTimeout(() => {
+    const pill = document.getElementById(pillId);
     if (pill) pill.classList.remove('show');
   }, delay);
 };
@@ -1665,6 +1668,15 @@ const initMap = (center) => {
   });
 
   // Eventos de navegación
+  // Si el usuario arrastra/hace zoom manualmente (gesto real, no un flyTo/easeTo
+  // programático), dejamos de seguir su GPS para que pueda recorrer el mapa
+  // libremente. Solo vuelve a seguir si toca el botón de ubicación.
+  mlMap.on('movestart', (e) => {
+    if (e && e.originalEvent && followMode) {
+      followMode = false;
+      updateGpsUI();
+    }
+  });
   mlMap.on('zoomend', () => { if (nearbyPlaces.length) buildMapMarkers(nearbyPlaces); });
   mlMap.on('moveend', () => {
     if (!mlMap) return;
@@ -1705,11 +1717,15 @@ const onGps = pos => {
   if (isFirstFix) maybeSuggestOfflineDownload();
   if (mlReady) updateUserMarker(lat,lng);
   if (mlReady && mlMap && validCoord(lat,lng)) {
-    if (!window._mapLoaded || document.getElementById('panel-map').classList.contains('visible')) {
+    if (!window._mapLoaded) {
+      // Primer fix de GPS: centrar el mapa en la posición del usuario una sola vez.
       const zoom = window._firstGpsZoom ? CONFIG.GPS_ZOOM : CONFIG.FOLLOW_ZOOM;
       if (!window._firstGpsZoom) window._firstGpsZoom = true;
       safeMove(() => mlMap.flyTo({ center:[lng,lat], zoom, duration:800 }));
     } else if (followMode) {
+      // Solo se recentra automáticamente si el usuario está en modo "seguir"
+      // (lo activa tocando el ícono de GPS). Si arrastró el mapa, followMode
+      // se desactiva y el mapa lo deja recorrer libremente.
       safeMove(() => mlMap.easeTo({ center:[lng,lat], duration:600 }));
     }
   }
@@ -2415,6 +2431,7 @@ const cercaLoadPlaces = async () => {
   cercaApplyFilters();
   const _updLbl1 = document.getElementById('cerca-updated-lbl');
   if (_updLbl1) _updLbl1.textContent = cached ? `Actualizado ${cached.label}` : 'Actualizado ahora';
+  if (cercaLoading) showPlacesLoading('Cargando establecimientos…', 'cerca-loading-pill', 'cerca-loading-text');
 
   // 2. Cargar reales en segundo plano
   let data = Object.values(placeStore)
@@ -2432,6 +2449,7 @@ const cercaLoadPlaces = async () => {
   }
   // Si no hay reales, se mantienen los hardcodeados/caché
   cercaLoading = false;
+  hidePlacesLoading(200, 'cerca-loading-pill');
 
   // Sincronizar con backend (actualiza estados)
   if (BACKEND_READY) {
