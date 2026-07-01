@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -937,6 +938,10 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwFXKjACviNKGYLDK8yA0rfGLipxyM8nyRyDZoOtSotCviFrBTrttkWP6wMSRCARYTNQA/exec',
   GOOGLE_CLIENT_ID: '283820904318-leis6rl3mfhtve2amj59q8sq221dg3qf.apps.googleusercontent.com',
+  // Key gratis de https://myprojects.geoapify.com (free tier: 3000 req/día). Se usa como fuente
+  // complementaria a Overpass para traer más establecimientos y más rápido. Si la dejás en
+  // 'PEGAR_AQUI', la app sigue funcionando solo con Overpass.
+  GEOAPIFY_API_KEY: '631ee415c3eb4b87b4d5a0c59503af58',
   DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
   REPORT_RADIUS_M: 20,
   GPS_ZOOM: 19,
@@ -964,6 +969,7 @@ const CONFIG = {
 
 const BACKEND_READY = !CONFIG.APPS_SCRIPT_URL.startsWith('PEGAR_AQUI');
 const GOOGLE_AUTH_READY = !CONFIG.GOOGLE_CLIENT_ID.startsWith('PEGAR_AQUI');
+const GEOAPIFY_READY = !CONFIG.GEOAPIFY_API_KEY.startsWith('PEGAR_AQUI');
 
 const SESSION_KEY = 'qooentum_user';
 const DEVICE_KEY = 'qooentum_device_email';
@@ -1050,11 +1056,20 @@ let cercaReqId = 0; // usado para descartar respuestas de cargas viejas (evita e
 let cercaCache = {}; // cache de resultados por radio, para no repetir el flash de datos demo al volver a un radio ya visitado
 let rankingData = [], prizesData = SEED_PRIZES.map(p=>({...p}));
 let _markerBatchToken = 0, _buildMarkersTimer = null;
-let _overpassLastReq = 0, _overpassInFlight = false;
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
-const OVERPASS_MIN_INTERVAL = 12000;
+// Varios espejos públicos de Overpass: se pide a todos en paralelo y se usa
+// el primero que responda. Reparte la carga entre servidores en vez de
+// depender de uno solo, así se evita el 429 y se espera mucho menos.
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+let _overpassMirrorLastReq = {}; // último request por espejo, para no abusar de cada uno individualmente
+const OVERPASS_MIN_INTERVAL_PER_MIRROR = 4000; // antes: 12s a UN solo server. Ahora: 4s por espejo, 3 en paralelo.
 const OVERPASS_CACHE = new Map();
 const OVERPASS_CACHE_TTL = 2*60*60*1000;
+const GEOAPIFY_CACHE = new Map();
+const GEOAPIFY_CACHE_TTL = 2*60*60*1000;
 let _syncInterval = null;
 let pickModeActive = false;
 let _toastActionTimer = null;
@@ -1408,24 +1423,31 @@ const osmToMeta = tags => {
   }
   return { emoji:'📍', tipo:'Lugar', cat:'other' };
 };
-const overpassRate = async (query) => {
-  if (_overpassInFlight) return null;
+// Pide a UN espejo puntual, respetando su propio intervalo mínimo.
+const overpassFetchMirror = async (url, query) => {
   const now = Date.now();
-  const elapsed = now - _overpassLastReq;
-  if (elapsed < OVERPASS_MIN_INTERVAL) await new Promise(r => setTimeout(r, OVERPASS_MIN_INTERVAL - elapsed));
-  _overpassInFlight = true;
-  _overpassLastReq = Date.now();
+  const last = _overpassMirrorLastReq[url] || 0;
+  const elapsed = now - last;
+  if (elapsed < OVERPASS_MIN_INTERVAL_PER_MIRROR) await new Promise(r => setTimeout(r, OVERPASS_MIN_INTERVAL_PER_MIRROR - elapsed));
+  _overpassMirrorLastReq[url] = Date.now();
+  const res = await fetch(url, {
+    method: 'POST',
+    body: 'data=' + encodeURIComponent(query),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (res.status === 429) { _overpassMirrorLastReq[url] = Date.now() + 30000; throw new Error('429'); }
+  if (!res.ok) throw new Error(String(res.status));
+  return res.json();
+};
+// Corre todos los espejos en paralelo y devuelve el primero que responda ok.
+const overpassRate = async (query) => {
   try {
-    const res = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      signal: AbortSignal.timeout(20000),
-    });
-    if (res.status === 429) { _overpassLastReq = Date.now() + 30000; throw new Error('429'); }
-    if (!res.ok) throw new Error(res.status);
-    return await res.json();
-  } finally { _overpassInFlight = false; }
+    return await Promise.any(OVERPASS_MIRRORS.map(url => overpassFetchMirror(url, query)));
+  } catch (e) {
+    console.warn('[overpass] todos los espejos fallaron', e);
+    return null;
+  }
 };
 const overpassSearch = async (lat, lng, radiusM) => {
   const key = `${Math.round(lat*400)}_${Math.round(lng*400)}`;
@@ -1467,9 +1489,119 @@ out center 60;`;
     })
     .filter(p => p && p.dist <= radiusM)
     .sort((a,b) => a.dist - b.dist)
-    .slice(0, window.innerWidth < 768 ? 40 : 80);
+    .slice(0, window.innerWidth < 768 ? 80 : 150);
   OVERPASS_CACHE.set(key, { places, ts: Date.now() });
   return places;
+};
+
+// ── Geoapify Places: fuente complementaria, corre en paralelo con Overpass ──
+// Mapea categorías de Geoapify a la misma estructura {emoji, tipo, cat} que osmToMeta.
+const geoapifyToMeta = (categories) => {
+  const cats = categories || [];
+  const has = pfx => cats.some(c => c.startsWith(pfx));
+  if (has('catering.restaurant')) return { emoji:'🍽️', tipo:'Restaurante', cat:'food' };
+  if (has('catering.cafe')) return { emoji:'☕', tipo:'Café', cat:'food' };
+  if (has('catering.fast_food')) return { emoji:'🍔', tipo:'Comida rápida', cat:'food' };
+  if (has('catering.bar') || has('catering.pub')) return { emoji:'🍺', tipo:'Bar', cat:'food' };
+  if (has('bakery') || has('catering.bakery')) return { emoji:'🥐', tipo:'Panadería', cat:'food' };
+  if (has('catering.ice_cream')) return { emoji:'🍦', tipo:'Heladería', cat:'food' };
+  if (has('healthcare.pharmacy')) return { emoji:'💊', tipo:'Farmacia', cat:'health' };
+  if (has('healthcare.hospital')) return { emoji:'🏥', tipo:'Hospital', cat:'health' };
+  if (has('healthcare.clinic')) return { emoji:'🏥', tipo:'Clínica', cat:'health' };
+  if (has('healthcare.dentist')) return { emoji:'🦷', tipo:'Dentista', cat:'health' };
+  if (has('healthcare')) return { emoji:'👨‍⚕️', tipo:'Salud', cat:'health' };
+  if (has('service.veterinary')) return { emoji:'🐾', tipo:'Veterinaria', cat:'health' };
+  if (has('optician')) return { emoji:'👓', tipo:'Óptica', cat:'health' };
+  if (has('service.financial.bank')) return { emoji:'🏦', tipo:'Banco', cat:'bank' };
+  if (has('atm') || has('service.financial.atm')) return { emoji:'🏧', tipo:'Cajero', cat:'bank' };
+  if (has('commercial.supermarket')) return { emoji:'🛒', tipo:'Supermercado', cat:'supermarket' };
+  if (has('commercial.convenience')) return { emoji:'🏪', tipo:'Almacén', cat:'supermarket' };
+  if (has('commercial.food_and_drink') || has('commercial.marketplace')) return { emoji:'🥦', tipo:'Verdulería', cat:'supermarket' };
+  if (has('postal')) return { emoji:'📮', tipo:'Correo', cat:'government' };
+  if (has('government')) return { emoji:'🏛️', tipo:'Oficina pública', cat:'government' };
+  if (has('commercial.clothing')) return { emoji:'👕', tipo:'Ropa', cat:'shopping' };
+  if (has('commercial.shoes')) return { emoji:'👟', tipo:'Zapatería', cat:'shopping' };
+  if (has('commercial.electronics')) return { emoji:'📱', tipo:'Electrónica', cat:'shopping' };
+  if (has('commercial.hardware') || has('commercial.doityourself')) return { emoji:'🔧', tipo:'Ferretería', cat:'shopping' };
+  if (has('commercial.books')) return { emoji:'📚', tipo:'Librería', cat:'shopping' };
+  if (has('commercial.hairdresser')) return { emoji:'💈', tipo:'Peluquería', cat:'shopping' };
+  if (has('commercial.beauty')) return { emoji:'💄', tipo:'Estética', cat:'shopping' };
+  if (has('service.laundry')) return { emoji:'👔', tipo:'Lavandería', cat:'shopping' };
+  if (has('service.vehicle') && has('fuel')) return { emoji:'⛽', tipo:'Estación de servicio', cat:'shopping' };
+  if (has('leisure.fitness_centre') || has('sport.fitness')) return { emoji:'🏋️', tipo:'Gimnasio', cat:'shopping' };
+  if (has('commercial.pet')) return { emoji:'🐾', tipo:'Petshop', cat:'shopping' };
+  if (has('commercial.sports')) return { emoji:'⚽', tipo:'Deportes', cat:'shopping' };
+  if (has('commercial.furniture')) return { emoji:'🛋️', tipo:'Mueblería', cat:'shopping' };
+  if (has('commercial.stationery')) return { emoji:'✏️', tipo:'Librería/Papelería', cat:'shopping' };
+  if (has('commercial')) return { emoji:'🏪', tipo:'Comercio', cat:'shopping' };
+  return { emoji:'📍', tipo:'Lugar', cat:'other' };
+};
+const GEOAPIFY_CATEGORIES = [
+  'catering.restaurant','catering.cafe','catering.fast_food','catering.bar','catering.pub',
+  'catering.bakery','catering.ice_cream','healthcare.pharmacy','healthcare.hospital',
+  'healthcare.clinic','healthcare.dentist','service.veterinary','service.financial.bank',
+  'service.financial.atm','commercial.supermarket','commercial.convenience',
+  'commercial.clothing','commercial.shoes','commercial.electronics','commercial.hardware',
+  'commercial.books','commercial.hairdresser','commercial.beauty','service.laundry',
+  'leisure.fitness_centre','commercial.pet','commercial.sports','commercial.furniture',
+  'commercial.stationery','postal','optician',
+].join(',');
+const geoapifySearch = async (lat, lng, radiusM) => {
+  if (!GEOAPIFY_READY) return [];
+  const key = `${Math.round(lat*400)}_${Math.round(lng*400)}`;
+  const cached = GEOAPIFY_CACHE.get(key);
+  if (cached && Date.now()-cached.ts < GEOAPIFY_CACHE_TTL) return cached.places;
+  const r = Math.min(radiusM, 5000);
+  const url = `https://api.geoapify.com/v2/places?categories=${GEOAPIFY_CATEGORIES}&filter=circle:${lng},${lat},${r}&bias=proximity:${lng},${lat}&limit=100&apiKey=${CONFIG.GEOAPIFY_API_KEY}`;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+    const places = (data.features||[])
+      .map(f => {
+        const p = f.properties || {};
+        const [flng, flat] = f.geometry?.coordinates || [null,null];
+        if (flat==null || flng==null || !p.name) return null;
+        const meta = geoapifyToMeta(p.categories);
+        return {
+          id: `geoapify-${p.place_id || p.osm_id || (flat+'_'+flng)}`,
+          name: p.name, type: meta.tipo, logo: meta.emoji, cat: meta.cat,
+          addr: p.address_line2 || p.street || '',
+          lat: flat, lng: flng, dist: Math.round(dist(lat,lng,flat,flng)),
+          status:0, reporters:0,
+          rating: (3.5 + ((p.place_id ? p.place_id.length : 5)%14)*0.1).toFixed(1),
+          reviewsN: 10 + ((p.place_id ? p.place_id.length : 5)%190),
+          open: true, verified: false, sponsor: null,
+        };
+      })
+      .filter(p => p && p.dist <= radiusM)
+      .sort((a,b) => a.dist - b.dist);
+    GEOAPIFY_CACHE.set(key, { places, ts: Date.now() });
+    return places;
+  } catch (e) {
+    console.warn('[geoapify]', e);
+    const cached2 = GEOAPIFY_CACHE.get(key);
+    return cached2 ? cached2.places : [];
+  }
+};
+
+// ── Fuente combinada: Overpass + Geoapify en paralelo ──
+// Corre ambas búsquedas al mismo tiempo (no una después de la otra) y mergea
+// sin duplicar: si un lugar de Geoapify está muy cerca (<25m) de uno que ya
+// trajo Overpass con nombre parecido, se descarta el duplicado.
+const mergeSources = (primary, secondary) => {
+  const isDup = (a,b) => dist(a.lat,a.lng,b.lat,b.lng) < 25 && normTxt(a.name) === normTxt(b.name);
+  const extra = secondary.filter(s => !primary.some(p => isDup(p,s)));
+  return [...primary, ...extra].sort((a,b) => a.dist - b.dist);
+};
+const searchPlaces = async (lat, lng, radiusM) => {
+  const [osm, geo] = await Promise.allSettled([
+    overpassSearch(lat, lng, radiusM),
+    geoapifySearch(lat, lng, radiusM),
+  ]);
+  const osmPlaces = osm.status === 'fulfilled' ? osm.value : [];
+  const geoPlaces = geo.status === 'fulfilled' ? geo.value : [];
+  return mergeSources(osmPlaces, geoPlaces);
 };
 
 // Backend
@@ -1552,7 +1684,7 @@ const _loadPlaces = async (lat,lng) => {
   showPlacesLoading('Buscando comercios cercanos…');
   try {
     const [osms, backend] = await Promise.all([
-      overpassSearch(lat,lng,600),
+      searchPlaces(lat,lng,600),
       BACKEND_READY ? apiGet('sync_places', {lat,lng,radius:600}) : null,
     ]);
     const bm = new Map((backend?.places||[]).map(p=>[p.id,p]));
@@ -2443,7 +2575,7 @@ const cercaLoadPlaces = async () => {
     .filter(p => validCoord(p.lat,p.lng) && dist(lat,lng,p.lat,p.lng) <= radiusAtStart)
     .map(p => ({ ...p, dist: Math.round(dist(lat,lng,p.lat,p.lng)), cat: p.cat || guessCat(p.name,p.type) }));
   if (data.length < 3) {
-    const fetched = await overpassSearch(lat, lng, radiusAtStart);
+    const fetched = await searchPlaces(lat, lng, radiusAtStart);
     data = fetched.map(p => ({ ...p, dist: Math.round(dist(lat,lng,p.lat,p.lng)), cat: p.cat || guessCat(p.name,p.type) }));
   }
   if (myReq !== cercaReqId) return; // el radio cambió mientras esperábamos: descartar, ya hay una carga más nueva en curso
