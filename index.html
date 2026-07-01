@@ -166,7 +166,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 .fc-card-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 3px 10px rgba(15,23,42,.16)); transition: transform .2s cubic-bezier(.34,1.56,.64,1), filter .2s; }
 .fc-card-wrap:hover { transform: scale(1.04) translateY(-2px); filter: drop-shadow(0 7px 18px rgba(15,23,42,.22)); }
 .fc-card { width: 160px; background: rgba(255,255,255,.98); border: 1.5px solid var(--border); border-radius: 22px; padding: 5px 10px 8px; font-family: inherit; text-align: left; backdrop-filter: blur(8px); }
-.fc-card-wrap.is-sponsor .fc-card { background: linear-gradient(325deg, color-mix(in srgb, var(--sponsor-color, #6366F1) 10%, #fff) 0%, rgb(231 220 189 / 98%) 55%); border-color: color-mix(in srgb, var(--sponsor-color, #6366F1) 45%, var(--border)); }
+.fc-card-wrap.is-sponsor .fc-card { background: linear-gradient(180deg, color-mix(in srgb, var(--sponsor-color, #6366F1) 10%, #fff) 0%, rgba(255,255,255,.98) 55%); border-color: color-mix(in srgb, var(--sponsor-color, #6366F1) 45%, var(--border)); }
 .fc-card-head { display: flex; gap: 6px; align-items: center; }
 .fc-card-logo { position: relative; width: 24px; height: 24px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; overflow: visible; }
 .fc-card-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
@@ -483,7 +483,6 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
   cursor: pointer; transition: all .2s ease;
   display: flex; gap: 10px; align-items: flex-start;
   animation: ncCardIn .25s ease both;
-  margin-top: 8px;
 }
 @keyframes ncCardIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
 .nc-card:hover { border-color: var(--green); box-shadow: 0 4px 16px rgba(0,196,140,.11); transform: translateY(-1px); }
@@ -845,7 +844,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
     <div class="cerca-radius-row">
       <span class="cerca-radius-lbl">Radio:</span>
       <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
-      
+      <button class="cerca-r-btn" data-r="100" onclick="cercaSetRadius(100,this)">100 m</button>
     </div>
     <div class="cerca-filter-row">
       <button class="cerca-f-chip active" data-cat="all" onclick="cercaSetCat('all',this)">Todo</button>
@@ -1313,12 +1312,21 @@ window.closeOfflinePanel = closeOfflinePanel;
 window.startOfflineDownloadFromUI = startOfflineDownloadFromUI;
 window.cancelOfflineDownload = cancelOfflineDownload;
 
-// Sugiere la descarga UNA sola vez, ~3s después del primer GPS fix,
-// si el usuario todavía no tiene una zona guardada offline.
+// Descarga la zona offline automáticamente ~3s después del primer GPS fix,
+// SIEMPRE que el usuario todavía no tenga una zona guardada — ya no es una sugerencia
+// descartable: si no respondía y refrescaba la página, antes se perdía la oportunidad
+// (quedaba marcado como "ya sugerido" en sessionStorage aunque nunca se descargara nada).
+// Ahora se dispara la descarga real en cada carga hasta que quede guardada con éxito.
 const maybeSuggestOfflineDownload = () => {
-  if (getOfflineRegion() || sessionStorage.getItem('qoo_offline_suggested')) return;
-  sessionStorage.setItem('qoo_offline_suggested', '1');
-  setTimeout(() => { if (!offlineDownloadActive) onOfflineBtnClick(); }, 3000);
+  if (getOfflineRegion()) return; // ya tiene una zona descargada, no hace falta repetir
+  if (offlineDownloadActive) return; // ya se está descargando, no duplicar
+  setTimeout(() => {
+    if (offlineDownloadActive || getOfflineRegion()) return;
+    const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
+    const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
+    document.getElementById('offline-panel')?.classList.add('show');
+    downloadOfflineCity(lat, lng, CONFIG.OFFLINE_DEFAULT_RADIUS_KM);
+  }, 3000);
 };
 
 // Última ubicación guardada
@@ -2154,7 +2162,7 @@ const PlacePopup = ({ place, onClose }) => {
   const website = sponsor?.website || null;
   // Paleta "gold premium" para comercios sponsor de nivel premium — mismo lineamiento que la mini card y la card de lista
   const T = isPremium ? {
-    cardBg: `linear-gradient(180deg, color-mix(in srgb, ${sponsorColor} 14%, #fff) 0%, rgb(29 29 29) 48%)`,
+    cardBg: `linear-gradient(180deg, color-mix(in srgb, ${sponsorColor} 14%, #fff) 0%, rgba(29,29,29) 48%)`,
     statBg: `color-mix(in srgb, ${sponsorColor} 9%, #fff)`,
     statBorder: `1px solid color-mix(in srgb, ${sponsorColor} 28%, var(--border))`,
     text: '#0F172A',
@@ -2334,10 +2342,10 @@ const PlacePopup = ({ place, onClose }) => {
             href: website, target:'_blank', rel:'noopener noreferrer',
             style:{
               display:'block', marginTop:10, fontSize:11.5, fontWeight:800,
-              color: '#fff' , textAlign:'center', textDecoration:'none',
-              border:`1.5px solid ${BRAND_GREEN}`, borderRadius:25,
+              color: BRAND_GREEN, textAlign:'center', textDecoration:'none',
+              border:`1.5px solid ${BRAND_GREEN}`, borderRadius:40,
               padding:'9px 14px',
-              background: `${BRAND_GREEN}`,
+              background: `${BRAND_GREEN}0D`,
               letterSpacing:'.2px',
             }
           }, website.replace(/^https?:\/\//,'').replace(/\/$/,''))
