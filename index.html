@@ -2620,8 +2620,18 @@ const syncOccupancy = () => {
       let changed = false;
       res.places.forEach(bp => {
         const p = placeStore[bp.id];
-        if (p) { if (p.status !== bp.status || p.reporters !== (bp.reporters??p.reporters)) changed = true;
-          p.status = bp.status ?? p.status; p.reporters = bp.reporters ?? p.reporters; placeStore[p.id] = p; }
+        if (!p) return;
+        if (p.status !== bp.status || p.reporters !== (bp.reporters??p.reporters)) changed = true;
+        p.status = bp.status ?? p.status;
+        p.reporters = bp.reporters ?? p.reporters;
+        const sponsorChanged = JSON.stringify(p.sponsor||null) !== JSON.stringify(bp.sponsor||null);
+        if (sponsorChanged) {
+          p.sponsor = bp.sponsor || null;
+          if (bp.sponsor) p.verified = true;
+          forceMarkerRebuild(p.id);
+          changed = true;
+        }
+        placeStore[p.id] = p;
       });
       if (changed) {
         persistCache();
