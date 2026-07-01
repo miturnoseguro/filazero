@@ -941,7 +941,7 @@ const CONFIG = {
   // Key gratis de https://myprojects.geoapify.com (free tier: 3000 req/día). Se usa como fuente
   // complementaria a Overpass para traer más establecimientos y más rápido. Si la dejás en
   // 'PEGAR_AQUI', la app sigue funcionando solo con Overpass.
-  GEOAPIFY_API_KEY: 'PEGAR_AQUI_TU_API_KEY_GEOAPIFY',
+  GEOAPIFY_API_KEY: '631ee415c3eb4b87b4d5a0c59503af58',
   DEFAULT_CENTER: { lat: -34.6083, lng: -58.3896 },
   REPORT_RADIUS_M: 20,
   GPS_ZOOM: 19,
@@ -1682,30 +1682,14 @@ const _loadPlaces = async (lat,lng) => {
     return;
   }
   showPlacesLoading('Buscando comercios cercanos…');
-
-  // Pintamos apenas responde CADA fuente por separado, en vez de esperar a
-  // Overpass + Geoapify + backend juntos. Si Overpass tarda 1s y Geoapify 4s,
-  // el usuario ve pins a partir del segundo 1, y el resto se va sumando
-  // encima sin parpadear (buildMapMarkers ya sabe no re-crear markers que
-  // ya existen, así que "pintar de nuevo" es barato).
-  const paintPartial = places => {
-    if (!places || !places.length) return;
-    places.forEach(p => { if (!placeStore[p.id]) placeStore[p.id] = p; });
-    rebuildNearby(lat,lng);
-    applySeed(lat,lng);
-    buildMapMarkers(nearbyPlaces);
-  };
-
-  const osmPromise = overpassSearch(lat,lng,600).then(r => { paintPartial(r); return r; }).catch(e => { console.warn('[overpass]', e); return []; });
-  const geoPromise = geoapifySearch(lat,lng,600).then(r => { paintPartial(r); return r; }).catch(e => { console.warn('[geoapify]', e); return []; });
-  const backendPromise = BACKEND_READY ? apiGet('sync_places', {lat,lng,radius:600}) : Promise.resolve(null);
-
   try {
-    const [osms, geo, backend] = await Promise.all([osmPromise, geoPromise, backendPromise]);
-    const merged0 = mergeSources(osms, geo);
+    const [osms, backend] = await Promise.all([
+      searchPlaces(lat,lng,600),
+      BACKEND_READY ? apiGet('sync_places', {lat,lng,radius:600}) : null,
+    ]);
     const bm = new Map((backend?.places||[]).map(p=>[p.id,p]));
-    const merged = merged0.map(p => { const bp = bm.get(p.id); return bp ? {...p,...bp} : p; });
-    const onlyBackend = (backend?.places||[]).filter(p => !merged0.find(o=>o.id===p.id));
+    const merged = osms.map(p => { const bp = bm.get(p.id); return bp ? {...p,...bp} : p; });
+    const onlyBackend = (backend?.places||[]).filter(p => !osms.find(o=>o.id===p.id));
     const all = [...merged, ...onlyBackend];
     const ids = [];
     all.forEach(p => { placeStore[p.id] = p; ids.push(p.id); });
