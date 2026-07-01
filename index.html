@@ -343,19 +343,19 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
   padding: 12px 14px; box-shadow: var(--shadow-lg);
   animation: adSlideIn .4s cubic-bezier(.34,1.56,.64,1);
 }
-.offline-panel.show { display: block; }
+.offline-panel.show { display: block; position: absolute; top: 10px; height: 100px; background: white; box-shadow: var(--shadow-lg);}
 .offline-panel-head { display: flex; align-items: center; gap: 10px; }
 .offline-panel-icon { font-size: 18px; flex-shrink: 0; }
 .offline-panel-body { flex: 1; min-width: 0; }
-.offline-panel-title { font-size: 12px; font-weight: 800; color: #fff; }
-.offline-panel-sub { font-size: 10.5px; color: rgba(255,255,255,.62); margin-top: 1px; }
+.offline-panel-title { font-size: 12px; font-weight: 800; color: var(--text2); }
+.offline-panel-sub { font-size: 10.5px; color: var(--text2); margin-top: 1px; }
 .offline-panel-close { background: none; border: none; color: rgba(255,255,255,.45); font-size: 14px; cursor: pointer; padding: 2px; line-height: 1; flex-shrink: 0; }
 .offline-panel-bar-track { margin-top: 10px; height: 6px; border-radius: 40px; background: rgba(255,255,255,.14); overflow: hidden; }
 .offline-panel-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--green-dk)); border-radius: 40px; transition: width .25s ease; }
 .offline-panel-actions { margin-top: 10px; display: flex; gap: 8px; }
 .offline-panel-btn { flex: 1; border: none; border-radius: 10px; padding: 8px 10px; font-size: 11.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
 .offline-panel-btn.primary { background: var(--green); color: #fff; }
-.offline-panel-btn.secondary { background: rgba(255,255,255,.12); color: #fff; }
+.offline-panel-btn.secondary { background: rgba(255,255,255,.12); color: #999; border: 2px solid #cecece; }
 
 /* ===== BOTTOM NAV ===== */
 .bottom-nav {
