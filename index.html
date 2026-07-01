@@ -845,11 +845,9 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
     </div>
     <div class="cerca-radius-row">
       <span class="cerca-radius-lbl">Radio:</span>
-      <button class="cerca-r-btn" data-r="5000" onclick="cercaSetRadius(5000,this)">5 km</button>
-      <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
       <button class="cerca-r-btn" data-r="100" onclick="cercaSetRadius(100,this)">100 m</button>
-      
-      
+      <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
+      <button class="cerca-r-btn" data-r="5000" onclick="cercaSetRadius(5000,this)">5 km</button>
     </div>
     <div class="cerca-filter-row">
       <button class="cerca-f-chip active" data-cat="all" onclick="cercaSetCat('all',this)">Todo</button>
@@ -1387,8 +1385,17 @@ const osmToMeta = tags => {
     { match:{shop:'beauty'}, emoji:'💄', tipo:'Estética', cat:'shopping' },
     { match:{shop:'laundry'}, emoji:'👔', tipo:'Lavandería', cat:'shopping' },
     { match:{amenity:'fuel'}, emoji:'⛽', tipo:'Estación de servicio', cat:'shopping' },
+    { match:{amenity:'veterinary'}, emoji:'🐾', tipo:'Veterinaria', cat:'health' },
+    { match:{leisure:'fitness_centre'}, emoji:'🏋️', tipo:'Gimnasio', cat:'shopping' },
+    { match:{leisure:'sports_centre'}, emoji:'🏋️', tipo:'Centro deportivo', cat:'shopping' },
+    { match:{shop:'optician'}, emoji:'👓', tipo:'Óptica', cat:'health' },
+    { match:{shop:'pet'}, emoji:'🐾', tipo:'Petshop', cat:'shopping' },
+    { match:{shop:'sports'}, emoji:'⚽', tipo:'Deportes', cat:'shopping' },
+    { match:{shop:'furniture'}, emoji:'🛋️', tipo:'Mueblería', cat:'shopping' },
+    { match:{shop:'stationery'}, emoji:'✏️', tipo:'Librería/Papelería', cat:'shopping' },
     { match:{shop:true}, emoji:'🏪', tipo:'Comercio', cat:'shopping' },
     { match:{amenity:true}, emoji:'📍', tipo:'Lugar', cat:'other' },
+    { match:{leisure:true}, emoji:'📍', tipo:'Lugar', cat:'other' },
   ];
   for (const r of rules) {
     let ok = true;
@@ -1426,10 +1433,12 @@ const overpassSearch = async (lat, lng, radiusM) => {
   const r = Math.min(radiusM, 5000);
   const q = `[out:json][timeout:15];
 (
-  node["amenity"~"restaurant|cafe|fast_food|bar|pharmacy|hospital|clinic|bank|atm|post_office|fuel|bakery|dentist|doctors|social_facility|ice_cream"](around:${r},${lat},${lng});
-  node["shop"~"supermarket|convenience|greengrocer|butcher|clothes|shoes|electronics|hardware|books|mobile_phone|hairdresser|beauty|laundry|bakery|money_lender"](around:${r},${lat},${lng});
-  way["amenity"~"restaurant|cafe|fast_food|bar|pharmacy|hospital|clinic|bank|fuel|supermarket"](around:${r},${lat},${lng});
-  way["shop"~"supermarket|convenience"](around:${r},${lat},${lng});
+  node["amenity"~"restaurant|cafe|fast_food|bar|pharmacy|hospital|clinic|bank|atm|post_office|fuel|bakery|dentist|doctors|social_facility|ice_cream|veterinary"](around:${r},${lat},${lng});
+  node["shop"~"supermarket|convenience|greengrocer|butcher|clothes|shoes|electronics|hardware|books|mobile_phone|hairdresser|beauty|laundry|bakery|money_lender|optician|pet|sports|furniture|stationery"](around:${r},${lat},${lng});
+  node["leisure"~"fitness_centre|sports_centre"](around:${r},${lat},${lng});
+  way["amenity"~"restaurant|cafe|fast_food|bar|pharmacy|hospital|clinic|bank|fuel|supermarket|veterinary"](around:${r},${lat},${lng});
+  way["shop"~"supermarket|convenience|hardware|sports|furniture"](around:${r},${lat},${lng});
+  way["leisure"~"fitness_centre|sports_centre"](around:${r},${lat},${lng});
 );
 out center 60;`;
   const data = await overpassRate(q);
@@ -2469,7 +2478,7 @@ const cercaLoadPlaces = async () => {
 const guessCat = (name,type) => {
   const l = (name+' '+type).toLowerCase();
   if (l.includes('restaurant')||l.includes('cafe')||l.includes('comida')||l.includes('panadería')||l.includes('bar')) return 'food';
-  if (l.includes('farmacia')||l.includes('hospital')||l.includes('clínica')||l.includes('médico')) return 'health';
+  if (l.includes('farmacia')||l.includes('hospital')||l.includes('clínica')||l.includes('médico')||l.includes('veterinaria')||l.includes('óptica')) return 'health';
   if (l.includes('super')||l.includes('mercado')||l.includes('carrefour')||l.includes('coto')) return 'supermarket';
   if (l.includes('banco')||l.includes('cajero')||l.includes('atm')) return 'bank';
   if (l.includes('gobierno')||l.includes('municipal')||l.includes('correo')||l.includes('anses')) return 'government';
