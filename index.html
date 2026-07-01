@@ -457,6 +457,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 }
 .cerca-count { font-size: 12px; color: var(--green); font-weight: 800; }
 .cerca-count-lbl { font-size: 12px; color: var(--text3); font-weight: 500; }
+.cerca-updated-lbl { font-size: 10px; color: var(--text3); font-weight: 500; margin-left: 8px; }
 .cerca-sort-btn {
   margin-left: auto; display: flex; align-items: center; gap: 4px;
   background: none; border: 1px solid var(--border); border-radius: 40px;
@@ -857,6 +858,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
     <div class="cerca-stats-bar">
       <span class="cerca-count" id="cerca-count">—</span>
       <span class="cerca-count-lbl" id="cerca-count-lbl">&nbsp;lugares encontrados</span>
+      <span class="cerca-updated-lbl" id="cerca-updated-lbl"></span>
       <button class="cerca-sort-btn" id="cerca-sort-btn" onclick="cercaCycleSort()">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg>
         <span id="cerca-sort-lbl">Distancia</span>
@@ -2394,7 +2396,7 @@ const cercaLoadPlaces = async () => {
   const hardcoded = demoData(lat, lng);
   cercaAllPlaces = hardcoded;
   cercaApplyFilters();
-  document.getElementById('cerca-updated-lbl').textContent = 'Actualizado ahora';
+  const _updLbl1 = document.getElementById('cerca-updated-lbl'); if (_updLbl1) _updLbl1.textContent = 'Actualizado ahora';
 
   // 2. Cargar reales en segundo plano
   let data = Object.values(placeStore)
@@ -2425,7 +2427,7 @@ const cercaLoadPlaces = async () => {
 
   cercaLoaded = true;
   const now = new Date();
-  document.getElementById('cerca-updated-lbl').textContent = `Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const _updLbl2 = document.getElementById('cerca-updated-lbl'); if (_updLbl2) _updLbl2.textContent = `Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
   cercaApplyFilters();
 };
 const guessCat = (name,type) => {
