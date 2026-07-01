@@ -2127,9 +2127,9 @@ const PlacePopup = ({ place, onClose }) => {
   const isPremium = sponsor?.tier === 'premium';
   // Paleta "black premium" para comercios sponsor de nivel premium
   const T = isPremium ? {
-    cardBg: `#333`,
+    cardBg: `#000`,
     statBg: 'rgba(255,255,255,.06)',
-    statBorder: `1px solid color-mix(in srgb, ${badgeText} 35%, rgba(255,255,255,.1))`,
+    statBorder: `1px solid #333`,
     text: '#F5F1E6',
     text2: 'rgba(245,241,230,.64)',
     text3: 'rgba(245,241,230,.42)',
