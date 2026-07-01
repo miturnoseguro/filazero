@@ -2339,7 +2339,7 @@ const cercaRenderList = () => {
       html += `<div class="nc-card" data-place-id="${p.id}" style="animation-delay:${Math.min(idx*0.025,0.3)}s">
         <div class="nc-logo">${logo}</div>
         <div class="nc-body">
-          <div class="nc-top"><div class="nc-name">${p.name}</div>${p.sponsor?.badge_text ? `<span class="fc-card-badge" style="background:${p.sponsor.badge_color||'#6366F1'};flex-shrink:0;">${p.sponsor.badge_text}</span>` : ''}<span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
+          <div class="nc-top"><div class="nc-name">${p.name}</div>${p.sponsor?.badge_text ?  : ''}<span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
           <div class="nc-meta"><span class="nc-type">${p.type}</span><div class="nc-dot"></div><span class="nc-dist">📍 ${fmtDist(p.dist)}</span>${p.addr ? `<div class="nc-dot"></div><span class="nc-addr">${p.addr}</span>` : ''}</div>
           <div class="nc-status" style="background:${s.color}"><div class="nc-sdot"></div><span class="nc-slabel">${s.label}</span><span class="nc-ssub">${s.sub}</span></div>
         </div>
