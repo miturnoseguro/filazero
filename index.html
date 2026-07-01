@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -180,6 +178,7 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
 .fc-card-status { display: flex; align-items: center; gap: 5px; padding: 4px 7px; border-radius: 12px; }
 .fc-card-status .s-dot-sm { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: rgba(255,255,255,.5); }
 .fc-card-status .s-label-sm { font-size: 9px; font-weight: 700; color: #fff; line-height: 1.2; }
+.fc-card-badge { margin-left: auto; font-size: 7px; font-weight: 800; color: #fff; padding: 1px 5px; border-radius: 40px; line-height: 1.4; white-space: nowrap; flex-shrink: 0; }
 .fc-tail { width: 2px; height: 6px; background: #CBD5E1; margin: 0 auto; }
 .fc-base { width: 6px; height: 6px; border-radius: 50%; background: #CBD5E1; margin: 0 auto; }
 
@@ -1855,8 +1854,10 @@ const makeMarker = p => {
   const s = (!p.reporters || p.reporters===0) ? NO_REPORT : STATUS_CFG[p.status];
   const logo = (p.sponsor?.logo_url) ? `<img src="${p.sponsor.logo_url}" alt="${p.name}">` : (p.logo || '🏪');
   const ver = p.verified ? `<div class="fc-card-verified">✓</div>` : '';
+  const isPremium = p.sponsor?.tier === 'premium';
+  const badge = p.sponsor?.badge_text ? `<span class="fc-card-badge" style="background:${p.sponsor.badge_color||'#6366F1'}">${p.sponsor.badge_text}</span>` : '';
   const el = document.createElement('div');
-  el.className = 'fc-card-wrap' + (p.sponsor ? ' is-sponsor' : '');
+  el.className = 'fc-card-wrap' + (isPremium ? ' is-sponsor' : '');
   if (p.sponsor?.badge_color) el.style.setProperty('--sponsor-color', p.sponsor.badge_color);
   el.innerHTML = `
     <div class="fc-card">
@@ -1865,7 +1866,7 @@ const makeMarker = p => {
         <div class="fc-card-info"><div class="fc-card-name">${p.name}</div><div class="fc-card-type">${p.type}</div></div>
         <span class="fc-card-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span>
       </div>
-      <div class="fc-card-status" style="background:${s.color}"><div class="s-dot-sm"></div><div class="s-label-sm">${s.label}</div></div>
+      <div class="fc-card-status" style="background:${s.color}"><div class="s-dot-sm"></div><div class="s-label-sm">${s.label}</div>${badge}</div>
     </div>
     <div class="fc-tail"></div><div class="fc-base"></div>
   `;
@@ -2017,8 +2018,8 @@ const PlacePopup = ({ place, onClose }) => {
   const sponsor = place.sponsor || null;
   const sponsorColor = sponsor?.badge_color || '#6366F1';
   const badgeText = sponsor?.badge_text || null;
-const promo = sponsor?.promo || null;
-const website = sponsor?.website || null;
+  const promo = sponsor?.promo || null;
+  const website = sponsor?.website || null;
 
   const overlayStyle = {
     position:'fixed', inset:0,
@@ -2063,14 +2064,14 @@ const website = sponsor?.website || null;
       React.createElement('div', { style:{overflowY:'auto',msOverflowStyle:'none',scrollbarWidth:'none'} },
         React.createElement('div', { style:{position:'relative',height:'200px',flexShrink:0,background:'#E2E8F0'} },
           React.createElement('img', {
-            badgeText && React.createElement('span', {
-  style:{fontSize:9,fontWeight:800,color:'#fff',background:sponsorColor,padding:'2px 7px',borderRadius:40,display:'inline-block',marginBottom:3}
-}, badgeText)
             src:photo, alt:place.name, loading:'lazy',
             onLoad:()=>setImgLoaded(true),
             onError:e => { const fb = PHOTOS[place.type] || PHOTOS.default; if (e.target.src !== fb) e.target.src = fb; },
             style:{width:'100%',height:'100%',objectFit:'cover',display:'block',opacity:imgLoaded?1:0,transition:'opacity 0.4s ease'}
           }),
+          badgeText && React.createElement('div', {style:{position:'absolute',top:12,right:52,background:sponsorColor,borderRadius:40,padding:'3px 9px',display:'flex',alignItems:'center',gap:4,boxShadow:'0 2px 8px rgba(0,0,0,.25)'}},
+            React.createElement('span', {style:{fontSize:10,fontWeight:800,color:'#fff'}}, badgeText)
+          ),
           React.createElement('div', { style:{position:'absolute',inset:0,background:'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.68) 100%)'} }),
           React.createElement('button', {
             onClick:handleClose,
@@ -2104,6 +2105,10 @@ const website = sponsor?.website || null;
                 React.createElement('p', {style:{margin:'1px 0 0',fontSize:9,color:'#64748B',textTransform:'uppercase',letterSpacing:'0.5px',fontWeight:600}}, lbl)
               )
             )
+          ),
+          promo && React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8,background:`${sponsorColor}14`,border:`1px solid ${sponsorColor}44`,borderRadius:10,padding:'8px 10px',marginBottom:10}},
+            React.createElement('span', {style:{fontSize:16,flexShrink:0}},'🎁'),
+            React.createElement('span', {style:{fontSize:12,fontWeight:800,color:sponsorColor}}, promo)
           ),
           notLog, tooFar,
           !hasGps && !onCooldown && React.createElement('div', {style:{display:'flex',alignItems:'center',gap:10,background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'10px 12px',marginBottom:12}},
@@ -2180,7 +2185,11 @@ const website = sponsor?.website || null;
               React.createElement('path', {d:'M16 3.13a4 4 0 0 1 0 7.75'})
             ),
             `${place.reporters} reportes en las últimas 2h`
-          )
+          ),
+          website && React.createElement('a', {
+            href: website, target:'_blank', rel:'noopener noreferrer',
+            style:{display:'block',marginTop:8,fontSize:11,fontWeight:800,color:sponsorColor,textAlign:'center',textDecoration:'none'}
+          }, 'Visitar sitio →')
         )
       )
     )
@@ -2330,7 +2339,7 @@ const cercaRenderList = () => {
       html += `<div class="nc-card" data-place-id="${p.id}" style="animation-delay:${Math.min(idx*0.025,0.3)}s">
         <div class="nc-logo">${logo}</div>
         <div class="nc-body">
-          <div class="nc-top"><div class="nc-name">${p.name}</div><span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
+          <div class="nc-top"><div class="nc-name">${p.name}</div>${p.sponsor?.badge_text ? `<span class="fc-card-badge" style="background:${p.sponsor.badge_color||'#6366F1'};flex-shrink:0;">${p.sponsor.badge_text}</span>` : ''}<span class="nc-badge-open ${p.open?'open':'closed'}">${p.open?'Abierto':'Cerrado'}</span></div>
           <div class="nc-meta"><span class="nc-type">${p.type}</span><div class="nc-dot"></div><span class="nc-dist">📍 ${fmtDist(p.dist)}</span>${p.addr ? `<div class="nc-dot"></div><span class="nc-addr">${p.addr}</span>` : ''}</div>
           <div class="nc-status" style="background:${s.color}"><div class="nc-sdot"></div><span class="nc-slabel">${s.label}</span><span class="nc-ssub">${s.sub}</span></div>
         </div>
