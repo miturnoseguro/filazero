@@ -2213,20 +2213,9 @@ const PlacePopup = ({ place, onClose }) => {
             ),
             `${place.reporters} reportes en las últimas 2h`
           ),
-        website && React.createElement('a', {
+         website && React.createElement('a', {
             href: website, target:'_blank', rel:'noopener noreferrer',
-            style:{
-              display:'block',
-              marginTop:8,
-              fontSize:11,
-              fontWeight:800,
-              color:sponsorColor,
-              textAlign:'center',
-              textDecoration:'none',
-              border:`1px solid ${sponsorColor}`,
-              borderRadius:6,
-              padding:'6px 10px'
-            }
+            style:{display:'block',marginTop:8,fontSize:11,fontWeight:800,color:sponsorColor,textAlign:'center',textDecoration:'none'}
           }, website)
         )
       )
