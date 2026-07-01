@@ -2232,27 +2232,22 @@ const submitVote = async (place, statusIdx) => {
 // ============================================================
 // CERCA (resumido - igual que antes)
 // ============================================================
-const cercaLoadPlaces = async () => {
-  const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
-  const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
-
-  // 1. Mostrar hardcodeados inmediatamente (sin skeletons)
-  const hardcoded = demoData(lat, lng);
-  cercaAllPlaces = hardcoded;
-  cercaApplyFilters();
-  document.getElementById('cerca-updated-lbl').textContent = 'Actualizado ahora';
-
-  // 2. Cargar reales en segundo plano
-  let data = Object.values(placeStore)
-    .filter(p => validCoord(p.lat,p.lng) && dist(lat,lng,p.lat,p.lng) <= cercaRadius)
-    .map(p => ({ ...p, dist: Math.round(dist(lat,lng,p.lat,p.lng)), cat: p.cat || guessCat(p.name,p.type) }));
-  if (data.length < 3) {
-    const fetched = await overpassSearch(lat, lng, Math.min(cercaRadius, 600));
-    data = fetched.map(p => ({ ...p, dist: Math.round(dist(lat,lng,p.lat,p.lng)), cat: p.cat || guessCat(p.name,p.type) }));
-  }
-  if (data.length > 0) {
-    // Reemplazar hardcodeados por reales (los reales van arriba)
-    cercaAllPlaces = data;
+if (BACKEND_READY) {
+    const backend = await apiGet('sync_places', {lat,lng,radius:cercaRadius,status_only:1});
+    if (backend?.places) {
+      const bm = new Map(backend.places.map(p=>[p.id,p]));
+      cercaAllPlaces = cercaAllPlaces.map(p => {
+        const bp = bm.get(p.id);
+        if (!bp) return p;
+        return {
+          ...p,
+          status: bp.status ?? p.status,
+          reporters: bp.reporters ?? p.reporters,
+          sponsor: bp.sponsor ?? p.sponsor ?? null,
+          verified: bp.sponsor ? true : p.verified,
+        };
+      });
+    }
   }
   // Si no hay reales, se mantienen los hardcodeados
 
