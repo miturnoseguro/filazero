@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -843,8 +842,9 @@ html, body { height: 100%; width: 100%; overflow: hidden; background: #fff; colo
     </div>
     <div class="cerca-radius-row">
       <span class="cerca-radius-lbl">Radio:</span>
-      <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
       <button class="cerca-r-btn" data-r="100" onclick="cercaSetRadius(100,this)">100 m</button>
+      <button class="cerca-r-btn active" data-r="1000" onclick="cercaSetRadius(1000,this)">1 km</button>
+      <button class="cerca-r-btn" data-r="5000" onclick="cercaSetRadius(5000,this)">5 km</button>
     </div>
     <div class="cerca-filter-row">
       <button class="cerca-f-chip active" data-cat="all" onclick="cercaSetCat('all',this)">Todo</button>
@@ -1041,6 +1041,8 @@ let gpsWatchId = null, placeCooldowns = {};
 let currentPopupPlace = null, popupRoot = null;
 let cercaAllPlaces = [], cercaFiltered = [], cercaRadius=1000, cercaCat='all', cercaSearchQ='', cercaSortMode='distance', cercaSortIdx=0, cercaLoading=false;
 let cercaLoaded = false;
+let cercaReqId = 0; // usado para descartar respuestas de cargas viejas (evita el parpadeo al cambiar de radio rápido)
+let cercaCache = {}; // cache de resultados por radio, para no repetir el flash de datos demo al volver a un radio ya visitado
 let rankingData = [], prizesData = SEED_PRIZES.map(p=>({...p}));
 let _markerBatchToken = 0, _buildMarkersTimer = null;
 let _overpassLastReq = 0, _overpassInFlight = false;
@@ -1415,7 +1417,7 @@ const overpassSearch = async (lat, lng, radiusM) => {
   const key = `${Math.round(lat*400)}_${Math.round(lng*400)}`;
   const cached = OVERPASS_CACHE.get(key);
   if (cached && Date.now()-cached.ts < OVERPASS_CACHE_TTL) return cached.places;
-  const r = Math.min(radiusM, 800);
+  const r = Math.min(radiusM, 5000);
   const q = `[out:json][timeout:15];
 (
   node["amenity"~"restaurant|cafe|fast_food|bar|pharmacy|hospital|clinic|bank|atm|post_office|fuel|bakery|dentist|doctors|social_facility|ice_cream"](around:${r},${lat},${lng});
@@ -2397,34 +2399,43 @@ const submitVote = async (place, statusIdx) => {
 // CERCA (resumido - igual que antes)
 // ============================================================
 const cercaLoadPlaces = async () => {
+  // "Ticket" de esta carga: si el usuario cambia de radio antes de que esto termine,
+  // cercaReqId avanza y esta carga se descarta en vez de pisar los resultados nuevos.
+  const myReq = ++cercaReqId;
+  const radiusAtStart = cercaRadius;
   const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
   const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
 
-  // 1. Mostrar hardcodeados inmediatamente (sin skeletons)
-  cercaLoading = true;
-  const hardcoded = demoData(lat, lng);
-  cercaAllPlaces = hardcoded;
+  // 1. Si ya teníamos datos cargados para este radio, mostrarlos de una (sin flash de demo).
+  //    Si no, mostrar hardcodeados mientras se busca de verdad.
+  const cached = cercaCache[radiusAtStart];
+  cercaLoading = !cached;
+  cercaAllPlaces = cached ? cached.places : demoData(lat, lng);
   cercaApplyFilters();
-  const _updLbl1 = document.getElementById('cerca-updated-lbl'); if (_updLbl1) _updLbl1.textContent = 'Actualizado ahora';
+  const _updLbl1 = document.getElementById('cerca-updated-lbl');
+  if (_updLbl1) _updLbl1.textContent = cached ? `Actualizado ${cached.label}` : 'Actualizado ahora';
 
   // 2. Cargar reales en segundo plano
   let data = Object.values(placeStore)
-    .filter(p => validCoord(p.lat,p.lng) && dist(lat,lng,p.lat,p.lng) <= cercaRadius)
+    .filter(p => validCoord(p.lat,p.lng) && dist(lat,lng,p.lat,p.lng) <= radiusAtStart)
     .map(p => ({ ...p, dist: Math.round(dist(lat,lng,p.lat,p.lng)), cat: p.cat || guessCat(p.name,p.type) }));
   if (data.length < 3) {
-    const fetched = await overpassSearch(lat, lng, Math.min(cercaRadius, 600));
+    const fetched = await overpassSearch(lat, lng, radiusAtStart);
     data = fetched.map(p => ({ ...p, dist: Math.round(dist(lat,lng,p.lat,p.lng)), cat: p.cat || guessCat(p.name,p.type) }));
   }
+  if (myReq !== cercaReqId) return; // el radio cambió mientras esperábamos: descartar, ya hay una carga más nueva en curso
+
   if (data.length > 0) {
-    // Reemplazar hardcodeados por reales (los reales van arriba)
+    // Reemplazar hardcodeados/caché por reales (los reales van arriba)
     cercaAllPlaces = data;
   }
-  // Si no hay reales, se mantienen los hardcodeados
+  // Si no hay reales, se mantienen los hardcodeados/caché
   cercaLoading = false;
 
   // Sincronizar con backend (actualiza estados)
   if (BACKEND_READY) {
-    const backend = await apiGet('sync_places', {lat,lng,radius:cercaRadius,status_only:1});
+    const backend = await apiGet('sync_places', {lat,lng,radius:radiusAtStart,status_only:1});
+    if (myReq !== cercaReqId) return; // idem: descartar si ya no es la carga vigente
     if (backend?.places) {
       const bm = new Map(backend.places.map(p=>[p.id,p]));
       cercaAllPlaces = cercaAllPlaces.map(p => {
@@ -2436,7 +2447,9 @@ const cercaLoadPlaces = async () => {
 
   cercaLoaded = true;
   const now = new Date();
-  const _updLbl2 = document.getElementById('cerca-updated-lbl'); if (_updLbl2) _updLbl2.textContent = `Actualizado ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const label = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  cercaCache[radiusAtStart] = { places: cercaAllPlaces, label };
+  const _updLbl2 = document.getElementById('cerca-updated-lbl'); if (_updLbl2) _updLbl2.textContent = `Actualizado ${label}`;
   cercaApplyFilters();
 };
 const guessCat = (name,type) => {
@@ -2553,6 +2566,7 @@ const cercaSetRadius = (r, btn) => {
   vibrate(5);
   document.querySelectorAll('.cerca-r-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  if (r === cercaRadius && cercaLoaded) return; // ya está mostrando este radio, no recargar
   cercaRadius = r;
   cercaLoaded = false;
   cercaLoadPlaces();
