@@ -2016,6 +2016,9 @@ const PlacePopup = ({ place, onClose }) => {
   const photo = getPhoto(place);
   const sponsor = place.sponsor || null;
   const sponsorColor = sponsor?.badge_color || '#6366F1';
+  const badgeText = sponsor?.badge_text || null;
+const promo = sponsor?.promo || null;
+const website = sponsor?.website || null;
 
   const overlayStyle = {
     position:'fixed', inset:0,
@@ -2060,6 +2063,9 @@ const PlacePopup = ({ place, onClose }) => {
       React.createElement('div', { style:{overflowY:'auto',msOverflowStyle:'none',scrollbarWidth:'none'} },
         React.createElement('div', { style:{position:'relative',height:'200px',flexShrink:0,background:'#E2E8F0'} },
           React.createElement('img', {
+            badgeText && React.createElement('span', {
+  style:{fontSize:9,fontWeight:800,color:'#fff',background:sponsorColor,padding:'2px 7px',borderRadius:40,display:'inline-block',marginBottom:3}
+}, badgeText)
             src:photo, alt:place.name, loading:'lazy',
             onLoad:()=>setImgLoaded(true),
             onError:e => { const fb = PHOTOS[place.type] || PHOTOS.default; if (e.target.src !== fb) e.target.src = fb; },
