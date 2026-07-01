@@ -2074,13 +2074,6 @@ const runSearch = async (q, cfg) => {
     // La lista "Cerca" ya tiene su propia fuente resuelta (cercaAllPlaces) — se usa esa primero
     // para no depender de que el mapa haya cargado placeStore todavía.
     let pool = (cfg.pool === 'cerca' && cercaAllPlaces.length) ? cercaAllPlaces : Object.values(placeStore);
-    // Fallback: si todavía no cargaron comercios reales (o hay muy pocos),
-    // sumamos los lugares demo para que el buscador siempre responda algo.
-    if (pool.length < 5) {
-      const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat, lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
-      const demo = demoData(lat, lng).filter(d => !pool.find(p => p.id === d.id));
-      pool = [...pool, ...demo];
-    }
 
     const results = pool.filter(p => normTxt(p.name).includes(nq) || normTxt(p.type).includes(nq)).slice(0,8);
     if (!results.length) { drop.innerHTML = `<div class="search-empty">😕 No encontramos "${q}" cerca.</div>`; return; }
@@ -2423,11 +2416,11 @@ const cercaLoadPlaces = async () => {
   const lat = userLat ?? CONFIG.DEFAULT_CENTER.lat;
   const lng = userLng ?? CONFIG.DEFAULT_CENTER.lng;
 
-  // 1. Si ya teníamos datos cargados para este radio, mostrarlos de una (sin flash de demo).
-  //    Si no, mostrar hardcodeados mientras se busca de verdad.
+  // 1. Si ya teníamos datos cargados para este radio, mostrarlos de una.
+  //    Si no, arrancamos vacío mientras se busca de verdad (solo datos reales).
   const cached = cercaCache[radiusAtStart];
   cercaLoading = !cached;
-  cercaAllPlaces = cached ? cached.places : demoData(lat, lng);
+  cercaAllPlaces = cached ? cached.places : [];
   cercaApplyFilters();
   const _updLbl1 = document.getElementById('cerca-updated-lbl');
   if (_updLbl1) _updLbl1.textContent = cached ? `Actualizado ${cached.label}` : 'Actualizado ahora';
@@ -2444,10 +2437,10 @@ const cercaLoadPlaces = async () => {
   if (myReq !== cercaReqId) return; // el radio cambió mientras esperábamos: descartar, ya hay una carga más nueva en curso
 
   if (data.length > 0) {
-    // Reemplazar hardcodeados/caché por reales (los reales van arriba)
+    // Reemplazar caché por reales (los reales van arriba)
     cercaAllPlaces = data;
   }
-  // Si no hay reales, se mantienen los hardcodeados/caché
+  // Si no hay reales, la lista queda vacía (se muestra el estado "sin resultados")
   cercaLoading = false;
   hidePlacesLoading(200, 'cerca-loading-pill');
 
@@ -2479,22 +2472,6 @@ const guessCat = (name,type) => {
   if (l.includes('banco')||l.includes('cajero')||l.includes('atm')) return 'bank';
   if (l.includes('gobierno')||l.includes('municipal')||l.includes('correo')||l.includes('anses')) return 'government';
   return 'shopping';
-};
-const demoData = (lat,lng) => {
-  const demos = [
-    { name:'Kiosco 24h', type:'Kiosco', emoji:'🏪', cat:'shopping', addr:'A la vuelta', dlat:0.0002, dlng:0.0002, status:0, reporters:2, rating:'4.1', reviewsN:64 },
-    { name:'Carrefour Express', type:'Supermercado', emoji:'🛒', cat:'supermarket', addr:'Av. Corrientes 1234', dlat:0.0012, dlng:0.0008, status:2, reporters:14, rating:'4.2', reviewsN:1200, sponsor:{tier:'premium', badge_color:'#D4AF37', badge_text:'Sponsor'} },
-    { name:'Farmacity', type:'Farmacia', emoji:'💊', cat:'health', addr:'Florida 340', dlat:0.0004, dlng:0.0015, status:0, reporters:5, rating:'4.0', reviewsN:856 },
-    { name:'Banco Nación', type:'Banco', emoji:'🏦', cat:'bank', addr:'Florida 236', dlat:-0.0006, dlng:0.0010, status:2, reporters:18, rating:'3.2', reviewsN:430 },
-    { name:'Starbucks', type:'Cafetería', emoji:'☕', cat:'food', addr:'Av. Santa Fe 800', dlat:-0.0003, dlng:0.0018, status:0, reporters:3, rating:'4.4', reviewsN:2100 },
-    { name:"McDonald's", type:'Comida rápida', emoji:'🍔', cat:'food', addr:'Corrientes 567', dlat:0.0018, dlng:-0.0002, status:3, reporters:22, rating:'3.9', reviewsN:3400 },
-    { name:'ANSES', type:'Oficina pública', emoji:'🏛️', cat:'government', addr:'Lima 121', dlat:-0.0015, dlng:0.0003, status:1, reporters:9, rating:'2.8', reviewsN:720 },
-  ];
-  return demos.map(d => {
-    const plat = lat + d.dlat, plng = lng + d.dlng;
-    const d2 = Math.round(dist(lat,lng,plat,plng));
-    return { id:`demo_${d.name.replace(/\s/g,'')}`, name:d.name, type:d.type, logo:d.emoji, cat:d.cat, addr:d.addr, lat:plat, lng:plng, dist:d2, open:true, verified:false, rating:d.rating, reviewsN:d.reviewsN, status:d.status, reporters:d.reporters, sponsor:d.sponsor || null };
-  }).filter(p => p.dist <= cercaRadius);
 };
 const cercaShowSkeleton = () => {
   // Ya no se usa, pero se mantiene por si se necesitara.
