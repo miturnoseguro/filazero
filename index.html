@@ -1995,8 +1995,8 @@ const updateUserMarker = (lat,lng) => {
 // BUSCADOR (compartido entre el mapa y la lista "Cerca" — mismo componente y misma lógica)
 // ============================================================
 const SEARCH_INSTANCES = [
-  { inputId:'map-search-input', dropdownId:'search-results-dropdown', wrapId:'map-search-wrap', clearId:'map-search-clear' },
-  { inputId:'cerca-search-input', dropdownId:'cerca-search-results-dropdown', wrapId:'cerca-search-wrap', clearId:'cerca-search-clear' },
+  { inputId:'map-search-input', dropdownId:'search-results-dropdown', wrapId:'map-search-wrap', clearId:'map-search-clear', pool:'map' },
+  { inputId:'cerca-search-input', dropdownId:'cerca-search-results-dropdown', wrapId:'cerca-search-wrap', clearId:'cerca-search-clear', pool:'cerca' },
 ];
 const initSearch = () => {
   SEARCH_INSTANCES.forEach(cfg => {
@@ -2035,8 +2035,9 @@ const runSearch = async (q, cfg) => {
     drop.classList.add('open');
 
     const nq = normTxt(q);
-    // Fuente principal: comercios reales ya cargados en el mapa.
-    let pool = Object.values(placeStore);
+    // La lista "Cerca" ya tiene su propia fuente resuelta (cercaAllPlaces) — se usa esa primero
+    // para no depender de que el mapa haya cargado placeStore todavía.
+    let pool = (cfg.pool === 'cerca' && cercaAllPlaces.length) ? cercaAllPlaces : Object.values(placeStore);
     // Fallback: si todavía no cargaron comercios reales (o hay muy pocos),
     // sumamos los lugares demo para que el buscador siempre responda algo.
     if (pool.length < 5) {
